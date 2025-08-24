@@ -5,6 +5,11 @@ import AuthProvider from '@/components/AuthProvider'
 export const metadata: Metadata = {
   title: 'Meduhentai - Đọc Manga Hentai Online',
   description: 'Đọc manga hentai online miễn phí với chất lượng cao, cập nhật liên tục',
+  icons: {
+    icon: '/medusa.ico',
+    shortcut: '/medusa.ico',
+    apple: '/medusa.ico',
+  },
 }
 
 export default function RootLayout({
@@ -14,6 +19,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
+      <head>
+        <link rel="icon" href="/medusa.ico" />
+        <link rel="shortcut icon" href="/medusa.ico" />
+        <link rel="apple-touch-icon" href="/medusa.ico" />
+      </head>
       <body className="antialiased">
         <AuthProvider>
           {children}
