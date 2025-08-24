@@ -4,6 +4,9 @@ const nextConfig = {
     domains: ['localhost', 'your-r2-domain.com'],
     unoptimized: true,
   },
+  experimental: {
+    serverComponentsExternalPackages: ['@aws-sdk/client-s3'],
+  },
   env: {
     MONGODB_URI: process.env.MONGODB_URI,
     CLOUDFLARE_R2_ACCOUNT_ID: process.env.CLOUDFLARE_R2_ACCOUNT_ID,

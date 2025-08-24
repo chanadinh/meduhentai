@@ -29,6 +29,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check file sizes (50MB limit)
+    const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+    for (const file of files) {
+      if (file.size > maxSize) {
+        return NextResponse.json(
+          { 
+            error: `File ${file.name} is too large. Maximum size is 50MB.`,
+            fileSize: file.size,
+            maxSize: maxSize
+          },
+          { status: 413 }
+        );
+      }
+    }
+
     const uploads: Array<{
       originalName: string;
       filename: string;

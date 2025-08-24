@@ -433,9 +433,9 @@ export default function ManageContent() {
       }
 
       const imageData = await imageResponse.json();
-      const pageUrls = imageData.results;
+      const pageUrls = imageData.uploads;
 
-      if (pageUrls.length !== pageFiles.length) {
+      if (!pageUrls || pageUrls.length !== pageFiles.length) {
         throw new Error('Một số ảnh tải lên thất bại');
       }
 
