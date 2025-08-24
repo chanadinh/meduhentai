@@ -8,14 +8,17 @@ export function middleware(request: NextRequest) {
     
     if (contentLength) {
       const sizeInBytes = parseInt(contentLength, 10);
-      const maxSize = 100 * 1024 * 1024; // 100MB
+      const maxSize = 100 * 1024 * 1024; // 100MB (Vercel's actual limit)
       
+      // Note: Vercel sees payload size as ~3-4x larger than actual file size
+      // due to base64 encoding, FormData overhead, and HTTP headers
       if (sizeInBytes > maxSize) {
         return NextResponse.json(
           { 
-            error: 'Request too large. Maximum size is 100MB.',
+            error: 'Request too large. Maximum size is 100MB (Vercel limit).',
             size: sizeInBytes,
-            maxSize: maxSize
+            maxSize: maxSize,
+            note: 'Vercel payload includes encoding overhead (~3-4x actual file size)'
           },
           { status: 413 }
         );

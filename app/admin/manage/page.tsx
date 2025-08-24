@@ -450,12 +450,20 @@ export default function ManageContent() {
     // Ensure page numbers are sequential before submitting
     normalizePageNumbers();
 
-    // Check file sizes before uploading
-    const maxSize = 100 * 1024 * 1024; // 100MB
-    const oversizedFiles = pageFiles.filter(page => page.file.size > maxSize);
+    // Check file sizes before uploading (considering Vercel overhead)
+    const maxFileSize = 25 * 1024 * 1024; // 25MB per file (Vercel will see ~100MB)
+    const oversizedFiles = pageFiles.filter(page => page.file.size > maxFileSize);
     if (oversizedFiles.length > 0) {
       const fileNames = oversizedFiles.map(page => page.file.name).join(', ');
-      toast.error(`File quá lớn: ${fileNames}. Kích thước tối đa là 100MB mỗi file.`);
+      toast.error(`File quá lớn: ${fileNames}. Kích thước tối đa là 25MB mỗi file (Vercel overhead).`);
+      return;
+    }
+
+    // Check total payload size (Vercel limit)
+    const totalSize = pageFiles.reduce((total, page) => total + page.file.size, 0);
+    const maxTotalSize = 30 * 1024 * 1024; // 30MB total (Vercel will see ~100MB)
+    if (totalSize > maxTotalSize) {
+      toast.error(`Tổng kích thước file quá lớn: ${(totalSize / (1024 * 1024)).toFixed(2)}MB. Tối đa 30MB để tránh lỗi Vercel.`);
       return;
     }
 
@@ -1123,7 +1131,7 @@ export default function ManageContent() {
                         <p className="mb-2 text-sm text-dark-500">
                           <span className="font-semibold">Click để tải</span> trang chương
                         </p>
-                        <p className="text-xs text-dark-400">PNG, JPG hoặc WEBP (TỐI ĐA 100MB mỗi ảnh)</p>
+                        <p className="text-xs text-dark-400">PNG, JPG hoặc WEBP (TỐI ĐA 25MB mỗi ảnh - Vercel limit)</p>
                       </div>
                       <input
                         type="file"
@@ -1145,6 +1153,18 @@ export default function ManageContent() {
                           <p>• Tổng số file: {pageFiles.length}</p>
                           <p>• Tổng kích thước: {(pageFiles.reduce((total, page) => total + page.file.size, 0) / (1024 * 1024)).toFixed(2)} MB</p>
                           <p>• File lớn nhất: {(Math.max(...pageFiles.map(page => page.file.size)) / (1024 * 1024)).toFixed(2)} MB</p>
+                        </div>
+                        
+                        {/* Vercel Overhead Warning */}
+                        <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                          <div className="flex items-center space-x-2 text-yellow-700">
+                            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                            <span className="text-xs font-medium">⚠️ Vercel Overhead:</span>
+                          </div>
+                          <p className="text-xs text-yellow-600 mt-1">
+                            Vercel sẽ thấy payload lớn hơn ~3-4x do encoding và overhead. 
+                            Giữ tổng size dưới 30MB để tránh lỗi.
+                          </p>
                         </div>
                       </div>
                     )}
