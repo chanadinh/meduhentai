@@ -175,8 +175,8 @@ export default function HomePage() {
                 {/* Left Side - Cover Image */}
                 <div className="w-full lg:w-64 flex-shrink-0 flex justify-center lg:justify-start lg:absolute lg:bottom-0">
                   {/* Tiêu điểm Label and Bar */}
-                  <div className="absolute -top-16 -left-36 right-0 z-20 text-center">
-                    <h2 className="text-white text-2xl font-bold mb-3 drop-shadow-lg">TIÊU ĐIỂM:</h2>
+                  <div className="absolute -top-12 -left-36 right-0 z-20 text-center">
+                    <h2 className="text-white text-2xl font-bold mb-1 drop-shadow-lg">TIÊU ĐIỂM:</h2>
                     <div className="w-24 h-1.5 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full"></div>
                   </div>
                   
@@ -194,10 +194,20 @@ export default function HomePage() {
                 <div className="flex-1 p-4 lg:p-8 flex flex-col lg:ml-64 lg:pt-16">
                   <h1 
                     key={`title-${currentPopularManga._id || currentPopularIndex}`}
-                    className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white mb-3 leading-tight drop-shadow-lg transition-all duration-500 ease-in-out animate-slide-in-right text-center lg:text-left"
+                    className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight drop-shadow-lg transition-all duration-500 ease-in-out animate-slide-in-right text-center lg:text-left"
                   >
                     {currentPopularManga.title}
                   </h1>
+                  
+                  {/* Manga Description and Read Button */}
+                  <div className="mb-4">
+                    <Link 
+                      href={`/manga/${currentPopularManga._id}`}
+                      className="inline-flex items-center px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg border border-purple-500 backdrop-blur-sm transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md mt-2"
+                    >
+                      Đọc ngay
+                    </Link>
+                  </div>
                   
                   {/* Genres */}
                   <div 
@@ -209,35 +219,6 @@ export default function HomePage() {
                         {genre.toUpperCase()}
                       </span>
                     ))}
-                  </div>
-                  
-                  {/* Description */}
-                  <p 
-                    key={`desc-${currentPopularManga._id || currentPopularIndex}`}
-                    className="text-white/90 leading-relaxed mb-4 drop-shadow-md transition-all duration-500 ease-in-out animate-slide-in-left text-sm text-center lg:text-left"
-                  >
-                    {currentPopularManga.description}
-                  </p>
-                  
-                  {/* Author */}
-                  <p 
-                    key={`author-${currentPopularManga._id || currentPopularIndex}`}
-                    className="text-white/70 text-xs drop-shadow-md transition-all duration-500 ease-in-out animate-slide-in-down text-center lg:text-left"
-                  >
-                    {currentPopularManga.author}
-                  </p>
-                  
-                  {/* Manga Description and Read Button */}
-                  <div className="mb-4">
-                    <p className="text-white/80 text-sm mb-3 line-clamp-2 leading-relaxed drop-shadow-md">
-                      {currentPopularManga.description}
-                    </p>
-                    <Link 
-                      href={`/manga/${currentPopularManga._id}`}
-                      className="inline-flex items-center px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg border border-purple-500 backdrop-blur-sm transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
-                    >
-                      Đọc ngay
-                    </Link>
                   </div>
                   
                   {/* Navigation */}

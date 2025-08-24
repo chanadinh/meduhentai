@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
         .sort(sortObject)
         .skip(skip)
         .limit(limit)
-        .select('title coverImage views chaptersCount createdAt updatedAt')
+        .select('title coverImage views chaptersCount createdAt updatedAt genres')
         .lean(),
       Manga.countDocuments({ isDeleted: { $ne: true } })
     ]);
