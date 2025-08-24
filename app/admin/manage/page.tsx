@@ -115,6 +115,17 @@ export default function ManageContent() {
   const [chapterLoading, setChapterLoading] = useState(false);
   const [chapters, setChapters] = useState<any[]>([]);
   const [chaptersLoading, setChaptersLoading] = useState(false);
+  
+  // Chapter editing state
+  const [editingChapter, setEditingChapter] = useState<any>(null);
+  const [editChapterForm, setEditChapterForm] = useState<ChapterForm>({
+    mangaId: '',
+    title: '',
+    chapterNumber: 1,
+    volume: 1,
+  });
+  const [editChapterLoading, setEditChapterLoading] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'edit' || activeTab === 'chapters') {
@@ -557,20 +568,97 @@ export default function ManageContent() {
     }
   };
 
-  const handleEditChapter = (chapter: any) => {
-    // TODO: Implement chapter editing
-    toast.success('Tính năng chỉnh sửa chương sẽ được phát triển sớm');
+  const handleEditChapter = async (chapter: any) => {
+    try {
+      // Fetch full chapter data
+      const response = await fetch(`/api/chapters/${chapter._id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch chapter data');
+      }
+      
+      const data = await response.json();
+      const fullChapter = data.chapter;
+      
+      // Set editing state
+      setEditingChapter(fullChapter);
+      setEditChapterForm({
+        mangaId: fullChapter.manga._id || fullChapter.manga,
+        title: fullChapter.title || '',
+        chapterNumber: fullChapter.chapterNumber || 1,
+        volume: fullChapter.volume || 1,
+      });
+      setShowEditModal(true);
+    } catch (error) {
+      console.error('Error fetching chapter for editing:', error);
+      toast.error('Không thể tải thông tin chương để chỉnh sửa');
+    }
   };
 
   const handleDeleteChapter = async (chapterId: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa chương này?')) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa chương này? Hành động này không thể hoàn tác.')) {
+      return;
+    }
     
     try {
-      // TODO: Implement chapter deletion API
-      toast.success('Tính năng xóa chương sẽ được phát triển sớm');
+      const response = await fetch(`/api/chapters/${chapterId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete chapter');
+      }
+      
+      toast.success('Chương đã được xóa thành công!');
+      
+      // Refresh chapters list
+      if (selectedManga) {
+        fetchChapters(selectedManga._id);
+      }
     } catch (error) {
       console.error('Error deleting chapter:', error);
-      toast.error('Không thể xóa chương');
+      toast.error(error instanceof Error ? error.message : 'Không thể xóa chương');
+    }
+  };
+
+  const handleEditChapterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingChapter) return;
+    
+    try {
+      setEditChapterLoading(true);
+      
+      const response = await fetch(`/api/chapters/${editingChapter._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: editChapterForm.title,
+          chapterNumber: editChapterForm.chapterNumber,
+          volume: editChapterForm.volume,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update chapter');
+      }
+      
+      toast.success('Chương đã được cập nhật thành công!');
+      
+      // Close modal and refresh chapters list
+      setShowEditModal(false);
+      setEditingChapter(null);
+      if (selectedManga) {
+        fetchChapters(selectedManga._id);
+      }
+    } catch (error) {
+      console.error('Error updating chapter:', error);
+      toast.error(error instanceof Error ? error.message : 'Không thể cập nhật chương');
+    } finally {
+      setEditChapterLoading(false);
     }
   };
 
@@ -1312,6 +1400,125 @@ export default function ManageContent() {
         {/* Tab Content */}
         {renderTabContent()}
       </div>
+
+      {/* Edit Chapter Modal */}
+      {showEditModal && editingChapter && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-dark-900">
+                Chỉnh sửa Chương {editingChapter.chapterNumber}
+              </h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-dark-400 hover:text-dark-600 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditChapterSubmit} className="space-y-6">
+              {/* Chapter Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 mb-2">
+                    Tiêu đề chương
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={editChapterForm.title}
+                    onChange={(e) => setEditChapterForm(prev => ({ ...prev, title: e.target.value }))}
+                    className="form-input-beautiful w-full"
+                    placeholder="Nhập tiêu đề chương"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 mb-2">
+                    Số chương
+                  </label>
+                  <input
+                    type="number"
+                    name="chapterNumber"
+                    min="1"
+                    value={editChapterForm.chapterNumber}
+                    onChange={(e) => setEditChapterForm(prev => ({ ...prev, chapterNumber: parseInt(e.target.value) }))}
+                    className="form-input-beautiful w-full"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 mb-2">
+                    Volume
+                  </label>
+                  <input
+                    type="number"
+                    name="volume"
+                    min="1"
+                    value={editChapterForm.volume}
+                    onChange={(e) => setEditChapterForm(prev => ({ ...prev, volume: parseInt(e.target.value) }))}
+                    className="form-input-beautiful w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Current Pages Info */}
+              <div>
+                <label className="block text-sm font-medium text-dark-700 mb-2">
+                  Trang hiện tại ({editingChapter.pages?.length || 0})
+                </label>
+                <div className="bg-dark-50 rounded-lg p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {editingChapter.pages?.map((page: any, index: number) => (
+                      <div key={index} className="relative group">
+                        <div className="aspect-[3/4] bg-dark-100 rounded-lg overflow-hidden">
+                          <img
+                            src={page.imageUrl}
+                            alt={`Page ${page.pageNumber}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="absolute top-2 left-2 bg-dark-900/90 text-white px-2 py-1 rounded-full text-xs font-medium">
+                          {page.pageNumber}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-dark-500 mt-3">
+                    Để thay đổi trang, hãy xóa chương này và tạo lại với trang mới.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 text-dark-600 hover:text-dark-800 transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={editChapterLoading}
+                  className="px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  {editChapterLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <Edit className="h-4 w-4" />
+                  )}
+                  <span>
+                    {editChapterLoading ? 'Đang cập nhật...' : 'Cập nhật Chương'}
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }
