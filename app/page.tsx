@@ -61,7 +61,7 @@ export default function HomePage() {
       setLoading(true);
       
       // Fetch popular manga
-      const popularResponse = await fetch('/api/manga?sort=views&limit=10');
+      const popularResponse = await fetch('/api/manga?sort=popular&limit=10');
       if (popularResponse.ok) {
         const popularData = await popularResponse.json();
         console.log('Popular manga data:', popularData);

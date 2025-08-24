@@ -25,6 +25,9 @@ export async function GET(request: NextRequest) {
       case 'views':
         sortObject = { views: sortOrder === 'desc' ? -1 : 1 };
         break;
+      case 'popular':
+        sortObject = { likes: sortOrder === 'desc' ? -1 : 1, views: sortOrder === 'desc' ? -1 : 1 };
+        break;
       case 'lastUpdated':
         sortObject = { updatedAt: sortOrder === 'desc' ? -1 : 1 };
         break;
@@ -44,7 +47,7 @@ export async function GET(request: NextRequest) {
         .sort(sortObject)
         .skip(skip)
         .limit(limit)
-        .select('title coverImage views chaptersCount createdAt updatedAt genres description author')
+        .select('title coverImage views chaptersCount createdAt updatedAt genres description author likes')
         .lean(),
       Manga.countDocuments({ isDeleted: { $ne: true } })
     ]);
