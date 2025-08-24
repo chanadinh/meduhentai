@@ -25,7 +25,8 @@ interface AdminLayoutProps {
 const navigation = [
   { name: 'Bảng điều khiển', href: '/admin', icon: BarChart3 },
   { name: 'Quản lý Nội dung', href: '/admin/manage', icon: BookOpen },
-  { name: 'Tải lên trực tiếp', href: '/admin/upload/direct', icon: Upload },
+  { name: 'Tải lên Blob', href: '/admin/upload/direct', icon: Upload },
+  { name: 'Tải lên R2', href: '/admin/upload/direct-r2', icon: Upload },
   { name: 'Người dùng', href: '/admin/users', icon: Users },
   { name: 'Thẻ & Thể loại', href: '/admin/tags', icon: Tags },
   { name: 'Cài đặt', href: '/admin/settings', icon: Settings },

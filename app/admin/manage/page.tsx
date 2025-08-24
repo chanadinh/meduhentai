@@ -127,6 +127,9 @@ export default function ManageContent() {
   });
   const [editChapterLoading, setEditChapterLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  
+  // Upload method state
+  const [uploadMethod, setUploadMethod] = useState<'server' | 'r2'>('r2');
 
   // Image compression options
   const [compressionOptions, setCompressionOptions] = useState({
@@ -477,63 +480,24 @@ export default function ManageContent() {
     // Ensure page numbers are sequential before submitting
     normalizePageNumbers();
 
-    // Check file sizes before uploading (considering Vercel overhead)
-    const maxFileSize = 1024 * 1024 * 1024; // 1GB per file (client limit)
-    const oversizedFiles = pageFiles.filter(page => page.file.size > maxFileSize);
-    if (oversizedFiles.length > 0) {
-      const fileNames = oversizedFiles.map(page => page.file.name).join(', ');
-      toast.error(`File quá lớn: ${fileNames}. Kích thước tối đa là 1GB mỗi file.`);
-      return;
-    }
-
-    // Check total payload size (Vercel limit)
-    const totalSize = pageFiles.reduce((total, page) => total + page.file.size, 0);
-    const maxTotalSize = 1024 * 1024 * 1024; // 1GB total (client limit)
-    if (totalSize > maxTotalSize) {
-      toast.error(`Tổng kích thước file quá lớn: ${(totalSize / (1024 * 1024 * 1024)).toFixed(2)}GB. Tối đa 1GB để tránh lỗi Vercel.`);
-      return;
-    }
-
     setChapterLoading(true);
 
     try {
-      // First upload all page images
-      const imageFormData = new FormData();
-      pageFiles.forEach(page => {
-        imageFormData.append('images', page.file);
-      });
-      imageFormData.append('folder', 'chapters');
+      let uploadedPages: any[] = [];
 
-      const imageResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: imageFormData,
-      });
-
-      if (!imageResponse.ok) {
-        if (imageResponse.status === 413) {
-          throw new Error('File quá lớn. Kích thước tối đa là 100MB mỗi file.');
-        }
-        const errorData = await imageResponse.json().catch(() => ({}));
-        const errorMessage = errorData.error || `Upload failed with status: ${imageResponse.status}`;
-        throw new Error(`Không thể tải ảnh trang: ${errorMessage}`);
+      if (uploadMethod === 'r2') {
+        // R2 Direct Upload Method
+        uploadedPages = await uploadPagesToR2();
+      } else {
+        // Server Upload Method (original)
+        uploadedPages = await uploadPagesToServer();
       }
 
-      const imageData = await imageResponse.json();
-      const pageUrls = imageData.uploads;
-
-      if (!pageUrls || pageUrls.length !== pageFiles.length) {
+      if (uploadedPages.length !== pageFiles.length) {
         throw new Error('Một số ảnh tải lên thất bại');
       }
 
-      // Create pages array with URLs and metadata
-      const pages = pageUrls.map((result: any, index: number) => ({
-        pageNumber: pageFiles[index].pageNumber, // Use the actual page number from pageFiles
-        imageUrl: result.url,
-        width: 800, // You might want to get actual dimensions
-        height: 1200,
-      }));
-
-      // Then create the chapter
+      // Create the chapter with uploaded page URLs
       const chapterResponse = await fetch('/api/chapters', {
         method: 'POST',
         headers: {
@@ -541,7 +505,7 @@ export default function ManageContent() {
         },
         body: JSON.stringify({
           ...chapterForm,
-          pages,
+          pages: uploadedPages,
         }),
       });
 
@@ -567,6 +531,128 @@ export default function ManageContent() {
     } finally {
       setChapterLoading(false);
     }
+  };
+
+  // R2 Direct Upload Function
+  const uploadPagesToR2 = async (): Promise<any[]> => {
+    const uploadedPages = [];
+    
+    for (let i = 0; i < pageFiles.length; i++) {
+      const page = pageFiles[i];
+      
+      try {
+        // Get presigned URL for R2 upload
+        const presignedResponse = await fetch('/api/upload/direct-r2', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            filename: page.file.name,
+            contentType: page.file.type,
+            folder: 'chapters',
+            fileSize: page.file.size,
+          }),
+        });
+
+        if (!presignedResponse.ok) {
+          const errorData = await presignedResponse.json();
+          throw new Error(errorData.error || 'Failed to get upload URL');
+        }
+
+        const { presignedUrl, key } = await presignedResponse.json();
+
+        // Upload file directly to R2 using presigned URL
+        const uploadResponse = await fetch(presignedUrl, {
+          method: 'PUT',
+          body: page.file,
+          headers: {
+            'Content-Type': page.file.type,
+          },
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+        }
+
+        // Construct the public URL
+        const publicUrl = `https://${process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN || 'your-r2-domain.com'}/${key}`;
+        
+        uploadedPages.push({
+          pageNumber: page.pageNumber,
+          imageUrl: publicUrl,
+          width: 800, // You might want to get actual dimensions
+          height: 1200,
+          key: key, // Store R2 key for future reference
+        });
+
+        // Show progress
+        toast.success(`Đã tải lên trang ${page.pageNumber}/${pageFiles.length} (R2)`);
+
+      } catch (error) {
+        console.error(`Error uploading page ${page.pageNumber} to R2:`, error);
+        throw new Error(`Không thể tải lên trang ${page.pageNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+
+    return uploadedPages;
+  };
+
+  // Server Upload Function (original method)
+  const uploadPagesToServer = async (): Promise<any[]> => {
+    // Check file sizes before uploading (considering Vercel overhead)
+    const maxFileSize = 25 * 1024 * 1024; // 25MB per file (Vercel will see ~100MB)
+    const oversizedFiles = pageFiles.filter(page => page.file.size > maxFileSize);
+    if (oversizedFiles.length > 0) {
+      const fileNames = oversizedFiles.map(page => page.file.name).join(', ');
+      throw new Error(`File quá lớn: ${fileNames}. Kích thước tối đa là 25MB mỗi file (Vercel overhead).`);
+    }
+
+    // Check total payload size (Vercel limit)
+    const totalSize = pageFiles.reduce((total, page) => total + page.file.size, 0);
+    const maxTotalSize = 30 * 1024 * 1024; // 30MB total (Vercel will see ~100MB)
+    if (totalSize > maxTotalSize) {
+      throw new Error(`Tổng kích thước file quá lớn: ${(totalSize / (1024 * 1024)).toFixed(2)}MB. Tối đa 30MB để tránh lỗi Vercel.`);
+    }
+
+    // Upload all page images to server
+    const imageFormData = new FormData();
+    pageFiles.forEach(page => {
+      imageFormData.append('images', page.file);
+    });
+    imageFormData.append('folder', 'chapters');
+
+    const imageResponse = await fetch('/api/upload', {
+      method: 'POST',
+      body: imageFormData,
+    });
+
+    if (!imageResponse.ok) {
+      if (imageResponse.status === 413) {
+        throw new Error('File quá lớn. Kích thước tối đa là 100MB mỗi file.');
+      }
+      const errorData = await imageResponse.json().catch(() => ({}));
+      const errorMessage = errorData.error || `Upload failed with status: ${imageResponse.status}`;
+      throw new Error(`Không thể tải ảnh trang: ${errorMessage}`);
+    }
+
+    const imageData = await imageResponse.json();
+    const pageUrls = imageData.uploads;
+
+    if (!pageUrls || pageUrls.length !== pageFiles.length) {
+      throw new Error('Một số ảnh tải lên thất bại');
+    }
+
+    // Create pages array with URLs and metadata
+    const pages = pageUrls.map((result: any, index: number) => ({
+      pageNumber: pageFiles[index].pageNumber,
+      imageUrl: result.url,
+      width: 800, // You might want to get actual dimensions
+      height: 1200,
+    }));
+
+    toast.success(`Đã tải lên ${pageFiles.length} trang qua server`);
+    return pages;
   };
 
   // Edit manga handlers
@@ -1078,6 +1164,51 @@ export default function ManageContent() {
             <div className="card p-6">
               <h3 className="text-lg font-semibold text-dark-900 mb-4">Tải lên Chương Mới</h3>
               
+              {/* Upload Method Toggle */}
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-gray-700">Phương thức tải lên:</span>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setUploadMethod('server')}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        uploadMethod === 'server'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      Server Upload
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUploadMethod('r2')}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        uploadMethod === 'r2'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      R2 Direct Upload
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="text-sm text-gray-600">
+                  {uploadMethod === 'server' ? (
+                    <div className="flex items-center space-x-2 text-blue-600">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span>Server Upload: Tải lên qua server (giới hạn 100MB, có nén ảnh)</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>R2 Direct Upload: Tải lên trực tiếp lên R2 (không giới hạn kích thước, không nén)</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
               <form onSubmit={handleChapterSubmit} className="space-y-6">
                 {/* Manga Selection - Horizontal Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -1158,9 +1289,18 @@ export default function ManageContent() {
                         <p className="mb-2 text-sm text-dark-500">
                           <span className="font-semibold">Click để tải</span> trang chương
                         </p>
-                        <p className="text-xs text-dark-400">PNG, JPG hoặc WEBP (TỐI ĐA 250MB mỗi ảnh - Vercel limit)</p>
+                        <p className="text-xs text-dark-400">
+                          PNG, JPG hoặc WEBP 
+                          {uploadMethod === 'server' 
+                            ? ' (TỐI ĐA 25MB mỗi ảnh - Server limit)' 
+                            : ' (Không giới hạn kích thước - R2 direct)'
+                          }
+                        </p>
                         <p className="text-xs text-dark-500 mt-1">
-                          Ảnh sẽ được nén tự động để giảm payload size
+                          {uploadMethod === 'server' 
+                            ? 'Ảnh sẽ được nén tự động để giảm payload size'
+                            : 'Ảnh sẽ được tải lên trực tiếp lên R2 không qua server'
+                          }
                         </p>
                       </div>
                       <input
@@ -1239,17 +1379,30 @@ export default function ManageContent() {
                           <p>• File lớn nhất: {(Math.max(...pageFiles.map(page => page.file.size)) / (1024 * 1024)).toFixed(2)} MB</p>
                         </div>
                         
-                        {/* Vercel Overhead Warning */}
-                        <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                          <div className="flex items-center space-x-2 text-yellow-700">
-                            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                            <span className="text-xs font-medium">⚠️ Vercel Overhead:</span>
+                        {/* Upload Method Specific Warnings */}
+                        {uploadMethod === 'server' ? (
+                          <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                            <div className="flex items-center space-x-2 text-yellow-700">
+                              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                              <span className="text-xs font-medium">⚠️ Server Upload Limits:</span>
+                            </div>
+                            <p className="text-xs text-yellow-600 mt-1">
+                              Vercel sẽ thấy payload lớn hơn ~3-4x do encoding và overhead. 
+                              Giữ tổng size dưới 30MB để tránh lỗi.
+                            </p>
                           </div>
-                          <p className="text-xs text-yellow-600 mt-1">
-                            Vercel sẽ thấy payload lớn hơn ~3-4x do encoding và overhead. 
-                            Giữ tổng size dưới 300MB để tránh lỗi.
-                          </p>
-                        </div>
+                        ) : (
+                          <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
+                            <div className="flex items-center space-x-2 text-green-700">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="text-xs font-medium">✅ R2 Direct Upload:</span>
+                            </div>
+                            <p className="text-xs text-green-600 mt-1">
+                              Không giới hạn kích thước file. Tải lên trực tiếp lên R2 
+                              không qua server.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
