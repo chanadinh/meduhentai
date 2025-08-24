@@ -1,0 +1,398 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { 
+  BookOpen, 
+  Star, 
+  Eye, 
+  Calendar, 
+  User, 
+  Heart,
+  Play,
+  Share2,
+  MoreHorizontal,
+  Bookmark
+} from 'lucide-react';
+import Navigation from '@/components/Navigation';
+import Comments from '@/components/Comments';
+import toast from 'react-hot-toast';
+
+interface Manga {
+  _id: string;
+  title: string;
+  description: string;
+  coverImage: string;
+  author: string;
+  artist: string;
+  status: string;
+  rating: number;
+  views: number;
+  genres: string[];
+  tags: string[];
+  chaptersCount: number;
+  chapters: Chapter[];
+}
+
+interface Chapter {
+  _id: string;
+  title: string;
+  chapterNumber: number;
+  createdAt: string;
+}
+
+export default function MangaDetailPage() {
+  const params = useParams();
+  const { data: session } = useSession();
+  const [manga, setManga] = useState<Manga | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [favorited, setFavorited] = useState(false);
+  const [activeTab, setActiveTab] = useState('chapters');
+
+  useEffect(() => {
+    if (params.id) {
+      fetchManga();
+    }
+  }, [params.id]);
+
+  const fetchManga = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/manga/${params.id}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch manga');
+      }
+      
+      const data = await response.json();
+      setManga(data.manga);
+    } catch (error) {
+      console.error('Error fetching manga:', error);
+      toast.error('Không thể tải thông tin manga');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFavorite = async () => {
+    if (!session) {
+      toast.error('Vui lòng đăng nhập để thêm vào yêu thích');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/user/favorites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ mangaId: manga?._id }),
+      });
+
+      if (response.ok) {
+        setFavorited(!favorited);
+        toast.success(favorited ? 'Đã xóa khỏi yêu thích' : 'Đã thêm vào yêu thích');
+      } else {
+        toast.error('Không thể cập nhật yêu thích');
+      }
+    } catch (error) {
+      console.error('Error updating favorite:', error);
+      toast.error('Không thể cập nhật yêu thích');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) return '1 ngày trước';
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} tuần trước`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} tháng trước`;
+    return `${Math.floor(diffDays / 365)} năm trước`;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="flex gap-8">
+              <div className="w-80 h-96 bg-gray-200 rounded-lg"></div>
+              <div className="flex-1 space-y-4">
+                <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                <div className="flex gap-3">
+                  <div className="h-10 bg-gray-200 rounded w-32"></div>
+                  <div className="h-10 bg-gray-200 rounded w-24"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!manga) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900">Không tìm thấy manga</h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Navigation />
+      
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Main Content */}
+        <div className="flex gap-8">
+          {/* Left Column - Cover Image */}
+          <div className="w-80 flex-shrink-0">
+            <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+              <img 
+                src={manga.coverImage} 
+                alt={manga.title}
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          </div>
+
+          {/* Right Column - Manga Details */}
+          <div className="flex-1">
+            {/* Title and Subtitle */}
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{manga.title}</h1>
+              {manga.description && (
+                <p className="text-lg text-gray-600 mb-4">{manga.description}</p>
+              )}
+              <p className="text-gray-500">by {manga.artist || manga.author}</p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 mb-6">
+              <button
+                onClick={handleFavorite}
+                className={`px-6 py-3 rounded-full font-medium transition-all duration-200 flex items-center gap-2 ${
+                  favorited 
+                    ? 'bg-red-500 hover:bg-red-600 text-white' 
+                    : 'bg-purple-500 hover:bg-purple-600 text-white'
+                }`}
+              >
+                <Heart className={`h-5 w-5 ${favorited ? 'fill-current' : ''}`} />
+                {favorited ? 'Đã yêu thích' : '+ Thêm vào thư viện'}
+              </button>
+              
+              {manga.chapters && manga.chapters.length > 0 && (
+                <a
+                  href={`/manga/${manga._id}/read/${manga.chapters[0]._id}`}
+                  className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full font-medium transition-all duration-200 flex items-center gap-2"
+                >
+                  <Play className="h-5 w-5" />
+                  Đọc ngay
+                </a>
+              )}
+              
+              <button className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-all duration-200">
+                <Share2 className="h-5 w-5" />
+              </button>
+              
+              <button className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-all duration-200">
+                <MoreHorizontal className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                {manga.status === 'completed' ? 'COMPLETED' : 
+                 manga.status === 'ongoing' ? 'ONGOING' : 
+                 manga.status === 'hiatus' ? 'HIATUS' : 
+                 manga.status === 'cancelled' ? 'CANCELLED' : 
+                 manga.status.toUpperCase()}
+              </span>
+              {manga.genres && manga.genres.slice(0, 3).map((genre, index) => (
+                <span key={index} className="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full">
+                  {genre.toUpperCase()}
+                </span>
+              ))}
+            </div>
+
+            {/* Stats */}
+            <div className="flex items-center gap-6 mb-8">
+              <div className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                <span className="text-lg font-semibold text-gray-900">{manga.rating.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Bookmark className="h-5 w-5 text-gray-500" />
+                <span className="text-lg font-semibold text-gray-900">{manga.views}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-gray-500" />
+                <span className="text-lg font-semibold text-gray-900">{manga.chaptersCount || manga.chapters?.length || 0}</span>
+              </div>
+            </div>
+
+            {/* Details Grid */}
+            <div className="grid grid-cols-2 gap-6 mb-8">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Tác giả</h3>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                    {manga.author}
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Họa sĩ</h3>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                    {manga.artist || manga.author}
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Thể loại</h3>
+                <div className="flex flex-wrap gap-2">
+                  {manga.genres && manga.genres.map((genre, index) => (
+                    <span key={index} className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
+                      {genre}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Nguồn</h3>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                    MangaDex
+                  </span>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                    Raw
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="mt-12">
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8">
+              <button
+                onClick={() => setActiveTab('chapters')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                  activeTab === 'chapters'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                DS Chương ({manga.chapters?.length || 0})
+              </button>
+              <button
+                onClick={() => setActiveTab('comments')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                  activeTab === 'comments'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Bình luận
+              </button>
+              <button
+                onClick={() => setActiveTab('covers')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                  activeTab === 'covers'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Ảnh bìa
+              </button>
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          <div className="mt-8">
+            {activeTab === 'chapters' && (
+              <div>
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <h3 className="font-semibold text-gray-900">No Volume</h3>
+                  </div>
+                  
+                  {manga.chapters && manga.chapters.length > 0 ? (
+                    <div className="divide-y divide-gray-200">
+                      {manga.chapters.map((chapter) => (
+                        <div key={chapter._id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-200">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Play className="h-4 w-4 text-purple-500" />
+                              <a
+                                href={`/manga/${manga._id}/read/${chapter._id}`}
+                                className="font-medium text-gray-900 hover:text-purple-600 transition-colors duration-200 cursor-pointer"
+                              >
+                                Ch. {chapter.chapterNumber} - {chapter.title}
+                              </a>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                              <span className="text-sm text-gray-500">No Group</span>
+                              <span className="text-sm text-gray-500">{formatDate(chapter.createdAt)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-6 py-8 text-center text-gray-500">
+                      Chưa có chương nào
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'comments' && (
+              <div>
+                <Comments mangaId={manga._id} />
+              </div>
+            )}
+
+            {activeTab === 'covers' && (
+              <div>
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="bg-gray-100 rounded-lg overflow-hidden">
+                      <img 
+                        src={manga.coverImage} 
+                        alt={manga.title}
+                        className="w-full h-auto object-cover"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
