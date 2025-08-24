@@ -1,6 +1,25 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 
-const ChapterSchema = new mongoose.Schema({
+// Chapter interface
+export interface IChapter extends Document {
+  title: string;
+  chapterNumber: number;
+  manga: mongoose.Types.ObjectId;
+  pages: Array<{
+    pageNumber: number;
+    imageUrl: string;
+    width: number;
+    height: number;
+  }>;
+  views: number;
+  isDeleted: boolean;
+  userId: mongoose.Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Chapter schema
+const ChapterSchema = new mongoose.Schema<IChapter>({
   title: {
     type: String,
     required: true,
@@ -55,4 +74,7 @@ ChapterSchema.index({ manga: 1, chapterNumber: 1 });
 ChapterSchema.index({ manga: 1, createdAt: -1 });
 ChapterSchema.index({ userId: 1 });
 
-export default mongoose.models.Chapter || mongoose.model('Chapter', ChapterSchema);
+// Export the model with proper typing
+const Chapter: Model<IChapter> = mongoose.models.Chapter || mongoose.model<IChapter>('Chapter', ChapterSchema);
+
+export default Chapter;

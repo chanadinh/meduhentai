@@ -1,6 +1,24 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 
-const NotificationSchema = new mongoose.Schema({
+// Notification interface
+export interface INotification extends Document {
+  userId: mongoose.Types.ObjectId;
+  type: 'new_comment' | 'comment_reply' | 'like' | 'unlike';
+  title: string;
+  message: string;
+  data: {
+    mangaId?: mongoose.Types.ObjectId;
+    chapterId?: mongoose.Types.ObjectId;
+    commentId?: mongoose.Types.ObjectId;
+    fromUser?: mongoose.Types.ObjectId;
+  };
+  isRead: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Notification schema
+const NotificationSchema = new mongoose.Schema<INotification>({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -38,4 +56,7 @@ NotificationSchema.index({ userId: 1, isRead: 1 });
 NotificationSchema.index({ userId: 1, createdAt: -1 });
 NotificationSchema.index({ type: 1 });
 
-export default mongoose.models.Notification || mongoose.model('Notification', NotificationSchema);
+// Export the model with proper typing
+const Notification: Model<INotification> = mongoose.models.Notification || mongoose.model<INotification>('Notification', NotificationSchema);
+
+export default Notification;

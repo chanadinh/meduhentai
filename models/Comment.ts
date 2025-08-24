@@ -1,6 +1,23 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 
-const CommentSchema = new mongoose.Schema({
+// Comment interface
+export interface IComment extends Document {
+  user: mongoose.Types.ObjectId;
+  content: string;
+  manga: mongoose.Types.ObjectId;
+  chapter?: mongoose.Types.ObjectId;
+  parentComment?: mongoose.Types.ObjectId;
+  replies: mongoose.Types.ObjectId[];
+  likes: mongoose.Types.ObjectId[];
+  dislikes: mongoose.Types.ObjectId[];
+  isEdited: boolean;
+  isDeleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Comment schema
+const CommentSchema = new mongoose.Schema<IComment>({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -56,4 +73,7 @@ CommentSchema.index({ createdAt: -1 });
 CommentSchema.index({ 'likes.length': -1 });
 CommentSchema.index({ 'dislikes.length': -1 });
 
-export default mongoose.models.Comment || mongoose.model('Comment', CommentSchema);
+// Export the model with proper typing
+const Comment: Model<IComment> = mongoose.models.Comment || mongoose.model<IComment>('Comment', CommentSchema);
+
+export default Comment;

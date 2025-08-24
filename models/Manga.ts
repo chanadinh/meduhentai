@@ -1,6 +1,26 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 
-const MangaSchema = new mongoose.Schema({
+// Manga interface
+export interface IManga extends Document {
+  title: string;
+  description: string;
+  coverImage: string;
+  genres: string[];
+  tags: string[];
+  author: string;
+  artist: string;
+  status: 'ongoing' | 'completed' | 'hiatus' | 'cancelled';
+  rating: number;
+  views: number;
+  chaptersCount: number;
+  isDeleted: boolean;
+  userId: mongoose.Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Manga schema
+const MangaSchema = new mongoose.Schema<IManga>({
   title: {
     type: String,
     required: true,
@@ -70,4 +90,7 @@ MangaSchema.index({ createdAt: -1 });
 MangaSchema.index({ updatedAt: -1 });
 MangaSchema.index({ userId: 1 });
 
-export default mongoose.models.Manga || mongoose.model('Manga', MangaSchema);
+// Export the model with proper typing
+const Manga: Model<IManga> = mongoose.models.Manga || mongoose.model<IManga>('Manga', MangaSchema);
+
+export default Manga;
