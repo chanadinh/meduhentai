@@ -77,3 +77,164 @@ export async function GET(
     );
   }
 }
+
+// PUT - Update a specific manga by ID
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const mangaId = params.id;
+
+    if (!mangaId) {
+      return NextResponse.json(
+        { error: 'Manga ID is required' },
+        { status: 400 }
+      );
+    }
+
+    await connectToDatabase();
+
+    const body = await request.json();
+    const {
+      title,
+      description,
+      author,
+      artist,
+      status,
+      type,
+      genres,
+      tags,
+      rating,
+      coverImage
+    } = body;
+
+    // Validate required fields
+    if (!title || !author) {
+      return NextResponse.json(
+        { error: 'Title and author are required' },
+        { status: 400 }
+      );
+    }
+
+    // Update the manga
+    const updatedManga = await Manga.findByIdAndUpdate(
+      mangaId,
+      {
+        title,
+        description,
+        author,
+        artist,
+        status,
+        type,
+        genres: genres || [],
+        tags: tags || [],
+        rating: rating || 0,
+        coverImage,
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedManga) {
+      return NextResponse.json(
+        { error: 'Manga not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: 'Manga updated successfully',
+      manga: updatedManga
+    });
+
+  } catch (error) {
+    console.error('Manga PUT error:', error);
+    
+    if (error instanceof Error) {
+      if (error.message.includes('MONGODB_URI')) {
+        return NextResponse.json(
+          { error: 'Database configuration error' },
+          { status: 500 }
+        );
+      }
+      if (error.message.includes('connect')) {
+        return NextResponse.json(
+          { error: 'Database connection failed' },
+          { status: 500 }
+        );
+      }
+    }
+    
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Delete a specific manga by ID
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const mangaId = params.id;
+
+    if (!mangaId) {
+      return NextResponse.json(
+        { error: 'Manga ID is required' },
+        { status: 400 }
+      );
+    }
+
+    await connectToDatabase();
+
+    // Check if manga exists
+    const manga = await Manga.findById(mangaId);
+    if (!manga) {
+      return NextResponse.json(
+        { error: 'Manga not found' },
+        { status: 404 }
+      );
+    }
+
+    // Soft delete the manga (set isDeleted flag instead of actually removing)
+    const deletedManga = await Manga.findByIdAndUpdate(
+      mangaId,
+      { 
+        isDeleted: true,
+        deletedAt: new Date()
+      },
+      { new: true }
+    );
+
+    return NextResponse.json({
+      message: 'Manga deleted successfully',
+      manga: deletedManga
+    });
+
+  } catch (error) {
+    console.error('Manga DELETE error:', error);
+    
+    if (error instanceof Error) {
+      if (error.message.includes('MONGODB_URI')) {
+        return NextResponse.json(
+          { error: 'Database configuration error' },
+          { status: 500 }
+        );
+      }
+      if (error.message.includes('connect')) {
+        return NextResponse.json(
+          { error: 'Database connection failed' },
+          { status: 500 }
+        );
+      }
+    }
+    
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}

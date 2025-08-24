@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import { 
   BookOpen, 
   Star, 
@@ -18,6 +19,7 @@ import {
 import Navigation from '@/components/Navigation';
 import Comments from '@/components/Comments';
 import toast from 'react-hot-toast';
+import { fixR2ImageUrl } from '@/lib/utils';
 
 interface Manga {
   _id: string;
@@ -163,7 +165,7 @@ export default function MangaDetailPage() {
           <div className="w-full lg:w-80 flex-shrink-0 flex justify-center lg:justify-start">
             <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-64 lg:w-80">
               <img 
-                src={manga.coverImage} 
+                src={fixR2ImageUrl(manga.coverImage)} 
                 alt={manga.title}
                 className="w-full h-auto object-cover"
               />
@@ -258,11 +260,14 @@ export default function MangaDetailPage() {
               </div>
               
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3">Họa sĩ</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">Đăng bởi</h3>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                    {manga.artist || manga.author}
-                  </span>
+                  <Link 
+                    href="/profile/admin" 
+                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-full transition-colors duration-200 cursor-pointer"
+                  >
+                    Admin
+                  </Link>
                 </div>
               </div>
               
@@ -277,17 +282,7 @@ export default function MangaDetailPage() {
                 </div>
               </div>
               
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-3">Nguồn</h3>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                    MangaDex
-                  </span>
-                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                    Raw
-                  </span>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -381,7 +376,7 @@ export default function MangaDetailPage() {
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <div className="bg-gray-100 rounded-lg overflow-hidden">
                       <img 
-                        src={manga.coverImage} 
+                        src={fixR2ImageUrl(manga.coverImage)} 
                         alt={manga.title}
                         className="w-full h-auto object-cover"
                       />

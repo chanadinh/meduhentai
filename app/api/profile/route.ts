@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { username, email, preferences } = await request.json();
+    const { username } = await request.json();
 
     await connectToDatabase();
 
@@ -90,9 +90,7 @@ export async function PUT(request: NextRequest) {
       user.email = email;
     }
 
-    if (preferences) {
-      user.preferences = { ...user.preferences, ...preferences };
-    }
+
 
     await user.save();
 

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Heart, Eye, Star, BookOpen } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
+import { fixR2ImageUrl } from '@/lib/utils';
 
 interface MangaCardProps {
   manga: {
@@ -61,7 +62,7 @@ export default function MangaCard({ manga, showStats = true, size = 'medium' }: 
       <Link href={`/manga/${manga._id}`} className="block">
         <div className={`relative overflow-hidden rounded-lg bg-dark-200 mb-3 ${sizeClasses[size]}`}>
           <img
-            src={manga.coverImage}
+            src={fixR2ImageUrl(manga.coverImage)}
             alt={manga.title}
             className={`w-full ${sizeClasses[size]} object-cover group-hover:scale-105 transition-transform duration-300`}
             loading="lazy"

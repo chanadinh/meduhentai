@@ -16,6 +16,7 @@ import {
   Filter
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { fixR2ImageUrl } from '@/lib/utils';
 
 // Manga Form Interface
 interface MangaForm {
@@ -117,6 +118,40 @@ export default function ManageContent() {
     }
   }, [activeTab]);
 
+  // Handle edit query parameter from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editMangaId = urlParams.get('edit');
+    
+    if (editMangaId) {
+      // Fetch the manga data and set it for editing
+      fetch(`/api/manga/${editMangaId}`)
+        .then(res => res.json())
+        .then(data => {
+          const manga = data.manga; // The API returns data in a 'manga' object
+          setMangaForm({
+            _id: manga._id,
+            title: manga.title,
+            description: manga.description,
+            author: manga.author,
+            artist: manga.artist,
+            status: manga.status,
+            type: manga.type,
+            genres: manga.genres || [],
+            tags: manga.tags || [],
+            rating: manga.rating || 0,
+          });
+          setCoverPreview(manga.coverImage);
+          setEditingManga(manga);
+          setActiveTab('upload');
+        })
+        .catch(error => {
+          console.error('Error fetching manga for editing:', error);
+          toast.error('Không thể tải thông tin manga để chỉnh sửa');
+        });
+    }
+  }, []);
+
   // Ensure page numbers are always sequential when pageFiles changes
   useEffect(() => {
     if (pageFiles.length > 0) {
@@ -198,38 +233,48 @@ export default function ManageContent() {
   const handleMangaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!mangaForm.title || !mangaForm.author || !coverImage) {
-      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc và tải ảnh bìa');
+    if (!mangaForm.title || !mangaForm.author) {
+      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+
+    // For new manga, cover image is required
+    if (!editingManga && !coverImage) {
+      toast.error('Vui lòng tải ảnh bìa cho manga mới');
       return;
     }
 
     setLoading(true);
 
     try {
-      // First upload the cover image
-      const imageFormData = new FormData();
-      imageFormData.append('images', coverImage);
-      imageFormData.append('folder', 'manga');
+      let coverImageUrl = coverPreview; // Use existing image if editing
 
-      const imageResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: imageFormData,
-      });
+      // Only upload new image if one was selected
+      if (coverImage) {
+        const imageFormData = new FormData();
+        imageFormData.append('images', coverImage);
+        imageFormData.append('folder', 'manga');
 
-      if (!imageResponse.ok) {
-        throw new Error('Không thể tải ảnh bìa');
-      }
+        const imageResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: imageFormData,
+        });
 
-      const imageData = await imageResponse.json();
-      
-      if (!imageData.uploads || !Array.isArray(imageData.uploads) || imageData.uploads.length === 0) {
-        throw new Error('Định dạng phản hồi tải lên không hợp lệ');
-      }
-      
-      const coverImageUrl = imageData.uploads[0]?.url;
+        if (!imageResponse.ok) {
+          throw new Error('Không thể tải ảnh bìa');
+        }
 
-      if (!coverImageUrl) {
-        throw new Error('Không thể lấy URL ảnh bìa');
+        const imageData = await imageResponse.json();
+        
+        if (!imageData.uploads || !Array.isArray(imageData.uploads) || imageData.uploads.length === 0) {
+          throw new Error('Định dạng phản hồi tải lên không hợp lệ');
+        }
+        
+        coverImageUrl = imageData.uploads[0]?.url;
+
+        if (!coverImageUrl) {
+          throw new Error('Không thể lấy URL ảnh bìa');
+        }
       }
 
       // Then create or update the manga
@@ -799,7 +844,7 @@ export default function ManageContent() {
                       <div className="flex items-start gap-3">
                         <div className="w-16 h-24 bg-dark-100 rounded overflow-hidden flex-shrink-0">
                           <img
-                            src={manga.coverImage}
+                            src={fixR2ImageUrl(manga.coverImage)}
                             alt={manga.title}
                             className="w-full h-full object-cover"
                           />

@@ -28,14 +28,14 @@ export default function Navigation() {
   return (
     <nav className="nav-glass shadow-soft sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-12">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 sm:space-x-3 group">
             <div className="relative">
-              <img src="/medusa.ico" alt="Meduhentai" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg group-hover:scale-110 transition-transform duration-200" />
+              <img src="/medusa.ico" alt="Meduhentai" className="h-6 w-6 sm:h-8 sm:w-8 rounded-lg group-hover:scale-110 transition-transform duration-200" />
               <div className="absolute inset-0 bg-primary-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
             </div>
-            <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
+            <span className="text-base sm:text-xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
               Meduhentai
             </span>
           </Link>
@@ -52,7 +52,7 @@ export default function Navigation() {
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               />
-              <Search className="search-icon h-5 w-5" />
+              <Search className="search-icon h-4 w-4" />
             </div>
             
             {/* Search Suggestions */}
@@ -184,10 +184,10 @@ export default function Navigation() {
               className="md:hidden p-2 rounded-lg hover:bg-white/20 transition-colors duration-200"
             >
               {isMenuOpen ? (
-                <X className="h-5 w-5 text-black" />
-              ) : (
-                <Menu className="h-5 w-5 text-black" />
-              )}
+                                        <X className="h-4 w-4 text-black" />
+                      ) : (
+                        <Menu className="h-4 w-4 text-black" />
+                      )}
             </button>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function Navigation() {
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 />
-                <Search className="search-icon h-5 w-5" />
+                <Search className="search-icon h-4 w-4" />
               </div>
               
               {/* Mobile Search Suggestions */}
@@ -272,7 +272,7 @@ export default function Navigation() {
               {session ? (
                 <>
                   <div className="flex items-center space-x-3 text-dark-900 bg-white/95 p-3 rounded-lg">
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-dark-200">
+                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-dark-200">
                       <img 
                         src={session.user.avatar || '/medusa.ico'} 
                         alt="Avatar" 
@@ -291,7 +291,7 @@ export default function Navigation() {
                       className="flex items-center space-x-3 text-dark-900 bg-white/95 hover:bg-white p-3 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <User className="h-5 w-5 text-primary-500" />
+                      <User className="h-4 w-4 text-primary-500" />
                       <span>Hồ sơ</span>
                     </Link>
                     
@@ -300,7 +300,7 @@ export default function Navigation() {
                       className="flex items-center space-x-3 text-dark-900 bg-white/95 hover:bg-white p-3 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <BookOpen className="h-5 w-5 text-primary-500" />
+                      <BookOpen className="h-4 w-4 text-primary-500" />
                       <span>Duyệt manga</span>
                     </Link>
                     
@@ -309,7 +309,7 @@ export default function Navigation() {
                       className="flex items-center space-x-3 text-dark-900 bg-white/95 hover:bg-white p-3 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <Heart className="h-5 w-5 text-accent-500" />
+                      <Heart className="h-4 w-4 text-accent-500" />
                       <span>Yêu thích</span>
                     </Link>
                     
@@ -319,7 +319,7 @@ export default function Navigation() {
                         className="flex items-center space-x-3 text-dark-900 bg-white/95 hover:bg-white p-3 rounded-lg transition-colors duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
-                        <Settings className="h-5 w-5 text-accent-500" />
+                        <Settings className="h-4 w-4 text-accent-500" />
                         <span>Quản trị</span>
                       </Link>
                     )}
@@ -333,7 +333,7 @@ export default function Navigation() {
                       }}
                       className="flex items-center space-x-3 text-red-600 bg-white/95 hover:bg-white p-3 rounded-lg transition-colors duration-200 w-full"
                     >
-                      <LogOut className="h-5 w-5" />
+                      <LogOut className="h-4 w-4" />
                       <span>Đăng xuất</span>
                     </button>
                   </div>

@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Navigation from '@/components/Navigation';
-import { ChevronLeft, ChevronRight, MessageCircle, User, Search, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessageCircle, User, Search, Clock, Eye, Star } from 'lucide-react';
 import Link from 'next/link';
+import { fixR2ImageUrl } from '@/lib/utils';
 
 interface Manga {
   _id: string;
@@ -154,14 +155,14 @@ export default function HomePage() {
       
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Popular New Titles Section */}
-        <section className="mb-16 relative overflow-hidden rounded-2xl">
+        <section className="mb-8 relative overflow-hidden rounded-2xl">
           {/* Background Image - Covers entire section */}
           {currentPopularManga && (
             <div 
               key={currentPopularManga._id || currentPopularIndex}
               className="absolute inset-0 rounded-2xl overflow-hidden animate-slide-bg-left"
               style={{
-                backgroundImage: `url(${currentPopularManga.coverImage})`,
+                backgroundImage: `url(${fixR2ImageUrl(currentPopularManga.coverImage)})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 filter: 'brightness(0.3)',
@@ -174,22 +175,28 @@ export default function HomePage() {
             {currentPopularManga ? (
               <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
                 {/* Left Side - Cover Image */}
-                <div className="w-full lg:w-96 flex-shrink-0 flex justify-center lg:justify-start">
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-64 lg:w-96">
+                <div className="w-full lg:w-64 flex-shrink-0 flex justify-center lg:justify-start lg:absolute lg:bottom-0">
+                  {/* Tiêu điểm Label and Bar */}
+                  <div className="absolute -top-16 -left-36 right-0 z-20 text-center">
+                    <h2 className="text-white text-2xl font-bold mb-3 drop-shadow-lg">TIÊU ĐIỂM:</h2>
+                    <div className="w-24 h-1.5 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full"></div>
+                  </div>
+                  
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-48 lg:w-64">
                     <img 
                       key={currentPopularManga._id || currentPopularIndex}
-                      src={currentPopularManga.coverImage} 
+                      src={fixR2ImageUrl(currentPopularManga.coverImage)} 
                       alt={currentPopularManga.title}
-                      className="w-full h-64 lg:h-96 object-cover transition-all duration-700 ease-in-out transform hover:scale-105 animate-slide-in-left"
+                      className="w-full h-64 lg:h-80 object-cover transition-all duration-700 ease-in-out transform hover:scale-105 animate-slide-in-left"
                     />
                   </div>
                 </div>
 
                 {/* Right Side - Manga Details (Text Only) */}
-                <div className="flex-1 p-4 lg:p-8 flex flex-col">
+                <div className="flex-1 p-4 lg:p-8 flex flex-col lg:ml-64 lg:pt-16">
                   <h1 
                     key={`title-${currentPopularManga._id || currentPopularIndex}`}
-                    className="text-xl sm:text-2xl font-bold text-white mb-4 leading-tight drop-shadow-lg transition-all duration-500 ease-in-out animate-slide-in-right text-center lg:text-left"
+                    className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white mb-3 leading-tight drop-shadow-lg transition-all duration-500 ease-in-out animate-slide-in-right text-center lg:text-left"
                   >
                     {currentPopularManga.title}
                   </h1>
@@ -197,7 +204,7 @@ export default function HomePage() {
                   {/* Tags */}
                   <div 
                     key={`tags-${currentPopularManga._id || currentPopularIndex}`}
-                    className="flex flex-wrap gap-2 mb-6 transition-all duration-500 ease-in-out animate-slide-in-up justify-center lg:justify-start"
+                    className="flex flex-wrap gap-2 mb-4 transition-all duration-500 ease-in-out animate-slide-in-up justify-center lg:justify-start"
                   >
                     {currentPopularManga.genres && currentPopularManga.genres.slice(0, 6).map((genre, index) => (
                       <span key={index} className="px-2 sm:px-3 py-1 bg-orange-500 text-white text-xs sm:text-sm font-medium rounded-full shadow-sm transition-all duration-300 hover:scale-110 animate-bounce-in" style={{animationDelay: `${index * 0.1}s`}}>
@@ -209,7 +216,7 @@ export default function HomePage() {
                   {/* Description */}
                   <p 
                     key={`desc-${currentPopularManga._id || currentPopularIndex}`}
-                    className="text-white/90 leading-relaxed mb-6 drop-shadow-md transition-all duration-500 ease-in-out animate-slide-in-left text-sm sm:text-base text-center lg:text-left"
+                    className="text-white/90 leading-relaxed mb-4 drop-shadow-md transition-all duration-500 ease-in-out animate-slide-in-left text-sm text-center lg:text-left"
                   >
                     {currentPopularManga.description}
                   </p>
@@ -217,13 +224,26 @@ export default function HomePage() {
                   {/* Author */}
                   <p 
                     key={`author-${currentPopularManga._id || currentPopularIndex}`}
-                    className="text-white/70 text-xs sm:text-sm drop-shadow-md transition-all duration-500 ease-in-out animate-slide-in-down text-center lg:text-left"
+                    className="text-white/70 text-xs drop-shadow-md transition-all duration-500 ease-in-out animate-slide-in-down text-center lg:text-left"
                   >
                     {currentPopularManga.author}
                   </p>
                   
+                  {/* Manga Description and Read Button */}
+                  <div className="mb-4">
+                    <p className="text-white/80 text-sm mb-3 line-clamp-2 leading-relaxed drop-shadow-md">
+                      {currentPopularManga.description}
+                    </p>
+                    <Link 
+                      href={`/manga/${currentPopularManga._id}`}
+                      className="inline-flex items-center px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg border border-purple-500 backdrop-blur-sm transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                    >
+                      Đọc ngay
+                    </Link>
+                  </div>
+                  
                   {/* Navigation */}
-                  <div className="flex items-center justify-between mt-auto pt-8 lg:pt-16">
+                  <div className="flex items-center justify-between mt-auto pt-4 lg:pt-8">
                     <div className="text-xs sm:text-sm text-white/80 font-medium drop-shadow-md">
                       NO. {currentPopularIndex + 1}
                     </div>
@@ -263,35 +283,43 @@ export default function HomePage() {
             </a>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {(latestManga && latestManga.length > 0 ? latestManga.slice(0, 9) : [sampleManga, sampleManga, sampleManga]).map((manga) => (
+          <div className="manga-grid">
+            {(latestManga && latestManga.length > 0 ? latestManga.slice(0, 12) : [sampleManga, sampleManga, sampleManga, sampleManga, sampleManga]).map((manga) => (
               <Link key={manga._id} href={`/manga/${manga._id}`} className="group block">
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1 cursor-pointer">
                   <div className="relative">
                     <img 
-                      src={manga.coverImage} 
+                      src={fixR2ImageUrl(manga.coverImage)} 
                       alt={manga.title}
-                      className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-200"
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
                     />
                   </div>
                   
-                  <div className="p-3">
-                    <h3 className="font-medium text-sm text-gray-900 mb-2 line-clamp-2 leading-tight">
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg text-gray-900 mb-3 line-clamp-2 leading-tight group-hover:text-purple-600 transition-colors duration-200">
                       {manga.title}
                     </h3>
                     
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-xs text-green-600">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span>Vol. 1 Ch. {(manga.chaptersCount || 1)}</span>
-                        <MessageCircle className="h-3 w-3" />
-                      </div>
-                      
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <User className="h-3 w-3" />
-                        <span>Không có nhóm</span>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <User className="h-4 w-4" />
+                        <span className="font-medium">{manga.author || 'Không có nhóm'}</span>
                         <span>•</span>
-                        <span>4 phút trước</span>
+                        <span className="text-purple-600 font-medium">
+                          {(() => {
+                            // Use the index to create realistic time progression since manga are sorted by creation date
+                            const index = latestManga.findIndex(m => m._id === manga._id);
+                            if (index === -1) return 'Vừa cập nhật';
+                            
+                            const now = new Date();
+                            const hoursAgo = index * 2; // Each manga is roughly 2 hours apart
+                            
+                            if (hoursAgo < 1) return 'Vừa cập nhật';
+                            if (hoursAgo < 24) return `${hoursAgo} giờ trước`;
+                            const daysAgo = Math.floor(hoursAgo / 24);
+                            return `${daysAgo} ngày trước`;
+                          })()}
+                        </span>
                       </div>
                     </div>
                   </div>

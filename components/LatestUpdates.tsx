@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Clock, Eye, Star, BookOpen } from 'lucide-react';
+import { fixR2ImageUrl } from '@/lib/utils';
 
 interface LatestUpdate {
   _id: string;
@@ -61,10 +62,10 @@ export default function LatestUpdates() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="manga-grid">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="animate-pulse">
-            <div className="bg-dark-200 rounded-xl h-32 mb-3"></div>
+            <div className="bg-dark-200 rounded-xl h-48 mb-3"></div>
             <div className="bg-dark-200 rounded-lg h-4 mb-2"></div>
             <div className="bg-dark-200 rounded-lg h-3 w-2/3"></div>
           </div>
@@ -86,15 +87,15 @@ export default function LatestUpdates() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="manga-grid">
       {latestUpdates.map((manga) => (
         <div key={manga._id} className="manga-card manga-card-hover group">
           <Link href={`/manga/${manga._id}`} className="block">
-            <div className="manga-cover h-32">
+            <div className="manga-cover h-48 w-full">
               <img
-                src={manga.coverImage}
+                src={fixR2ImageUrl(manga.coverImage)}
                 alt={manga.title}
-                className="manga-cover-hover"
+                className="w-full h-full object-cover"
                 loading="lazy"
               />
               <div className="manga-overlay" />

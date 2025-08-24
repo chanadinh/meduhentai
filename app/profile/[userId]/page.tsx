@@ -6,9 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   User, 
-  Mail, 
   Calendar, 
-  Settings, 
   Camera, 
   Trash2,
   Save,
@@ -16,7 +14,9 @@ import {
   Upload
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
+import EditMangaModal from '@/components/EditMangaModal';
 import toast from 'react-hot-toast';
+import { fixR2ImageUrl } from '@/lib/utils';
 
 interface UserProfile {
   username: string;
@@ -45,10 +45,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    theme: 'auto',
-    language: 'vi'
+    username: ''
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
@@ -84,10 +81,7 @@ export default function ProfilePage() {
       const data = await response.json();
       setProfile(data.profile);
       setFormData({
-        username: data.profile.username,
-        email: data.profile.email,
-        theme: data.profile.preferences?.theme || 'auto',
-        language: data.profile.preferences?.language || 'vi'
+        username: data.profile.username
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -110,9 +104,14 @@ export default function ProfilePage() {
   };
 
   const handleAvatarUpload = async () => {
-    if (!avatarFile) return;
+    console.log('handleAvatarUpload called'); // Debug log
+    if (!avatarFile) {
+      console.log('No avatar file selected'); // Debug log
+      return;
+    }
 
     try {
+      console.log('Uploading avatar file:', avatarFile.name); // Debug log
       const formData = new FormData();
       formData.append('avatar', avatarFile);
 
@@ -126,6 +125,7 @@ export default function ProfilePage() {
       }
 
       const data = await response.json();
+      console.log('Upload successful:', data); // Debug log
       setProfile(prev => prev ? { ...prev, avatar: data.avatar } : null);
       setAvatarFile(null);
       setAvatarPreview('');
@@ -137,7 +137,9 @@ export default function ProfilePage() {
   };
 
   const handleAvatarRemove = async () => {
+    console.log('handleAvatarRemove called'); // Debug log
     try {
+      console.log('Sending DELETE request to /api/profile/avatar'); // Debug log
       const response = await fetch('/api/profile/avatar', {
         method: 'DELETE',
       });
@@ -146,6 +148,7 @@ export default function ProfilePage() {
         throw new Error('Failed to remove avatar');
       }
 
+      console.log('Delete successful'); // Debug log
       setProfile(prev => prev ? { ...prev, avatar: '/medusa.ico' } : null);
       toast.success('Avatar đã được xóa!');
     } catch (error) {
@@ -265,10 +268,14 @@ export default function ProfilePage() {
             </div>
             
             {avatarFile && (
-              <div className="mt-4 space-x-2">
+              <div className="mt-4 space-x-2 relative z-20">
                 <button
-                  onClick={handleAvatarUpload}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 text-sm"
+                  onClick={() => {
+                    console.log('Save Avatar button clicked'); // Debug log
+                    handleAvatarUpload();
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 text-sm cursor-pointer relative z-20"
+                  style={{ pointerEvents: 'auto' }}
                 >
                   <Save className="h-4 w-4 mr-2" />
                   Lưu Avatar
@@ -278,7 +285,8 @@ export default function ProfilePage() {
                     setAvatarFile(null);
                     setAvatarPreview('');
                   }}
-                  className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200 text-sm"
+                  className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200 text-sm cursor-pointer relative z-20"
+                  style={{ pointerEvents: 'auto' }}
                 >
                   Hủy
                 </button>
@@ -286,8 +294,12 @@ export default function ProfilePage() {
             )}
             
             <button
-              onClick={handleAvatarRemove}
-              className="mt-2 text-white/80 hover:text-white text-sm underline"
+              onClick={() => {
+                console.log('Remove Avatar button clicked'); // Debug log
+                handleAvatarRemove();
+              }}
+              className="mt-2 text-white/80 hover:text-white text-sm underline cursor-pointer relative z-20"
+              style={{ pointerEvents: 'auto' }}
             >
               Xóa avatar
             </button>
@@ -338,24 +350,7 @@ export default function ProfilePage() {
                 </div>
               </div>
               
-              <div className="flex items-center space-x-3">
-                <Mail className="h-5 w-5 text-primary-600" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-dark-700 mb-1">
-                    Email
-                  </label>
-                  {editing ? (
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    />
-                  ) : (
-                    <p className="text-dark-900">{profile?.email || 'N/A'}</p>
-                  )}
-                </div>
-              </div>
+
               
               <div className="flex items-center space-x-3">
                 <User className="h-5 w-5 text-primary-600" />
@@ -409,10 +404,7 @@ export default function ProfilePage() {
                   onClick={() => {
                     setEditing(false);
                     setFormData({
-                      username: profile?.username || '',
-                      email: profile?.email || '',
-                      theme: profile?.preferences?.theme || 'auto',
-                      language: profile?.preferences?.language || 'vi'
+                      username: profile?.username || ''
                     });
                   }}
                   className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200"
@@ -423,44 +415,7 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Preferences */}
-          <div className="bg-white rounded-xl p-6 border border-dark-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-dark-900">Tùy chọn</h2>
-              <Settings className="h-6 w-6 text-primary-600" />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-dark-700 mb-2">
-                  Giao diện
-                </label>
-                <select
-                  value={formData.theme}
-                  onChange={(e) => setFormData(prev => ({ ...prev, theme: e.target.value }))}
-                  className="w-full px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  <option value="auto">Tự động</option>
-                  <option value="light">Sáng</option>
-                  <option value="dark">Tối</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-dark-700 mb-2">
-                  Ngôn ngữ
-                </label>
-                <select
-                  value={formData.language}
-                  onChange={(e) => setFormData(prev => ({ ...prev, language: e.target.value }))}
-                  className="w-full px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  <option value="vi">Tiếng Việt</option>
-                  <option value="en">English</option>
-                </select>
-              </div>
-            </div>
-          </div>
+
 
           {/* Statistics */}
           <div className="bg-white rounded-xl p-6 border border-dark-200">
@@ -514,6 +469,10 @@ function MyMangaList() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  
+  // Edit manga modal state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingMangaId, setEditingMangaId] = useState<string>('');
 
   useEffect(() => {
     fetchMyManga();
@@ -551,6 +510,15 @@ function MyMangaList() {
     }
   };
 
+  const handleEditManga = (mangaId: string) => {
+    setEditingMangaId(mangaId);
+    setEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    fetchMyManga(); // Refresh the manga list
+  };
+
   if (loading && page === 1) {
     return (
       <div className="text-center py-8">
@@ -564,10 +532,6 @@ function MyMangaList() {
     return (
       <div className="text-center py-8">
         <p className="text-dark-600 mb-4">Bạn chưa tải lên manga nào</p>
-        <Link href="/admin/upload" className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105">
-          <Upload className="h-4 w-4 mr-2" />
-          Tải lên Manga đầu tiên
-        </Link>
       </div>
     );
   }
@@ -579,7 +543,7 @@ function MyMangaList() {
           <div key={manga._id} className="bg-dark-50 rounded-lg p-4 border border-dark-200">
             <div className="flex items-center space-x-3">
               <img
-                src={manga.coverImage}
+                src={fixR2ImageUrl(manga.coverImage)}
                 alt={manga.title}
                 className="w-16 h-20 object-cover rounded-lg"
               />
@@ -597,12 +561,12 @@ function MyMangaList() {
               >
                 Xem
               </Link>
-              <Link
-                href={`/admin/manga/${manga._id}`}
+              <button
+                onClick={() => handleEditManga(manga._id)}
                 className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 text-sm flex-1 text-center"
               >
                 Chỉnh sửa
-              </Link>
+              </button>
             </div>
           </div>
         ))}
@@ -619,6 +583,14 @@ function MyMangaList() {
           </button>
         </div>
       )}
+      
+      {/* Edit Manga Modal */}
+      <EditMangaModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        mangaId={editingMangaId}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   );
 }

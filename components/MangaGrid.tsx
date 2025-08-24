@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Heart, Eye, Star, BookOpen } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
+import { fixR2ImageUrl } from '@/lib/utils';
 
 interface Manga {
   _id: string;
@@ -121,13 +122,13 @@ export default function MangaGrid({ endpoint, showPagination = true, limit = 20 
         {mangas.map((manga) => (
           <div key={manga._id} className="manga-card manga-card-hover group">
             <Link href={`/manga/${manga._id}`} className="block">
-              <div className="manga-cover h-64">
-                <img
-                  src={manga.coverImage}
-                  alt={manga.title}
-                  className="manga-cover-hover"
-                  loading="lazy"
-                />
+                          <div className="manga-cover h-48 w-full">
+              <img
+                src={fixR2ImageUrl(manga.coverImage)}
+                alt={manga.title}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
                 <div className="manga-overlay" />
                 
                 {/* Status Badge */}
