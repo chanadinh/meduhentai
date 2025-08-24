@@ -89,17 +89,17 @@ export default function HomePage() {
   };
 
   const nextPopular = () => {
-    if (popularManga && popularManga.length > 0) {
+    if (sortedPopularManga && sortedPopularManga.length > 0) {
       setCurrentPopularIndex((prev) => 
-        prev === popularManga.length - 1 ? 0 : prev + 1
+        prev === sortedPopularManga.length - 1 ? 0 : prev + 1
       );
     }
   };
 
   const prevPopular = () => {
-    if (popularManga && popularManga.length > 0) {
+    if (sortedPopularManga && sortedPopularManga.length > 0) {
       setCurrentPopularIndex((prev) => 
-        prev === 0 ? popularManga.length - 1 : prev - 1
+        prev === 0 ? sortedPopularManga.length - 1 : prev - 1
       );
     }
   };
@@ -147,24 +147,26 @@ export default function HomePage() {
     );
   }
 
-  const currentPopularManga = popularManga && popularManga.length > 0 ? popularManga[currentPopularIndex] : sampleManga;
+  // Sort manga by ranking (likes first, then views)
+  const sortedPopularManga = popularManga && popularManga.length > 0 
+    ? [...popularManga].sort((a, b) => {
+        // First sort by likes (descending)
+        if (a.likes !== b.likes) {
+          return (b.likes || 0) - (a.likes || 0);
+        }
+        // If likes are equal, sort by views (descending)
+        return (b.views || 0) - (a.views || 0);
+      })
+    : [];
+
+  const currentPopularManga = sortedPopularManga.length > 0 ? sortedPopularManga[currentPopularIndex] : sampleManga;
 
   // Calculate the actual ranking position based on likes and views
   const getRankingPosition = (manga: any) => {
-    if (!popularManga || popularManga.length === 0) return 1;
+    if (!sortedPopularManga || sortedPopularManga.length === 0) return 1;
     
-    // Sort manga by likes first, then by views
-    const sortedManga = [...popularManga].sort((a, b) => {
-      // First sort by likes (descending)
-      if (a.likes !== b.likes) {
-        return (b.likes || 0) - (a.likes || 0);
-      }
-      // If likes are equal, sort by views (descending)
-      return (b.views || 0) - (a.views || 0);
-    });
-    
-    // Find the position of the current manga
-    const position = sortedManga.findIndex(m => m._id === manga._id);
+    // Find the position of the current manga in the sorted array
+    const position = sortedPopularManga.findIndex(m => m._id === manga._id);
     return position + 1; // Add 1 because index is 0-based
   };
 
