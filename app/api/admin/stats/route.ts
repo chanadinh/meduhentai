@@ -7,6 +7,9 @@ import Chapter from '@/models/Chapter';
 import User from '@/models/User';
 import Comment from '@/models/Comment';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // GET - Fetch admin statistics
 export async function GET(request: NextRequest) {
   try {

@@ -5,6 +5,9 @@ import { connectToDatabase } from '@/lib/mongodb';
 import Comment from '@/models/Comment';
 import User from '@/models/User';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // GET - Fetch comments for a specific manga/chapter
 export async function GET(request: NextRequest) {
   try {

@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Notification from '@/models/Notification';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // GET - Fetch user notifications
 export async function GET(request: NextRequest) {
   try {

@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Notification from '@/models/Notification';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // POST - Create a new notification
 export async function POST(request: NextRequest) {
   try {

@@ -5,6 +5,9 @@ import { connectToDatabase } from '@/lib/mongodb';
 import Comment from '@/models/Comment';
 import mongoose from 'mongoose';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // POST - Add/remove like or dislike
 export async function POST(
   request: NextRequest,

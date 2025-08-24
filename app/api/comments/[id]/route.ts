@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Comment from '@/models/Comment';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // PUT - Update a comment
 export async function PUT(
   request: NextRequest,

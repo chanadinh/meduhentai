@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // POST - Add/remove manga from favorites
 export async function POST(request: NextRequest) {
   try {

@@ -6,6 +6,9 @@ import User from '@/models/User';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // POST - Upload avatar
 export async function POST(request: NextRequest) {
   try {
