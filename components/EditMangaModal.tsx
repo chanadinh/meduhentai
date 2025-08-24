@@ -174,7 +174,9 @@ export default function EditMangaModal({ isOpen, onClose, mangaId, onSuccess }: 
         });
 
         if (!imageResponse.ok) {
-          throw new Error('Không thể tải ảnh bìa');
+          const errorData = await imageResponse.json().catch(() => ({}));
+          const errorMessage = errorData.error || `Upload failed with status: ${imageResponse.status}`;
+          throw new Error(`Không thể tải ảnh bìa: ${errorMessage}`);
         }
 
         const imageData = await imageResponse.json();

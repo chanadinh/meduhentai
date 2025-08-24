@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { username, email } = await request.json();
+    const { username } = await request.json();
 
     await connectToDatabase();
 
@@ -78,17 +78,7 @@ export async function PUT(request: NextRequest) {
       user.username = username;
     }
 
-    if (email && email !== user.email) {
-      // Check if email is already taken
-      const existingUser = await User.findOne({ email, _id: { $ne: user._id } });
-      if (existingUser) {
-        return NextResponse.json(
-          { error: 'Email already taken' },
-          { status: 400 }
-        );
-      }
-      user.email = email;
-    }
+
 
 
 

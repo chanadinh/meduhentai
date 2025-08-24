@@ -2,12 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
+// Validate environment variables
+if (!process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || 
+    !process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || 
+    !process.env.CLOUDFLARE_R2_ENDPOINT || 
+    !process.env.CLOUDFLARE_R2_BUCKET_NAME) {
+  throw new Error('Missing R2 environment variables');
+}
+
 const s3Client = new S3Client({
   region: 'auto',
-  endpoint: process.env.CLOUDFLARE_R2_ENDPOINT!,
+  endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
   credentials: {
-    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
   },
 });
 
@@ -75,9 +83,27 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Upload error:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to upload files';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.message.includes('Missing R2 environment variables')) {
+        errorMessage = 'Server configuration error';
+        statusCode = 500;
+      } else if (error.message.includes('credentials')) {
+        errorMessage = 'Authentication failed';
+        statusCode = 500;
+      } else if (error.message.includes('bucket')) {
+        errorMessage = 'Storage bucket error';
+        statusCode = 500;
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to upload files' },
-      { status: 500 }
+      { error: errorMessage, details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: statusCode }
     );
   }
 }
