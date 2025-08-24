@@ -591,11 +591,59 @@ export default function ManageContent() {
 
       } catch (error) {
         console.error(`Error uploading page ${page.pageNumber} to R2:`, error);
-        throw new Error(`Không thể tải lên trang ${page.pageNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        
+        // If R2 upload fails, try server upload as fallback
+        if (error instanceof Error && error.message.includes('Failed to fetch')) {
+          toast.error(`R2 upload failed for page ${page.pageNumber}, trying server upload as fallback...`);
+          
+          try {
+            // Fallback to server upload for this specific page
+            const fallbackResult = await uploadSinglePageToServer(page);
+            uploadedPages.push(fallbackResult);
+            toast.success(`Đã tải lên trang ${page.pageNumber}/${pageFiles.length} (Server fallback)`);
+          } catch (fallbackError) {
+            throw new Error(`Không thể tải lên trang ${page.pageNumber} (cả R2 và Server đều thất bại): ${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}`);
+          }
+        } else {
+          throw new Error(`Không thể tải lên trang ${page.pageNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
       }
     }
 
     return uploadedPages;
+  };
+
+  // Fallback server upload for individual pages
+  const uploadSinglePageToServer = async (page: PageFile): Promise<any> => {
+    const imageFormData = new FormData();
+    imageFormData.append('images', page.file);
+    imageFormData.append('folder', 'chapters');
+
+    const imageResponse = await fetch('/api/upload', {
+      method: 'POST',
+      body: imageFormData,
+    });
+
+    if (!imageResponse.ok) {
+      const errorData = await imageResponse.json().catch(() => ({}));
+      const errorMessage = errorData.error || `Upload failed with status: ${imageResponse.status}`;
+      throw new Error(`Server upload failed: ${errorMessage}`);
+    }
+
+    const imageData = await imageResponse.json();
+    const result = imageData.uploads[0];
+
+    if (!result) {
+      throw new Error('Server upload response invalid');
+    }
+
+    return {
+      pageNumber: page.pageNumber,
+      imageUrl: result.url,
+      width: 800,
+      height: 1200,
+      uploadedVia: 'server-fallback',
+    };
   };
 
   // Server Upload Function (original method)
@@ -1401,6 +1449,16 @@ export default function ManageContent() {
                               Không giới hạn kích thước file. Tải lên trực tiếp lên R2 
                               không qua server.
                             </p>
+                            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                              <div className="flex items-center space-x-2 text-blue-700">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <span className="text-xs font-medium">ℹ️ CORS Setup Required:</span>
+                              </div>
+                              <p className="text-xs text-blue-600 mt-1">
+                                Nếu gặp lỗi CORS, hãy cấu hình CORS policy cho R2 bucket. 
+                                Hệ thống sẽ tự động fallback về server upload.
+                              </p>
+                            </div>
                           </div>
                         )}
                       </div>
