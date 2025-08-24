@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fixR2ImageUrl } from '@/lib/utils';
+import imageCompression from 'browser-image-compression';
 
 // Manga Form Interface
 interface MangaForm {
@@ -126,6 +127,17 @@ export default function ManageContent() {
   });
   const [editChapterLoading, setEditChapterLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  // Image compression options
+  const [compressionOptions, setCompressionOptions] = useState({
+    maxSizeMB: 2, // Compress to max 2MB
+    maxWidthOrHeight: 1920, // Max dimension
+    useWebWorker: true,
+    fileType: 'image/jpeg',
+    quality: 0.8, // 80% quality
+  });
+  
+  const [showCompressionSettings, setShowCompressionSettings] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'edit' || activeTab === 'chapters') {
@@ -383,38 +395,53 @@ export default function ManageContent() {
     setChapterForm(prev => ({ ...prev, mangaId }));
   };
 
-  const handlePageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
-    // Process files sequentially to ensure proper page numbering
-    const processFiles = async () => {
+    if (files.length === 0) return;
+
+    toast.success(`Đang nén ${files.length} ảnh...`);
+
+    try {
+      const compressedPages: PageFile[] = [];
+      
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        if (file.size > 10 * 1024 * 1024) { // 10MB limit per image
-          toast.error(`${file.name} quá lớn. Kích thước tối đa là 10MB.`);
-          continue;
-        }
-
-        const reader = new FileReader();
+        // Compress image
+        const compressedFile = await imageCompression(file, compressionOptions);
         
-        reader.onload = (event) => {
-          setPageFiles(prev => {
-            const newPage: PageFile = {
-              file,
-              preview: event.target?.result as string,
-              pageNumber: prev.length + 1,
-            };
-            
-            return [...prev, newPage];
-          });
+        const pageFile: PageFile = {
+          file: compressedFile,
+          preview: URL.createObjectURL(compressedFile),
+          pageNumber: pageFiles.length + i + 1,
         };
         
-        reader.readAsDataURL(file);
+        compressedPages.push(pageFile);
       }
-    };
-    
-    processFiles();
+
+      setPageFiles(prev => [...prev, ...compressedPages]);
+      
+      // Show compression results
+      const totalOriginalSize = files.reduce((sum, f) => sum + f.size, 0);
+      const totalCompressedSize = compressedPages.reduce((sum, p) => sum + p.file.size, 0);
+      const savings = ((totalOriginalSize - totalCompressedSize) / totalOriginalSize * 100).toFixed(1);
+      
+      toast.success(`Nén hoàn tất! Tiết kiệm ${savings}% dung lượng`);
+      
+    } catch (error) {
+      console.error('Compression error:', error);
+      toast.error('Lỗi khi nén ảnh. Sử dụng ảnh gốc.');
+      
+      // Fallback to original files
+      const fallbackPages: PageFile[] = files.map((file, index) => ({
+        file,
+        preview: URL.createObjectURL(file),
+        pageNumber: pageFiles.length + index + 1,
+      }));
+      
+      setPageFiles(prev => [...prev, ...fallbackPages]);
+    }
   };
 
   const removePage = (index: number) => {
@@ -1132,6 +1159,9 @@ export default function ManageContent() {
                           <span className="font-semibold">Click để tải</span> trang chương
                         </p>
                         <p className="text-xs text-dark-400">PNG, JPG hoặc WEBP (TỐI ĐA 25MB mỗi ảnh - Vercel limit)</p>
+                        <p className="text-xs text-dark-500 mt-1">
+                          Ảnh sẽ được nén tự động để giảm payload size
+                        </p>
                       </div>
                       <input
                         type="file"
@@ -1142,6 +1172,59 @@ export default function ManageContent() {
                       />
                     </label>
                     
+                    {/* Compression Settings */}
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 text-green-700">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm font-medium">⚡ Cài đặt nén ảnh:</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowCompressionSettings(!showCompressionSettings)}
+                          className="text-green-600 hover:text-green-800 text-sm"
+                        >
+                          {showCompressionSettings ? 'Ẩn' : 'Hiện'}
+                        </button>
+                      </div>
+                      
+                      {showCompressionSettings && (
+                        <div className="mt-3 space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs text-green-700 mb-1">Chất lượng:</label>
+                              <select
+                                value={compressionOptions.quality}
+                                onChange={(e) => setCompressionOptions(prev => ({ ...prev, quality: parseFloat(e.target.value) }))}
+                                className="w-full text-xs border border-green-200 rounded px-2 py-1"
+                              >
+                                <option value={0.9}>90% (Chất lượng cao)</option>
+                                <option value={0.8}>80% (Chất lượng tốt)</option>
+                                <option value={0.7}>70% (Chất lượng trung bình)</option>
+                                <option value={0.6}>60% (Chất lượng thấp)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs text-green-700 mb-1">Kích thước tối đa:</label>
+                              <select
+                                value={compressionOptions.maxSizeMB}
+                                onChange={(e) => setCompressionOptions(prev => ({ ...prev, maxSizeMB: parseFloat(e.target.value) }))}
+                                className="w-full text-xs border border-green-200 rounded px-2 py-1"
+                              >
+                                <option value={1}>1MB</option>
+                                <option value={2}>2MB</option>
+                                <option value={3}>3MB</option>
+                                <option value={5}>5MB</option>
+                              </select>
+                            </div>
+                          </div>
+                          <p className="text-xs text-green-600">
+                            Nén ảnh giúp giảm payload size và tránh lỗi Vercel 413
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
                     {/* File Size Warning */}
                     {pageFiles.length > 0 && (
                       <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
