@@ -17,6 +17,7 @@ interface Manga {
   author: string;
   status: string;
   genres: string[];
+  likes?: number;
 }
 
 export default function HomePage() {
@@ -34,7 +35,8 @@ export default function HomePage() {
     chaptersCount: 15,
     author: 'Tác giả Mẫu',
     status: 'ongoing',
-    genres: ['SUGGESTIVE', 'ACTION', 'ADVENTURE', 'COMEDY', 'FANTASY', 'ISEKAI']
+    genres: ['SUGGESTIVE', 'ACTION', 'ADVENTURE', 'COMEDY', 'FANTASY', 'ISEKAI'],
+    likes: 567
   };
   const [loading, setLoading] = useState(true);
   const [currentPopularIndex, setCurrentPopularIndex] = useState(0);
@@ -147,6 +149,25 @@ export default function HomePage() {
 
   const currentPopularManga = popularManga && popularManga.length > 0 ? popularManga[currentPopularIndex] : sampleManga;
 
+  // Calculate the actual ranking position based on likes and views
+  const getRankingPosition = (manga: any) => {
+    if (!popularManga || popularManga.length === 0) return 1;
+    
+    // Sort manga by likes first, then by views
+    const sortedManga = [...popularManga].sort((a, b) => {
+      // First sort by likes (descending)
+      if (a.likes !== b.likes) {
+        return (b.likes || 0) - (a.likes || 0);
+      }
+      // If likes are equal, sort by views (descending)
+      return (b.views || 0) - (a.views || 0);
+    });
+    
+    // Find the position of the current manga
+    const position = sortedManga.findIndex(m => m._id === manga._id);
+    return position + 1; // Add 1 because index is 0-based
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
@@ -240,7 +261,7 @@ export default function HomePage() {
                   {/* Navigation */}
                   <div className="flex items-center justify-between mt-auto pt-3 lg:pt-6">
                     <div className="text-xs sm:text-sm text-white/80 font-medium drop-shadow-md">
-                      NO. {currentPopularIndex + 1}
+                      NO. {getRankingPosition(currentPopularManga)}
                     </div>
                     <div className="flex items-center gap-2 sm:gap-4">
                       <button
