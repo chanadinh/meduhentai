@@ -1,26 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { uploadImage } from '@/lib/r2';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
-
-// Validate environment variables
-if (!process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || 
-    !process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || 
-    !process.env.CLOUDFLARE_R2_ENDPOINT || 
-    !process.env.CLOUDFLARE_R2_BUCKET_NAME) {
-  throw new Error('Missing R2 environment variables');
-}
-
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
-  credentials: {
-    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
-  },
-});
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,23 +39,26 @@ export async function POST(request: NextRequest) {
       // Convert file to buffer
       const buffer = await file.arrayBuffer();
 
-      // Upload to R2
-      const command = new PutObjectCommand({
-        Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
-        Key: filename,
-        Body: Buffer.from(buffer),
-        ContentType: file.type,
+      // Upload to R2 using the existing utility function
+      console.log('Attempting to upload file:', {
+        filename,
+        size: file.size,
+        type: file.type
       });
 
-      await s3Client.send(command);
+      const uploadResult = await uploadImage(filename, Buffer.from(buffer), file.type);
 
-      // Generate public URL using the configured public domain
-      const publicUrl = `https://${process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN}/${filename}`;
+      if (!uploadResult.success) {
+        console.error('R2 upload error for file:', filename, uploadResult.error);
+        throw new Error(`R2 upload failed for ${filename}: ${uploadResult.error}`);
+      }
+
+      console.log('File uploaded successfully:', filename);
 
       uploads.push({
         originalName: file.name,
         filename: filename,
-        url: publicUrl,
+        url: uploadResult.url,
         size: file.size,
         type: file.type,
       });
@@ -101,11 +86,24 @@ export async function POST(request: NextRequest) {
       } else if (error.message.includes('bucket')) {
         errorMessage = 'Storage bucket error';
         statusCode = 500;
+      } else if (error.message.includes('R2 upload failed')) {
+        errorMessage = 'File upload to storage failed';
+        statusCode = 500;
+      } else if (error.message.includes('AccessDenied')) {
+        errorMessage = 'Access denied to storage bucket';
+        statusCode = 500;
+      } else if (error.message.includes('NoSuchBucket')) {
+        errorMessage = 'Storage bucket not found';
+        statusCode = 500;
       }
     }
     
     return NextResponse.json(
-      { error: errorMessage, details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: errorMessage, 
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      },
       { status: statusCode }
     );
   }
