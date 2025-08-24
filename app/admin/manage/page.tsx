@@ -560,7 +560,7 @@ export default function ManageContent() {
           throw new Error(errorData.error || 'Failed to get upload URL');
         }
 
-        const { presignedUrl, key } = await presignedResponse.json();
+        const { presignedUrl, key, bucket } = await presignedResponse.json();
 
         // Upload file directly to R2 using presigned URL
         const uploadResponse = await fetch(presignedUrl, {
@@ -575,8 +575,12 @@ export default function ManageContent() {
           throw new Error(`Upload failed: ${uploadResponse.statusText}`);
         }
 
-        // Construct the public URL
-        const publicUrl = `https://${process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN || 'your-r2-domain.com'}/${key}`;
+        // Construct the public URL using the actual R2 endpoint
+        // Try to get the domain from environment variables or use the bucket info
+        const r2Domain = process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN || 
+                         process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN || 
+                         `${bucket}.86a9e43542ceb9d9b531800759299f28.r2.cloudflarestorage.com`;
+        const publicUrl = `https://${r2Domain}/${key}`;
         
         uploadedPages.push({
           pageNumber: page.pageNumber,

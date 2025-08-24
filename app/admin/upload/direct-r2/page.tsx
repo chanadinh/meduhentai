@@ -93,8 +93,8 @@ export default function DirectR2UploadPage() {
       throw new Error(`Upload failed: ${uploadResponse.statusText}`);
     }
 
-    // Step 3: Construct the public URL
-    const publicUrl = `https://${process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN || 'your-r2-domain.com'}/${key}`;
+    // Step 3: Construct the public URL using the actual R2 endpoint
+    const publicUrl = `https://${process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN || process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN || 'project-image.86a9e43542ceb9d9b531800759299f28.r2.cloudflarestorage.com'}/${key}`;
 
     return {
       key,
