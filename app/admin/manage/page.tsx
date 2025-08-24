@@ -130,7 +130,7 @@ export default function ManageContent() {
 
   // Image compression options
   const [compressionOptions, setCompressionOptions] = useState({
-    maxSizeMB: 2, // Compress to max 2MB
+    maxSizeMB: 10, // Compress to max 10MB
     maxWidthOrHeight: 1920, // Max dimension
     useWebWorker: true,
     fileType: 'image/jpeg',
@@ -1158,7 +1158,7 @@ export default function ManageContent() {
                         <p className="mb-2 text-sm text-dark-500">
                           <span className="font-semibold">Click để tải</span> trang chương
                         </p>
-                        <p className="text-xs text-dark-400">PNG, JPG hoặc WEBP (TỐI ĐA 25MB mỗi ảnh - Vercel limit)</p>
+                        <p className="text-xs text-dark-400">PNG, JPG hoặc WEBP (TỐI ĐA 250MB mỗi ảnh - Vercel limit)</p>
                         <p className="text-xs text-dark-500 mt-1">
                           Ảnh sẽ được nén tự động để giảm payload size
                         </p>
@@ -1211,10 +1211,11 @@ export default function ManageContent() {
                                 onChange={(e) => setCompressionOptions(prev => ({ ...prev, maxSizeMB: parseFloat(e.target.value) }))}
                                 className="w-full text-xs border border-green-200 rounded px-2 py-1"
                               >
-                                <option value={1}>1MB</option>
-                                <option value={2}>2MB</option>
-                                <option value={3}>3MB</option>
                                 <option value={5}>5MB</option>
+                                <option value={10}>10MB</option>
+                                <option value={20}>20MB</option>
+                                <option value={50}>50MB</option>
+                                <option value={100}>100MB</option>
                               </select>
                             </div>
                           </div>
@@ -1246,7 +1247,7 @@ export default function ManageContent() {
                           </div>
                           <p className="text-xs text-yellow-600 mt-1">
                             Vercel sẽ thấy payload lớn hơn ~3-4x do encoding và overhead. 
-                            Giữ tổng size dưới 30MB để tránh lỗi.
+                            Giữ tổng size dưới 300MB để tránh lỗi.
                           </p>
                         </div>
                       </div>

@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check file sizes (100MB server limit - Vercel constraint)
-    const maxSize = 100 * 1024 * 1024; // 100MB in bytes (Vercel server limit)
+    const maxSize = 1024 * 1024 * 1024; // 1GB in bytes (Vercel server limit)
     for (const file of files) {
       if (file.size > maxSize) {
         return NextResponse.json(
