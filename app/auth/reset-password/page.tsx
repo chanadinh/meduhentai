@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Loader2, Lock, CheckCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Eye, EyeOff, Loader2, Lock, CheckCircle, XCircle } from 'lucide-react';
 
 function ResetPasswordForm() {
   const [formData, setFormData] = useState({
@@ -18,9 +17,24 @@ function ResetPasswordForm() {
   const [token, setToken] = useState('');
   const [tokenValid, setTokenValid] = useState(false);
   const [checkingToken, setCheckingToken] = useState(true);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Auto-hide notifications after 5 seconds
+  useEffect(() => {
+    if (notification.type) {
+      const timer = setTimeout(() => {
+        setNotification({ type: null, message: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const showNotification = useCallback((type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+  }, []);
 
   useEffect(() => {
     const tokenParam = searchParams.get('token');
@@ -59,23 +73,26 @@ function ResetPasswordForm() {
     e.preventDefault();
     
     if (!formData.password || !formData.confirmPassword) {
-      toast.error('Please fill in all fields');
+      showNotification('error', 'Vui lòng điền đầy đủ các trường');
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+      showNotification('error', 'Mật khẩu không khớp');
       return;
     }
 
     if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters long');
+      showNotification('error', 'Mật khẩu phải có ít nhất 6 ký tự');
       return;
     }
 
     setLoading(true);
+    setNotification({ type: null, message: '' }); // Clear any existing notifications
 
     try {
+      console.log('Submitting password reset with token:', token);
+      
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: {
@@ -88,16 +105,17 @@ function ResetPasswordForm() {
       });
 
       const data = await response.json();
+      console.log('Reset password response:', response.status, data);
 
       if (response.ok) {
         setSuccess(true);
-        toast.success('Password reset successfully!');
+        showNotification('success', 'Đặt lại mật khẩu thành công!');
       } else {
-        toast.error(data.message || 'An error occurred');
+        showNotification('error', data.message || 'Đã xảy ra lỗi');
       }
     } catch (error) {
       console.error('Reset password error:', error);
-      toast.error('An error occurred. Please try again.');
+      showNotification('error', 'Đã xảy ra lỗi. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -110,12 +128,36 @@ function ResetPasswordForm() {
     });
   };
 
+  // Notification component
+  const NotificationBanner = () => {
+    if (!notification.type) return null;
+
+    const bgColor = notification.type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+    const textColor = notification.type === 'success' ? 'text-green-800' : 'text-red-800';
+    const icon = notification.type === 'success' ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />;
+
+    return (
+      <div className={`fixed top-4 right-4 z-50 p-4 border rounded-lg shadow-lg ${bgColor} ${textColor} max-w-sm`}>
+        <div className="flex items-center space-x-2">
+          {icon}
+          <span className="font-medium">{notification.message}</span>
+          <button
+            onClick={() => setNotification({ type: null, message: '' })}
+            className="ml-auto text-gray-400 hover:text-gray-600"
+          >
+            <XCircle className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   if (checkingToken) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600">Validating reset token...</p>
+          <p className="text-gray-600">Đang xác thực token...</p>
         </div>
       </div>
     );
@@ -141,19 +183,19 @@ function ResetPasswordForm() {
                 <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100">
                   <Lock className="h-8 w-8 text-red-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">Invalid Reset Link</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Liên kết đặt lại không hợp lệ</h2>
                 <p className="text-gray-600">
-                  This password reset link is invalid or has expired.
+                  Liên kết đặt lại mật khẩu này không hợp lệ hoặc đã hết hạn.
                 </p>
                 <p className="text-sm text-gray-500">
-                  Please request a new password reset link.
+                  Vui lòng yêu cầu liên kết đặt lại mật khẩu mới.
                 </p>
                 <div className="pt-4">
                   <Link
                     href="/auth/forgot-password"
                     className="w-full inline-flex justify-center items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-2xl font-semibold text-base transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
                   >
-                    Request New Reset Link
+                    Yêu cầu liên kết mới
                   </Link>
                 </div>
               </div>
@@ -184,16 +226,16 @@ function ResetPasswordForm() {
                 <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
                   <CheckCircle className="h-8 w-8 text-green-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">Password Reset Successfully!</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Đặt lại mật khẩu thành công!</h2>
                 <p className="text-gray-600">
-                  Your password has been updated. You can now sign in with your new password.
+                  Mật khẩu của bạn đã được cập nhật. Bây giờ bạn có thể đăng nhập bằng mật khẩu mới.
                 </p>
                 <div className="pt-4">
                   <Link
                     href="/auth/signin"
                     className="w-full inline-flex justify-center items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-2xl font-semibold text-base transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
                   >
-                    Sign In
+                    Đăng nhập
                   </Link>
                 </div>
               </div>
@@ -206,6 +248,7 @@ function ResetPasswordForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <NotificationBanner />
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <Link href="/" className="flex items-center justify-center space-x-3 mb-8 group">
@@ -308,7 +351,7 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">Đang tải...</p>
         </div>
       </div>
     }>
