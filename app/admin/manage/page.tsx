@@ -450,6 +450,15 @@ export default function ManageContent() {
     // Ensure page numbers are sequential before submitting
     normalizePageNumbers();
 
+    // Check file sizes before uploading
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    const oversizedFiles = pageFiles.filter(page => page.file.size > maxSize);
+    if (oversizedFiles.length > 0) {
+      const fileNames = oversizedFiles.map(page => page.file.name).join(', ');
+      toast.error(`File quá lớn: ${fileNames}. Kích thước tối đa là 50MB mỗi file.`);
+      return;
+    }
+
     setChapterLoading(true);
 
     try {
@@ -466,7 +475,12 @@ export default function ManageContent() {
       });
 
       if (!imageResponse.ok) {
-        throw new Error('Không thể tải ảnh trang');
+        if (imageResponse.status === 413) {
+          throw new Error('File quá lớn. Kích thước tối đa là 50MB mỗi file.');
+        }
+        const errorData = await imageResponse.json().catch(() => ({}));
+        const errorMessage = errorData.error || `Upload failed with status: ${imageResponse.status}`;
+        throw new Error(`Không thể tải ảnh trang: ${errorMessage}`);
       }
 
       const imageData = await imageResponse.json();
@@ -1109,7 +1123,7 @@ export default function ManageContent() {
                         <p className="mb-2 text-sm text-dark-500">
                           <span className="font-semibold">Click để tải</span> trang chương
                         </p>
-                        <p className="text-xs text-dark-400">PNG, JPG hoặc WEBP (TỐI ĐA. 10MB mỗi ảnh)</p>
+                        <p className="text-xs text-dark-400">PNG, JPG hoặc WEBP (TỐI ĐA 50MB mỗi ảnh)</p>
                       </div>
                       <input
                         type="file"
@@ -1119,6 +1133,21 @@ export default function ManageContent() {
                         onChange={handlePageUpload}
                       />
                     </label>
+                    
+                    {/* File Size Warning */}
+                    {pageFiles.length > 0 && (
+                      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center space-x-2 text-blue-700">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-sm font-medium">Thông tin file:</span>
+                        </div>
+                        <div className="mt-2 text-sm text-blue-600">
+                          <p>• Tổng số file: {pageFiles.length}</p>
+                          <p>• Tổng kích thước: {(pageFiles.reduce((total, page) => total + page.file.size, 0) / (1024 * 1024)).toFixed(2)} MB</p>
+                          <p>• File lớn nhất: {(Math.max(...pageFiles.map(page => page.file.size)) / (1024 * 1024)).toFixed(2)} MB</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Page Grid - Enhanced Horizontal Layout */}
