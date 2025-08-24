@@ -4,6 +4,7 @@ import mongoose, { Document, Model } from 'mongoose';
 export interface IChapter extends Document {
   title: string;
   chapterNumber: number;
+  volume: number;
   manga: mongoose.Types.ObjectId;
   pages: Array<{
     pageNumber: number;
@@ -28,6 +29,10 @@ const ChapterSchema = new mongoose.Schema<IChapter>({
   chapterNumber: {
     type: Number,
     required: true
+  },
+  volume: {
+    type: Number,
+    default: 1
   },
   manga: {
     type: mongoose.Schema.Types.ObjectId,
