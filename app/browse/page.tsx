@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Filter, Grid, List } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import MangaGrid from '@/components/MangaGrid';
 import toast from 'react-hot-toast';
 
-export default function BrowsePage() {
+function BrowsePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -166,5 +166,13 @@ export default function BrowsePage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function BrowsePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BrowsePageContent />
+    </Suspense>
   );
 }
