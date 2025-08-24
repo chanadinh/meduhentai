@@ -451,11 +451,11 @@ export default function ManageContent() {
     normalizePageNumbers();
 
     // Check file sizes before uploading
-    const maxSize = 50 * 1024 * 1024; // 50MB
+    const maxSize = 100 * 1024 * 1024; // 100MB
     const oversizedFiles = pageFiles.filter(page => page.file.size > maxSize);
     if (oversizedFiles.length > 0) {
       const fileNames = oversizedFiles.map(page => page.file.name).join(', ');
-      toast.error(`File quá lớn: ${fileNames}. Kích thước tối đa là 50MB mỗi file.`);
+      toast.error(`File quá lớn: ${fileNames}. Kích thước tối đa là 100MB mỗi file.`);
       return;
     }
 
@@ -476,7 +476,7 @@ export default function ManageContent() {
 
       if (!imageResponse.ok) {
         if (imageResponse.status === 413) {
-          throw new Error('File quá lớn. Kích thước tối đa là 50MB mỗi file.');
+          throw new Error('File quá lớn. Kích thước tối đa là 100MB mỗi file.');
         }
         const errorData = await imageResponse.json().catch(() => ({}));
         const errorMessage = errorData.error || `Upload failed with status: ${imageResponse.status}`;
@@ -1123,7 +1123,7 @@ export default function ManageContent() {
                         <p className="mb-2 text-sm text-dark-500">
                           <span className="font-semibold">Click để tải</span> trang chương
                         </p>
-                        <p className="text-xs text-dark-400">PNG, JPG hoặc WEBP (TỐI ĐA 50MB mỗi ảnh)</p>
+                        <p className="text-xs text-dark-400">PNG, JPG hoặc WEBP (TỐI ĐA 100MB mỗi ảnh)</p>
                       </div>
                       <input
                         type="file"

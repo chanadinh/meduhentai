@@ -8,12 +8,12 @@ export function middleware(request: NextRequest) {
     
     if (contentLength) {
       const sizeInBytes = parseInt(contentLength, 10);
-      const maxSize = 50 * 1024 * 1024; // 50MB
+      const maxSize = 100 * 1024 * 1024; // 100MB
       
       if (sizeInBytes > maxSize) {
         return NextResponse.json(
           { 
-            error: 'Request too large. Maximum size is 50MB.',
+            error: 'Request too large. Maximum size is 100MB.',
             size: sizeInBytes,
             maxSize: maxSize
           },
