@@ -659,7 +659,7 @@ export default function ManageContent() {
                     <button
                       type="button"
                       onClick={handleAddTag}
-                      className="btn-primary px-4"
+                      className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
                     >
                       <Plus className="h-4 w-4" />
                     </button>
@@ -719,7 +719,7 @@ export default function ManageContent() {
                     <button
                       type="button"
                       onClick={resetMangaForm}
-                      className="btn-secondary"
+                      className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
                     >
                       Hủy chỉnh sửa
                     </button>
@@ -727,7 +727,7 @@ export default function ManageContent() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="btn-primary flex items-center space-x-2"
+                    className="px-6 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 flex items-center space-x-2"
                   >
                     {loading ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -825,14 +825,14 @@ export default function ManageContent() {
                       <div className="flex gap-2 mt-3">
                         <button
                           onClick={() => handleEditManga(manga)}
-                          className="btn-secondary flex-1 flex items-center justify-center gap-2 text-sm"
+                          className="flex-1 flex items-center justify-center gap-2 text-sm px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
                         >
                           <Edit3 className="h-4 w-4" />
                           Chỉnh sửa
                         </button>
                         <button
                           onClick={() => handleDeleteManga(manga._id)}
-                          className="btn-error flex-1 flex items-center justify-center gap-2 text-sm"
+                          className="flex-1 flex items-center justify-center gap-2 text-sm px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
                         >
                           <X className="h-4 w-4" />
                           Xóa
@@ -1010,7 +1010,7 @@ export default function ManageContent() {
                   <button
                     type="submit"
                     disabled={chapterLoading || pageFiles.length === 0}
-                    className="btn-primary flex items-center space-x-2"
+                    className="px-6 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 flex items-center space-x-2"
                   >
                     {chapterLoading ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
