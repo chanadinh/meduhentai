@@ -6,6 +6,18 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
+    // Debug environment variables in production
+    console.log('Environment check:', {
+      hasAccessKey: !!process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+      hasSecretKey: !!process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+      hasEndpoint: !!process.env.CLOUDFLARE_R2_ENDPOINT,
+      hasBucket: !!process.env.CLOUDFLARE_R2_BUCKET_NAME,
+      hasPublicDomain: !!process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN,
+      hasAccountId: !!process.env.CLOUDFLARE_R2_ACCOUNT_ID,
+      nodeEnv: process.env.NODE_ENV,
+      vercel: process.env.VERCEL
+    });
+
     const formData = await request.formData();
     const files = formData.getAll('images') as File[];
     const folder = formData.get('folder') as string || 'uploads';
@@ -46,11 +58,19 @@ export async function POST(request: NextRequest) {
         type: file.type
       });
 
-      const uploadResult = await uploadImage(filename, Buffer.from(buffer), file.type);
+      let uploadResult;
+      try {
+        uploadResult = await uploadImage(filename, Buffer.from(buffer), file.type);
 
-      if (!uploadResult.success) {
-        console.error('R2 upload error for file:', filename, uploadResult.error);
-        throw new Error(`R2 upload failed for ${filename}: ${uploadResult.error}`);
+        if (!uploadResult.success) {
+          console.error('R2 upload error for file:', filename, uploadResult.error);
+          throw new Error(`R2 upload failed for ${filename}: ${uploadResult.error}`);
+        }
+
+        console.log('Upload result:', uploadResult);
+      } catch (uploadError) {
+        console.error('Upload function error:', uploadError);
+        throw new Error(`Upload function failed: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`);
       }
 
       console.log('File uploaded successfully:', filename);

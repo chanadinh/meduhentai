@@ -1,16 +1,27 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const R2_ACCOUNT_ID = process.env.CLOUDFLARE_R2_ACCOUNT_ID!;
-const R2_ACCESS_KEY_ID = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!;
-const R2_SECRET_ACCESS_KEY = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!;
-const R2_BUCKET_NAME = process.env.CLOUDFLARE_R2_BUCKET_NAME!;
-const R2_ENDPOINT = process.env.CLOUDFLARE_R2_ENDPOINT!;
-const R2_PUBLIC_DOMAIN = process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN!;
+const R2_ACCOUNT_ID = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
+const R2_ACCESS_KEY_ID = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
+const R2_SECRET_ACCESS_KEY = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
+const R2_BUCKET_NAME = process.env.CLOUDFLARE_R2_BUCKET_NAME;
+const R2_ENDPOINT = process.env.CLOUDFLARE_R2_ENDPOINT;
+const R2_PUBLIC_DOMAIN = process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN;
 const R2_REGION = process.env.R2_REGION || 'auto';
 
-if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET_NAME || !R2_ENDPOINT) {
-  throw new Error('Missing R2 environment variables. Please check CLOUDFLARE_R2_ACCOUNT_ID, CLOUDFLARE_R2_ACCESS_KEY_ID, CLOUDFLARE_R2_SECRET_ACCESS_KEY, CLOUDFLARE_R2_BUCKET_NAME, and CLOUDFLARE_R2_ENDPOINT');
+// Check environment variables at runtime
+function validateR2Config() {
+  const missingVars = [];
+  if (!R2_ACCOUNT_ID) missingVars.push('CLOUDFLARE_R2_ACCOUNT_ID');
+  if (!R2_ACCESS_KEY_ID) missingVars.push('CLOUDFLARE_R2_ACCESS_KEY_ID');
+  if (!R2_SECRET_ACCESS_KEY) missingVars.push('CLOUDFLARE_R2_SECRET_ACCESS_KEY');
+  if (!R2_BUCKET_NAME) missingVars.push('CLOUDFLARE_R2_BUCKET_NAME');
+  if (!R2_ENDPOINT) missingVars.push('CLOUDFLARE_R2_ENDPOINT');
+  if (!R2_PUBLIC_DOMAIN) missingVars.push('CLOUDFLARE_R2_PUBLIC_DOMAIN');
+  
+  if (missingVars.length > 0) {
+    throw new Error(`Missing R2 environment variables: ${missingVars.join(', ')}`);
+  }
 }
 
 const s3Client = new S3Client({
@@ -28,15 +39,18 @@ export async function uploadImage(
   contentType: string,
   metadata?: Record<string, string>
 ) {
-  const command = new PutObjectCommand({
-    Bucket: R2_BUCKET_NAME,
-    Key: key,
-    Body: buffer,
-    ContentType: contentType,
-    Metadata: metadata,
-  });
-
   try {
+    // Validate configuration before attempting upload
+    validateR2Config();
+    
+    const command = new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME!,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+      Metadata: metadata,
+    });
+
     const result = await s3Client.send(command);
     return {
       success: true,
@@ -54,12 +68,14 @@ export async function uploadImage(
 }
 
 export async function deleteImage(key: string) {
-  const command = new DeleteObjectCommand({
-    Bucket: R2_BUCKET_NAME,
-    Key: key,
-  });
-
   try {
+    validateR2Config();
+    
+    const command = new DeleteObjectCommand({
+      Bucket: R2_BUCKET_NAME!,
+      Key: key,
+    });
+
     await s3Client.send(command);
     return { success: true };
   } catch (error) {
@@ -72,12 +88,14 @@ export async function deleteImage(key: string) {
 }
 
 export async function getSignedImageUrl(key: string, expiresIn: number = 3600) {
-  const command = new GetObjectCommand({
-    Bucket: R2_BUCKET_NAME,
-    Key: key,
-  });
-
   try {
+    validateR2Config();
+    
+    const command = new GetObjectCommand({
+      Bucket: R2_BUCKET_NAME!,
+      Key: key,
+    });
+
     const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });
     return signedUrl;
   } catch (error) {
