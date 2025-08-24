@@ -170,26 +170,26 @@ export default function HomePage() {
           )}
           
           {/* Content */}
-          <div className="relative z-10 p-8">
+          <div className="relative z-10 p-4 sm:p-6 lg:p-8">
             {currentPopularManga ? (
-              <div className="flex gap-8">
+              <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
                 {/* Left Side - Cover Image */}
-                <div className="w-96 flex-shrink-0">
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+                <div className="w-full lg:w-96 flex-shrink-0 flex justify-center lg:justify-start">
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-64 lg:w-96">
                     <img 
                       key={currentPopularManga._id || currentPopularIndex}
                       src={currentPopularManga.coverImage} 
                       alt={currentPopularManga.title}
-                      className="w-full h-96 object-cover transition-all duration-700 ease-in-out transform hover:scale-105 animate-slide-in-left"
+                      className="w-full h-64 lg:h-96 object-cover transition-all duration-700 ease-in-out transform hover:scale-105 animate-slide-in-left"
                     />
                   </div>
                 </div>
 
                 {/* Right Side - Manga Details (Text Only) */}
-                <div className="flex-1 p-8 flex flex-col">
+                <div className="flex-1 p-4 lg:p-8 flex flex-col">
                   <h1 
                     key={`title-${currentPopularManga._id || currentPopularIndex}`}
-                    className="text-2xl font-bold text-white mb-4 leading-tight drop-shadow-lg transition-all duration-500 ease-in-out animate-slide-in-right"
+                    className="text-xl sm:text-2xl font-bold text-white mb-4 leading-tight drop-shadow-lg transition-all duration-500 ease-in-out animate-slide-in-right text-center lg:text-left"
                   >
                     {currentPopularManga.title}
                   </h1>
@@ -197,10 +197,10 @@ export default function HomePage() {
                   {/* Tags */}
                   <div 
                     key={`tags-${currentPopularManga._id || currentPopularIndex}`}
-                    className="flex flex-wrap gap-2 mb-6 transition-all duration-500 ease-in-out animate-slide-in-up"
+                    className="flex flex-wrap gap-2 mb-6 transition-all duration-500 ease-in-out animate-slide-in-up justify-center lg:justify-start"
                   >
                     {currentPopularManga.genres && currentPopularManga.genres.slice(0, 6).map((genre, index) => (
-                      <span key={index} className="px-3 py-1 bg-orange-500 text-white text-sm font-medium rounded-full shadow-sm transition-all duration-300 hover:scale-110 animate-bounce-in" style={{animationDelay: `${index * 0.1}s`}}>
+                      <span key={index} className="px-2 sm:px-3 py-1 bg-orange-500 text-white text-xs sm:text-sm font-medium rounded-full shadow-sm transition-all duration-300 hover:scale-110 animate-bounce-in" style={{animationDelay: `${index * 0.1}s`}}>
                         {genre.toUpperCase()}
                       </span>
                     ))}
@@ -209,7 +209,7 @@ export default function HomePage() {
                   {/* Description */}
                   <p 
                     key={`desc-${currentPopularManga._id || currentPopularIndex}`}
-                    className="text-white/90 leading-relaxed mb-6 drop-shadow-md transition-all duration-500 ease-in-out animate-slide-in-left"
+                    className="text-white/90 leading-relaxed mb-6 drop-shadow-md transition-all duration-500 ease-in-out animate-slide-in-left text-sm sm:text-base text-center lg:text-left"
                   >
                     {currentPopularManga.description}
                   </p>
@@ -217,28 +217,28 @@ export default function HomePage() {
                   {/* Author */}
                   <p 
                     key={`author-${currentPopularManga._id || currentPopularIndex}`}
-                    className="text-white/70 text-sm drop-shadow-md transition-all duration-500 ease-in-out animate-slide-in-down"
+                    className="text-white/70 text-xs sm:text-sm drop-shadow-md transition-all duration-500 ease-in-out animate-slide-in-down text-center lg:text-left"
                   >
                     {currentPopularManga.author}
                   </p>
                   
                   {/* Navigation */}
-                  <div className="flex items-center justify-between mt-auto pt-16">
-                    <div className="text-sm text-white/80 font-medium drop-shadow-md">
+                  <div className="flex items-center justify-between mt-auto pt-8 lg:pt-16">
+                    <div className="text-xs sm:text-sm text-white/80 font-medium drop-shadow-md">
                       NO. {currentPopularIndex + 1}
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                       <button
                         onClick={prevPopular}
                         className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-full border border-white/30 backdrop-blur-sm transition-all duration-200 hover:scale-110"
                       >
-                        <ChevronLeft className="h-5 w-5" />
+                        <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                       <button
                         onClick={nextPopular}
                         className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-full border border-white/30 backdrop-blur-sm transition-all duration-200 hover:scale-110"
                       >
-                        <ChevronRight className="h-5 w-5" />
+                        <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                     </div>
                   </div>
@@ -246,7 +246,7 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="text-center py-12 text-gray-500">
-                <div className="h-96 bg-gray-100 rounded-2xl flex items-center justify-center">
+                <div className="h-64 lg:h-96 bg-gray-100 rounded-2xl flex items-center justify-center">
                   <p>Chưa có manga nào</p>
                 </div>
               </div>
@@ -256,14 +256,14 @@ export default function HomePage() {
 
         {/* Latest Updates Section */}
         <section>
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Cập Nhật Mới Nhất</h2>
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Cập Nhật Mới Nhất</h2>
             <a href="/browse" className="text-gray-600 hover:text-gray-800 transition-colors duration-200">
-              <ChevronRight className="h-6 w-6" />
+              <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
             </a>
           </div>
           
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {(latestManga && latestManga.length > 0 ? latestManga.slice(0, 9) : [sampleManga, sampleManga, sampleManga]).map((manga) => (
               <Link key={manga._id} href={`/manga/${manga._id}`} className="group block">
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1 cursor-pointer">

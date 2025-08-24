@@ -76,11 +76,11 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
+      <div className="space-y-6 lg:space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-dark-900">Bảng quản trị</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-4 sm:mb-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-dark-900">Bảng quản trị</h1>
             <p className="text-dark-600 mt-2">
               Chào mừng trở lại, {session.user.username}!
             </p>
@@ -89,15 +89,15 @@ export default function AdminDashboard() {
 
         {/* Stats Grid */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-xl p-6 border border-dark-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+            <div className="bg-white rounded-xl p-4 lg:p-6 border border-dark-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-dark-600">Tổng Manga</p>
-                  <p className="text-3xl font-bold text-primary-600">{stats.totalManga}</p>
+                  <p className="text-2xl lg:text-3xl font-bold text-primary-600">{stats.totalManga}</p>
                 </div>
-                <div className="p-3 bg-primary-100 rounded-lg">
-                  <BookOpen className="h-6 w-6 text-primary-600" />
+                <div className="p-2 lg:p-3 bg-primary-100 rounded-lg">
+                  <BookOpen className="h-5 w-5 lg:h-6 lg:w-6 text-primary-600" />
                 </div>
               </div>
             </div>

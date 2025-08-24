@@ -156,12 +156,12 @@ export default function MangaDetailPage() {
     <div className="min-h-screen bg-white">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-4 sm:py-8">
         {/* Main Content */}
-        <div className="flex gap-8">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
           {/* Left Column - Cover Image */}
-          <div className="w-80 flex-shrink-0">
-            <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+          <div className="w-full lg:w-80 flex-shrink-0 flex justify-center lg:justify-start">
+            <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-64 lg:w-80">
               <img 
                 src={manga.coverImage} 
                 alt={manga.title}
@@ -173,25 +173,25 @@ export default function MangaDetailPage() {
           {/* Right Column - Manga Details */}
           <div className="flex-1">
             {/* Title and Subtitle */}
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{manga.title}</h1>
+            <div className="mb-4 lg:mb-6 text-center lg:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{manga.title}</h1>
               {manga.description && (
-                <p className="text-lg text-gray-600 mb-4">{manga.description}</p>
+                <p className="text-base sm:text-lg text-gray-600 mb-4">{manga.description}</p>
               )}
               <p className="text-gray-500">by {manga.artist || manga.author}</p>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 mb-4 lg:mb-6">
               <button
                 onClick={handleFavorite}
-                className={`px-6 py-3 rounded-full font-medium transition-all duration-200 flex items-center gap-2 ${
+                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
                   favorited 
                     ? 'bg-red-500 hover:bg-red-600 text-white' 
                     : 'bg-purple-500 hover:bg-purple-600 text-white'
                 }`}
               >
-                <Heart className={`h-5 w-5 ${favorited ? 'fill-current' : ''}`} />
+                <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${favorited ? 'fill-current' : ''}`} />
                 {favorited ? 'Đã yêu thích' : '+ Thêm vào thư viện'}
               </button>
               
