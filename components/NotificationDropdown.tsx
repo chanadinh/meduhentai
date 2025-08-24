@@ -173,7 +173,7 @@ export default function NotificationDropdown() {
       {/* Notification Bell */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-dark-600 hover:text-purple-600 transition-colors duration-200"
+        className="relative p-2 text-dark-600 hover:text-purple-600 transition-colors duration-200 w-full flex items-center justify-center"
       >
         <Bell className="h-6 w-6" />
         {unreadCount > 0 && (

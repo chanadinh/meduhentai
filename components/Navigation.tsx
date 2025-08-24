@@ -285,6 +285,16 @@ export default function Navigation() {
                     </div>
                   </div>
                   
+                  {/* Mobile Notification Button */}
+                  <div className="flex justify-center mb-4">
+                    <div className="w-full max-w-xs">
+                      <div className="bg-white/95 p-3 rounded-lg border border-dark-200">
+                        <div className="text-center mb-2 text-sm text-dark-600">Thông báo</div>
+                        <NotificationDropdown />
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div className="space-y-2">
                     <Link 
                       href="/profile" 
