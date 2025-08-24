@@ -181,7 +181,7 @@ export default function Navigation() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
+              className="md:hidden p-2 rounded-lg hover:bg-white/20 transition-colors duration-200"
             >
               {isMenuOpen ? (
                 <X className="h-5 w-5 text-white" />
