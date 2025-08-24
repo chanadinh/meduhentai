@@ -184,9 +184,9 @@ export default function Navigation() {
               className="md:hidden p-2 rounded-lg hover:bg-white/20 transition-colors duration-200"
             >
               {isMenuOpen ? (
-                <X className="h-5 w-5 text-white" />
+                <X className="h-5 w-5 text-black" />
               ) : (
-                <Menu className="h-5 w-5 text-white" />
+                <Menu className="h-5 w-5 text-black" />
               )}
             </button>
           </div>
