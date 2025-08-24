@@ -6,10 +6,9 @@ export interface IManga extends Document {
   description: string;
   coverImage: string;
   genres: string[];
-  tags: string[];
   author: string;
   artist: string;
-  status: 'ongoing' | 'completed' | 'hiatus' | 'cancelled';
+  status: 'ongoing' | 'completed';
   views: number;
   chaptersCount: number;
   likes: number;
@@ -39,10 +38,6 @@ const MangaSchema = new mongoose.Schema<IManga>({
     type: String,
     trim: true
   }],
-  tags: [{
-    type: String,
-    trim: true
-  }],
   author: {
     type: String,
     trim: true
@@ -53,7 +48,7 @@ const MangaSchema = new mongoose.Schema<IManga>({
   },
   status: {
     type: String,
-    enum: ['ongoing', 'completed', 'hiatus', 'cancelled'],
+    enum: ['ongoing', 'completed'],
     default: 'ongoing'
   },
   views: {

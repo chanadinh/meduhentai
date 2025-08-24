@@ -11,10 +11,10 @@ interface Manga {
   description: string;
   coverImage: string;
   genres: string[];
-  tags: string[];
+
   author: string;
   artist: string;
-  status: 'ongoing' | 'completed' | 'hiatus' | 'cancelled';
+  status: 'ongoing' | 'completed';
   views: number;
   chaptersCount: number;
   totalChapters?: number; // Add this for MangaCard compatibility

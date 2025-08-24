@@ -400,10 +400,7 @@
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
-.status-hiatus-beautiful {
-  @apply bg-gradient-to-r from-yellow-400 to-yellow-500 text-white;
-  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.3);
-}
+
 
 .manga-cover-large {
   @apply relative overflow-hidden rounded-2xl;
@@ -651,17 +648,11 @@
   @apply bg-green-100 text-green-800;
 }
 
-.status-hiatus {
-  @apply bg-yellow-100 text-yellow-800;
-}
-
-.status-cancelled {
-  @apply bg-red-100 text-red-800;
-}
 
 
 
-/* Genre tags */
+
+/* Genres */
 .genre-tag {
   @apply inline-block px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors duration-200;
 }

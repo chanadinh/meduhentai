@@ -73,8 +73,7 @@ function BrowsePageContent() {
                 <option value="all">Tất cả trạng thái</option>
                 <option value="ongoing">Đang tiến hành</option>
                 <option value="completed">Hoàn thành</option>
-                <option value="hiatus">Tạm ngưng</option>
-                <option value="cancelled">Đã hủy</option>
+
               </select>
 
               {/* Genre Filter */}

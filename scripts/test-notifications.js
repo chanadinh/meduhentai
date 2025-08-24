@@ -50,8 +50,8 @@ async function testNotifications() {
         title: 'Test Manga',
         description: 'A test manga for notification testing',
         coverImage: 'https://via.placeholder.com/300x400',
-        genres: ['test'],
-        tags: ['test'],
+        genres: ['test', 'Ahegao', 'Anal', 'BDSM'],
+    
         author: 'Test Author',
         artist: 'Test Artist',
         status: 'ongoing',

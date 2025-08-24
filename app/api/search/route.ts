@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         { title: searchRegex },
         { author: searchRegex },
         { genres: { $in: [searchRegex] } },
-        { tags: { $in: [searchRegex] } },
+
         { description: searchRegex }
       ]
     };
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         .sort(sortObject)
         .skip(skip)
         .limit(limit)
-        .select('title author coverImage views totalChapters type genres tags createdAt')
+        .select('title author coverImage views totalChapters type genres createdAt')
         .lean(),
       Manga.countDocuments(searchQuery)
     ]);

@@ -14,7 +14,6 @@ import {
   X,
   Home,
   FileImage,
-  Tags,
   Shield
 } from 'lucide-react';
 
@@ -28,7 +27,7 @@ const navigation = [
   { name: 'Tải lên Blob', href: '/admin/upload/direct', icon: Upload },
   { name: 'Tải lên R2', href: '/admin/upload/direct-r2', icon: Upload },
   { name: 'Người dùng', href: '/admin/users', icon: Users },
-  { name: 'Thẻ & Thể loại', href: '/admin/tags', icon: Tags },
+
   { name: 'Cài đặt', href: '/admin/settings', icon: Settings },
 ];
 

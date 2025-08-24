@@ -105,7 +105,6 @@ export async function PUT(
       status,
       type,
       genres,
-      tags,
       coverImage
     } = body;
 
@@ -128,7 +127,7 @@ export async function PUT(
         status,
         type,
         genres: genres || [],
-        tags: tags || [],
+
         coverImage,
         updatedAt: new Date()
       },

@@ -199,9 +199,9 @@ export default function HomePage() {
                     {currentPopularManga.title}
                   </h1>
                   
-                  {/* Tags */}
+                  {/* Genres */}
                   <div 
-                    key={`tags-${currentPopularManga._id || currentPopularIndex}`}
+                    key={`genres-${currentPopularManga._id || currentPopularIndex}`}
                     className="flex flex-wrap gap-2 mb-4 transition-all duration-500 ease-in-out animate-slide-in-up justify-center lg:justify-start"
                   >
                     {currentPopularManga.genres && currentPopularManga.genres.slice(0, 6).map((genre, index) => (

@@ -71,10 +71,7 @@ export default function MangaCard({ manga, showStats = true, size = 'medium' }: 
           {/* Status Badge */}
           <div className="absolute top-2 left-2">
             <span className={`status-badge ${
-              manga.status === 'completed' ? 'status-completed' :
-              manga.status === 'ongoing' ? 'status-ongoing' :
-              manga.status === 'hiatus' ? 'status-hiatus' :
-              'status-cancelled'
+              manga.status === 'completed' ? 'status-completed' : 'status-ongoing'
             }`}>
               {manga.status}
             </span>

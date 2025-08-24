@@ -34,7 +34,7 @@ interface Manga {
   likes: number;
   dislikes: number;
   genres: string[];
-  tags: string[];
+
   chaptersCount: number;
   chapters: Chapter[];
 }
@@ -315,14 +315,10 @@ export default function MangaDetailPage() {
               </button>
             </div>
 
-            {/* Tags */}
+            {/* Status and Genres */}
             <div className="flex flex-wrap gap-2 mb-6">
               <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                {manga.status === 'completed' ? 'COMPLETED' : 
-                 manga.status === 'ongoing' ? 'ONGOING' : 
-                 manga.status === 'hiatus' ? 'HIATUS' : 
-                 manga.status === 'cancelled' ? 'CANCELLED' : 
-                 manga.status.toUpperCase()}
+                {manga.status === 'completed' ? 'COMPLETED' : 'ONGOING'}
               </span>
               {manga.genres && manga.genres.slice(0, 3).map((genre, index) => (
                 <span key={index} className="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full">
