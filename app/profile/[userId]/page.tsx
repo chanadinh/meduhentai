@@ -268,7 +268,7 @@ export default function ProfilePage() {
               <div className="mt-4 space-x-2">
                 <button
                   onClick={handleAvatarUpload}
-                  className="btn-primary btn-sm"
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 text-sm"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   Lưu Avatar
@@ -278,7 +278,7 @@ export default function ProfilePage() {
                     setAvatarFile(null);
                     setAvatarPreview('');
                   }}
-                  className="btn-outline btn-sm"
+                  className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200 text-sm"
                 >
                   Hủy
                 </button>
@@ -302,7 +302,7 @@ export default function ProfilePage() {
               <h2 className="text-xl font-semibold text-dark-900">Thông tin cơ bản</h2>
               <button
                 onClick={() => setEditing(!editing)}
-                className="btn-outline btn-sm"
+                className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200 text-sm"
               >
                 {editing ? (
                   <>
@@ -400,7 +400,7 @@ export default function ProfilePage() {
               <div className="mt-6 flex space-x-3">
                 <button
                   onClick={handleSaveProfile}
-                  className="btn-primary"
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   Lưu thay đổi
@@ -415,7 +415,7 @@ export default function ProfilePage() {
                       language: profile?.preferences?.language || 'vi'
                     });
                   }}
-                  className="btn-outline"
+                  className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200"
                 >
                   Hủy
                 </button>
@@ -494,7 +494,7 @@ export default function ProfilePage() {
           <div className="bg-white rounded-xl p-6 border border-dark-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-dark-900">Manga đã tải lên</h2>
-              <Link href="/admin/upload" className="btn-primary btn-sm">
+              <Link href="/admin/upload" className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 text-sm">
                 <Upload className="h-4 w-4 mr-2" />
                 Tải lên Manga mới
               </Link>
@@ -593,13 +593,13 @@ function MyMangaList() {
             <div className="mt-3 flex space-x-2">
               <Link
                 href={`/manga/${manga._id}`}
-                className="btn-outline btn-sm flex-1 text-center"
+                className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200 text-sm flex-1 text-center"
               >
                 Xem
               </Link>
               <Link
                 href={`/admin/manga/${manga._id}`}
-                className="btn-primary btn-sm flex-1 text-center"
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 text-sm flex-1 text-center"
               >
                 Chỉnh sửa
               </Link>
@@ -613,7 +613,7 @@ function MyMangaList() {
           <button
             onClick={loadMore}
             disabled={loading}
-            className="btn-outline"
+            className="px-6 py-3 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200"
           >
             {loading ? 'Đang tải...' : 'Tải thêm'}
           </button>
