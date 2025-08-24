@@ -15,7 +15,6 @@ interface Manga {
   author: string;
   artist: string;
   status: 'ongoing' | 'completed' | 'hiatus' | 'cancelled';
-  rating: number;
   views: number;
   chaptersCount: number;
   totalChapters?: number; // Add this for MangaCard compatibility

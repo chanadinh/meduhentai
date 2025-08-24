@@ -12,7 +12,6 @@ interface MangaCardProps {
     title: string;
     coverImage: string;
     author: string;
-    rating: number;
     views: number;
     totalChapters: number;
     status: string;
@@ -81,11 +80,7 @@ export default function MangaCard({ manga, showStats = true, size = 'medium' }: 
             </span>
           </div>
 
-          {/* Rating */}
-          <div className="absolute top-2 right-2 flex items-center bg-black/70 text-white px-2 py-1 rounded-full">
-            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 mr-1" />
-            <span className="text-xs">{manga.rating.toFixed(1)}</span>
-          </div>
+
 
           {/* Favorite Button */}
           <button

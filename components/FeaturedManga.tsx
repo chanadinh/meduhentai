@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Star, Eye, BookOpen, Heart, Calendar, Users, TrendingUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, BookOpen, Heart, Calendar, Users, TrendingUp } from 'lucide-react';
 import { fixR2ImageUrl } from '@/lib/utils';
 
 interface FeaturedManga {
@@ -11,7 +11,6 @@ interface FeaturedManga {
   description: string;
   coverImage: string;
   author: string;
-  rating: number;
   views: number;
   totalChapters: number;
   status: string;
@@ -30,7 +29,7 @@ export default function FeaturedManga() {
   const fetchFeaturedManga = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/manga?sortBy=rating&sortOrder=desc&limit=5');
+      const response = await fetch('/api/manga?sortBy=views&sortOrder=desc&limit=5');
       const data = await response.json();
       
       if (data.mangas) {
@@ -111,10 +110,7 @@ export default function FeaturedManga() {
           </div>
 
           <div className="flex items-center space-x-4 mb-4 text-sm">
-            <div className="flex items-center">
-              <Star className="h-4 w-4 fill-warning-400 text-warning-400 mr-1" />
-              <span className="font-semibold">{currentManga.rating.toFixed(1)}</span>
-            </div>
+
             <div className="flex items-center">
               <Eye className="h-4 w-4 mr-1" />
               <span className="font-semibold">{currentManga.views.toLocaleString()}</span>
@@ -183,10 +179,7 @@ export default function FeaturedManga() {
           <div className="mb-4">
             <h4 className="text-xs sm:text-sm text-white/80 font-medium drop-shadow-md mb-2">Thống kê</h4>
             <div className="space-y-2 text-right">
-              <div className="flex items-center justify-end space-x-3">
-                <span className="text-xs sm:text-sm text-white/80 font-medium drop-shadow-md">Đánh giá:</span>
-                <span className="text-xs sm:text-sm text-white/80 font-medium drop-shadow-md">{currentManga.rating.toFixed(1)}</span>
-              </div>
+
               <div className="flex items-center justify-end space-x-3">
                 <span className="text-xs sm:text-sm text-white/80 font-medium drop-shadow-md">Lượt xem:</span>
                 <span className="text-xs sm:text-sm text-white/80 font-medium drop-shadow-md">{currentManga.views.toLocaleString()}</span>
@@ -254,13 +247,7 @@ export default function FeaturedManga() {
           <div className="mb-6">
             <h4 className="text-lg font-semibold mb-3 text-white/90">Cộng đồng</h4>
             <div className="space-y-3 text-right">
-              <div className="flex items-center justify-end space-x-3">
-                <span className="text-white/70">Đánh giá:</span>
-                <div className="flex items-center bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm">
-                  <Star className="h-4 w-4 fill-warning-400 text-warning-400 mr-1" />
-                  <span className="font-semibold">{currentManga.rating.toFixed(1)}</span>
-                </div>
-              </div>
+
               <div className="flex items-center justify-end space-x-3">
                 <span className="text-white/70">Lượt xem:</span>
                 <div className="bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm">
@@ -308,19 +295,7 @@ export default function FeaturedManga() {
           <div className="mb-6">
             <h4 className="text-lg font-semibold mb-3 text-white/90">Thông tin chi tiết</h4>
             <div className="space-y-3 text-right">
-              <div className="flex items-center justify-end space-x-3">
-                <span className="text-white/70">Chất lượng:</span>
-                <div className={`px-3 py-1 rounded-lg backdrop-blur-sm ${
-                  currentManga.rating >= 4.5 ? 'bg-green-500/30' :
-                  currentManga.rating >= 4.0 ? 'bg-yellow-500/30' :
-                  'bg-blue-500/30'
-                }`}>
-                  <span className="font-semibold">
-                    {currentManga.rating >= 4.5 ? '🎯 Xuất sắc' : 
-                     currentManga.rating >= 4.0 ? '⭐ Tốt' : '📖 Khá'}
-                  </span>
-                </div>
-              </div>
+
               <div className="flex items-center justify-end space-x-3">
                 <span className="text-white/70">Độ hoàn thành:</span>
                 <div className="bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm">
@@ -338,23 +313,7 @@ export default function FeaturedManga() {
             </div>
           </div>
 
-          {/* Popularity Indicator */}
-          <div className="mt-6">
-            <div className="text-center">
-              <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg px-4 py-2">
-                <div className={`w-3 h-3 rounded-full ${
-                  currentManga.rating >= 4.5 ? 'bg-green-400' :
-                  currentManga.rating >= 4.0 ? 'bg-yellow-400' :
-                  'bg-red-400'
-                }`}></div>
-                <span className="text-sm font-medium">
-                  {currentManga.rating >= 4.5 ? 'Xuất sắc' :
-                   currentManga.rating >= 4.0 ? 'Tốt' :
-                   'Khá'}
-                </span>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -380,10 +339,7 @@ export default function FeaturedManga() {
           <div>
             <h4 className="text-sm font-semibold mb-2 text-white/90">Thống kê</h4>
             <div className="space-y-1 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-white/70">Đánh giá:</span>
-                <span className="font-semibold">{currentManga.rating.toFixed(1)}</span>
-              </div>
+
               <div className="flex items-center justify-between">
                 <span className="text-white/70">Chương:</span>
                 <span className="font-semibold">{currentManga.totalChapters}</span>

@@ -12,7 +12,6 @@ interface Manga {
   title: string;
   coverImage: string;
   description: string;
-  rating: number;
   views: number;
   chaptersCount: number;
   author: string;
@@ -31,7 +30,6 @@ export default function HomePage() {
     title: 'Tiêu đề Manga Mẫu - Đây là một tiêu đề rất dài để kiểm tra bố cục',
     coverImage: 'https://via.placeholder.com/384x384/6366f1/ffffff?text=Sample+Manga',
     description: 'Đây là mô tả manga mẫu để hiển thị cách bố cục sẽ trông như thế nào khi có nội dung thực tế. Nó phải đủ dài để thể hiện việc gói văn bản và khoảng cách.',
-    rating: 4.5,
     views: 1234,
     chaptersCount: 15,
     author: 'Tác giả Mẫu',

@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     const user = await User.findById(session.user.id)
       .populate({
         path: 'favorites',
-        select: 'title coverImage author rating views status'
+        select: 'title coverImage author views status'
       });
 
     if (!user) {

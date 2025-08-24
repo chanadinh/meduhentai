@@ -3,7 +3,7 @@ import mongoose, { Document, Model } from 'mongoose';
 // Notification interface
 export interface INotification extends Document {
   userId: mongoose.Types.ObjectId;
-  type: 'new_comment' | 'comment_reply' | 'like' | 'unlike';
+  type: 'new_comment' | 'comment_reply' | 'like' | 'unlike' | 'manga_comment';
   title: string;
   message: string;
   data: {
@@ -27,7 +27,7 @@ const NotificationSchema = new mongoose.Schema<INotification>({
   type: {
     type: String,
     required: true,
-    enum: ['new_comment', 'comment_reply', 'like', 'unlike']
+    enum: ['new_comment', 'comment_reply', 'like', 'unlike', 'manga_comment']
   },
   title: {
     type: String,

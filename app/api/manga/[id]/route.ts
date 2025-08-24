@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import Manga from '@/models/Manga';
 import Chapter from '@/models/Chapter';
+import Notification from '@/models/Notification';
 
 // GET - Fetch a specific manga by ID
 export async function GET(
@@ -105,7 +106,6 @@ export async function PUT(
       type,
       genres,
       tags,
-      rating,
       coverImage
     } = body;
 
@@ -129,7 +129,6 @@ export async function PUT(
         type,
         genres: genres || [],
         tags: tags || [],
-        rating: rating || 0,
         coverImage,
         updatedAt: new Date()
       },
@@ -208,6 +207,16 @@ export async function DELETE(
       },
       { new: true }
     );
+
+    // Clean up related notifications
+    try {
+      await Notification.deleteMany({
+        'data.mangaId': mangaId
+      });
+    } catch (notificationError) {
+      // Log error but don't fail the manga deletion
+      console.error('Failed to clean up notifications for deleted manga:', notificationError);
+    }
 
     return NextResponse.json({
       message: 'Manga deleted successfully',

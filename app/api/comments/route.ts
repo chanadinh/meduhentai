@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Comment from '@/models/Comment';
 import User from '@/models/User';
+import Manga from '@/models/Manga';
+import Notification from '@/models/Notification';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -177,6 +179,64 @@ export async function POST(request: NextRequest) {
         parentComment,
         { $push: { replies: comment._id } }
       );
+      
+      // Send notification to parent comment owner (if commenter is not the owner)
+      try {
+        const parentCommentDoc = await Comment.findById(parentComment).select('user');
+        if (parentCommentDoc && parentCommentDoc.user.toString() !== session.user.id) {
+          // Get commenter info for the notification
+          const commenter = await User.findById(session.user.id).select('username');
+          
+          if (commenter) {
+            // Create notification for parent comment owner
+            await Notification.create({
+              userId: parentCommentDoc.user,
+              type: 'comment_reply',
+              title: 'Phản hồi mới',
+              message: `${commenter.username} đã phản hồi bình luận của bạn`,
+              data: {
+                mangaId: mangaId,
+                chapterId: chapterId || undefined,
+                commentId: comment._id,
+                fromUser: session.user.id
+              },
+              isRead: false
+            });
+          }
+        }
+      } catch (replyNotificationError) {
+        // Log error but don't fail the comment creation
+        console.error('Failed to create reply notification:', replyNotificationError);
+      }
+    }
+
+    // Send notification to manga uploader (if commenter is not the uploader)
+    try {
+      const manga = await Manga.findById(mangaId).select('userId title');
+      if (manga && manga.userId.toString() !== session.user.id) {
+        // Get commenter info for the notification
+        const commenter = await User.findById(session.user.id).select('username');
+        
+        if (commenter) {
+          // Create notification for manga uploader
+          await Notification.create({
+            userId: manga.userId,
+            type: 'manga_comment',
+            title: 'Bình luận mới trên manga của bạn',
+            message: `${commenter.username} đã bình luận trên manga "${manga.title}"`,
+            data: {
+              mangaId: manga._id,
+              chapterId: chapterId || undefined,
+              commentId: comment._id,
+              fromUser: session.user.id
+            },
+            isRead: false
+          });
+        }
+      }
+    } catch (notificationError) {
+      // Log error but don't fail the comment creation
+      console.error('Failed to create notification for manga uploader:', notificationError);
     }
 
     return NextResponse.json({ comment }, { status: 201 });

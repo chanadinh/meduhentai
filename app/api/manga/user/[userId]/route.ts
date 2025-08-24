@@ -23,7 +23,7 @@ export async function GET(
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .select('title coverImage rating views chaptersCount createdAt updatedAt')
+        .select('title coverImage views chaptersCount createdAt updatedAt')
         .lean(),
       Manga.countDocuments({ 
         userId: params.userId,

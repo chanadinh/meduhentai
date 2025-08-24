@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
     // Fetch notifications
     const [notifications, total] = await Promise.all([
       Notification.find(query)
+        .populate('data.fromUser', 'username avatar')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

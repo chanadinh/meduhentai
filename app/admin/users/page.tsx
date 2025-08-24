@@ -7,56 +7,79 @@ interface User {
   _id: string;
   username: string;
   email: string;
-  role: 'user' | 'admin';
-  status: 'active' | 'suspended' | 'banned';
+  role: 'user' | 'uploader' | 'admin';
+  avatar: string;
   createdAt: string;
-  lastLogin?: string;
+  updatedAt: string;
+  originalPassword?: string;
+  stats: {
+    totalViews: number;
+    totalLikes: number;
+    totalComments: number;
+  };
+}
+
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalUsers: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+  limit: number;
 }
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [showPasswords, setShowPasswords] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(1, searchTerm);
   }, []);
 
-  const fetchUsers = async () => {
+  // Handle search with debouncing
+  useEffect(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    const timeout = setTimeout(() => {
+      fetchUsers(1, searchTerm);
+    }, 500);
+
+    setSearchTimeout(timeout);
+
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    };
+  }, [searchTerm]);
+
+  const fetchUsers = async (page: number = 1, search: string = '') => {
     try {
       setLoading(true);
-      // TODO: Implement API call to fetch users
-      // For now, using mock data
-      const mockUsers: User[] = [
-        {
-          _id: '1',
-          username: 'admin',
-          email: 'admin@meduhentai.com',
-          role: 'admin',
-          status: 'active',
-          createdAt: '2024-01-01',
-          lastLogin: '2024-01-15'
-        },
-        {
-          _id: '2',
-          username: 'user1',
-          email: 'user1@example.com',
-          role: 'user',
-          status: 'active',
-          createdAt: '2024-01-05',
-          lastLogin: '2024-01-14'
-        },
-        {
-          _id: '3',
-          username: 'user2',
-          email: 'user2@example.com',
-          role: 'user',
-          status: 'suspended',
-          createdAt: '2024-01-10',
-          lastLogin: '2024-01-12'
-        }
-      ];
-      setUsers(mockUsers);
+      
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '20',
+        ...(search && { search })
+      });
+
+      const response = await fetch(`/api/admin/users?${params}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      const data = await response.json();
+      setUsers(data.users);
+      setPagination(data.pagination);
+      setCurrentPage(page);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -64,44 +87,77 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleStatusChange = async (userId: string, newStatus: User['status']) => {
-    try {
-      // TODO: Implement API call to update user status
-      setUsers(users.map(user => 
-        user._id === userId ? { ...user, status: newStatus } : user
-      ));
-    } catch (error) {
-      console.error('Error updating user status:', error);
-    }
-  };
-
   const handleRoleChange = async (userId: string, newRole: User['role']) => {
     try {
-      // TODO: Implement API call to update user role
+      const response = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          updates: { role: newRole }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user role');
+      }
+
+      // Update local state
       setUsers(users.map(user => 
         user._id === userId ? { ...user, role: newRole } : user
       ));
+
+      // Refresh the current page to get updated data
+      fetchUsers(currentPage, searchTerm);
     } catch (error) {
       console.error('Error updating user role:', error);
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
 
-  const getStatusColor = (status: User['status']) => {
-    switch (status) {
-      case 'active': return 'text-green-600 bg-green-100';
-      case 'suspended': return 'text-yellow-600 bg-yellow-100';
-      case 'banned': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+
+      // Refresh the current page to get updated data
+      fetchUsers(currentPage, searchTerm);
+    } catch (error) {
+      console.error('Error deleting user:', error);
     }
   };
 
   const getRoleColor = (role: User['role']) => {
-    return role === 'admin' ? 'text-purple-600 bg-purple-100' : 'text-blue-600 bg-blue-100';
+    switch (role) {
+      case 'admin':
+        return 'text-purple-600 bg-purple-100';
+      case 'uploader':
+        return 'text-green-600 bg-green-100';
+      default:
+        return 'text-blue-600 bg-blue-100';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   return (
@@ -112,8 +168,8 @@ export default function AdminUsersPage() {
           <p className="text-gray-600">Manage platform users and their permissions</p>
         </div>
 
-        {/* Search */}
-        <div className="mb-6">
+        {/* Search and Controls */}
+        <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center">
           <input
             type="text"
             placeholder="Search users by username or email..."
@@ -121,12 +177,25 @@ export default function AdminUsersPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           />
+          <div className="flex items-center gap-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={showPasswords}
+                onChange={(e) => setShowPasswords(e.target.checked)}
+                className="mr-2 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              />
+              <span className="text-sm text-gray-700">Show Passwords</span>
+            </label>
+          </div>
         </div>
 
         {/* Users Table */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Users ({filteredUsers.length})</h3>
+            <h3 className="text-lg font-medium text-gray-900">
+              Users {pagination && `(${pagination.totalUsers})`}
+            </h3>
           </div>
           {loading ? (
             <div className="p-6 text-center">
@@ -145,13 +214,13 @@ export default function AdminUsersPage() {
                       Role
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      Password
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Stats
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Joined
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Last Login
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -159,12 +228,19 @@ export default function AdminUsersPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredUsers.map((user) => (
+                  {users.map((user) => (
                     <tr key={user._id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{user.username}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="flex items-center">
+                          <img 
+                            src={user.avatar || '/medusa.ico'} 
+                            alt={user.username}
+                            className="h-10 w-10 rounded-full mr-3"
+                          />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                            <div className="text-sm text-gray-500">{user.email}</div>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -174,31 +250,51 @@ export default function AdminUsersPage() {
                           className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role)} border-0`}
                         >
                           <option value="user">User</option>
+                          <option value="uploader">Uploader</option>
                           <option value="admin">Admin</option>
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <select
-                          value={user.status}
-                          onChange={(e) => handleStatusChange(user._id, e.target.value as User['status'])}
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.status)} border-0`}
-                        >
-                          <option value="active">Active</option>
-                          <option value="suspended">Suspended</option>
-                          <option value="banned">Banned</option>
-                        </select>
+                        <div className="text-sm text-gray-500">
+                          {user.originalPassword ? (
+                            <div className="flex items-center gap-2">
+                              {showPasswords ? (
+                                <span className="font-mono bg-gray-100 px-2 py-1 rounded">
+                                  {user.originalPassword}
+                                </span>
+                              ) : (
+                                <span className="font-mono bg-gray-100 px-2 py-1 rounded">
+                                  {'•'.repeat(user.originalPassword.length)}
+                                </span>
+                              )}
+                              <button
+                                onClick={() => navigator.clipboard.writeText(user.originalPassword!)}
+                                className="text-purple-600 hover:text-purple-800 text-xs"
+                                title="Copy password"
+                              >
+                                📋
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 italic">Not available</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          <div>Views: {user.stats.totalViews.toLocaleString()}</div>
+                          <div>Likes: {user.stats.totalLikes.toLocaleString()}</div>
+                          <div>Comments: {user.stats.totalComments.toLocaleString()}</div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
+                        {formatDate(user.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-purple-600 hover:text-purple-900 mr-3">
-                          Edit
-                        </button>
-                        <button className="text-red-600 hover:text-red-900">
+                        <button 
+                          onClick={() => handleDeleteUser(user._id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
                           Delete
                         </button>
                       </td>
@@ -209,6 +305,36 @@ export default function AdminUsersPage() {
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to{' '}
+              {Math.min(pagination.currentPage * pagination.limit, pagination.totalUsers)} of{' '}
+              {pagination.totalUsers} users
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => fetchUsers(pagination.currentPage - 1, searchTerm)}
+                disabled={!pagination.hasPrevPage}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="px-3 py-2 text-sm text-gray-700">
+                Page {pagination.currentPage} of {pagination.totalPages}
+              </span>
+              <button
+                onClick={() => fetchUsers(pagination.currentPage + 1, searchTerm)}
+                disabled={!pagination.hasNextPage}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

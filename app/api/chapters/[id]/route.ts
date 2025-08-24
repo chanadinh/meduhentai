@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Chapter from '@/models/Chapter';
 import Manga from '@/models/Manga';
+import Notification from '@/models/Notification';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -188,6 +189,16 @@ export async function DELETE(
     await Manga.findByIdAndUpdate(chapter.manga, {
       $inc: { chaptersCount: -1 }
     });
+
+    // Clean up related notifications
+    try {
+      await Notification.deleteMany({
+        'data.chapterId': id
+      });
+    } catch (notificationError) {
+      // Log error but don't fail the chapter deletion
+      console.error('Failed to clean up notifications for deleted chapter:', notificationError);
+    }
 
     return NextResponse.json({
       message: 'Chapter deleted successfully'

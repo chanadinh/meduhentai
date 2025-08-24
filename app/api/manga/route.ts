@@ -21,9 +21,7 @@ export async function GET(request: NextRequest) {
     // Build sort object
     let sortObject: any = {};
     switch (sortBy) {
-      case 'rating':
-        sortObject = { rating: sortOrder === 'desc' ? -1 : 1 };
-        break;
+
       case 'views':
         sortObject = { views: sortOrder === 'desc' ? -1 : 1 };
         break;
@@ -46,7 +44,7 @@ export async function GET(request: NextRequest) {
         .sort(sortObject)
         .skip(skip)
         .limit(limit)
-        .select('title coverImage rating views chaptersCount createdAt updatedAt')
+        .select('title coverImage views chaptersCount createdAt updatedAt')
         .lean(),
       Manga.countDocuments({ isDeleted: { $ne: true } })
     ]);
@@ -83,6 +81,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Check if user has uploader or admin role
+    if (session.user.role !== 'uploader' && session.user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Access denied. Only uploaders and admins can create manga.' },
+        { status: 403 }
       );
     }
 

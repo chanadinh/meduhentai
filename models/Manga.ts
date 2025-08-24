@@ -10,9 +10,10 @@ export interface IManga extends Document {
   author: string;
   artist: string;
   status: 'ongoing' | 'completed' | 'hiatus' | 'cancelled';
-  rating: number;
   views: number;
   chaptersCount: number;
+  likes: number;
+  dislikes: number;
   isDeleted: boolean;
   userId: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -55,17 +56,19 @@ const MangaSchema = new mongoose.Schema<IManga>({
     enum: ['ongoing', 'completed', 'hiatus', 'cancelled'],
     default: 'ongoing'
   },
-  rating: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 5
-  },
   views: {
     type: Number,
     default: 0
   },
   chaptersCount: {
+    type: Number,
+    default: 0
+  },
+  likes: {
+    type: Number,
+    default: 0
+  },
+  dislikes: {
     type: Number,
     default: 0
   },
@@ -84,7 +87,6 @@ const MangaSchema = new mongoose.Schema<IManga>({
 
 // Create indexes for better query performance
 MangaSchema.index({ title: 'text', description: 'text' });
-MangaSchema.index({ rating: -1 });
 MangaSchema.index({ views: -1 });
 MangaSchema.index({ createdAt: -1 });
 MangaSchema.index({ updatedAt: -1 });

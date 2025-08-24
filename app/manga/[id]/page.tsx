@@ -6,7 +6,6 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { 
   BookOpen, 
-  Star, 
   Eye, 
   Calendar, 
   User, 
@@ -14,7 +13,9 @@ import {
   Play,
   Share2,
   MoreHorizontal,
-  Bookmark
+  Bookmark,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import Comments from '@/components/Comments';
@@ -29,8 +30,9 @@ interface Manga {
   author: string;
   artist: string;
   status: string;
-  rating: number;
   views: number;
+  likes: number;
+  dislikes: number;
   genres: string[];
   tags: string[];
   chaptersCount: number;
@@ -51,12 +53,17 @@ export default function MangaDetailPage() {
   const [loading, setLoading] = useState(true);
   const [favorited, setFavorited] = useState(false);
   const [activeTab, setActiveTab] = useState('chapters');
+  const [userReaction, setUserReaction] = useState<'like' | 'dislike' | null>(null);
+  const [reactionCounts, setReactionCounts] = useState({ likes: 0, dislikes: 0 });
 
   useEffect(() => {
     if (params.id) {
       fetchManga();
+      if (session) {
+        fetchUserReaction();
+      }
     }
-  }, [params.id]);
+  }, [params.id, session]);
 
   const fetchManga = async () => {
     try {
@@ -69,11 +76,31 @@ export default function MangaDetailPage() {
       
       const data = await response.json();
       setManga(data.manga);
+      setReactionCounts({
+        likes: data.manga.likes || 0,
+        dislikes: data.manga.dislikes || 0
+      });
     } catch (error) {
       console.error('Error fetching manga:', error);
       toast.error('Không thể tải thông tin manga');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserReaction = async () => {
+    try {
+      const response = await fetch(`/api/manga/${params.id}/reactions`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserReaction(data.userReaction);
+        setReactionCounts({
+          likes: data.likes,
+          dislikes: data.dislikes
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user reaction:', error);
     }
   };
 
@@ -101,6 +128,51 @@ export default function MangaDetailPage() {
     } catch (error) {
       console.error('Error updating favorite:', error);
       toast.error('Không thể cập nhật yêu thích');
+    }
+  };
+
+  const handleReaction = async (reaction: 'like' | 'dislike') => {
+    if (!session) {
+      toast.error('Vui lòng đăng nhập để thích/không thích');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/manga/${params.id}/reactions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reaction }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserReaction(data.reaction);
+        
+        // Update reaction counts based on the action
+        if (data.action === 'added') {
+          setReactionCounts(prev => ({
+            ...prev,
+            [reaction + 's']: prev[reaction + 's'] + 1
+          }));
+        } else if (data.action === 'removed') {
+          setReactionCounts(prev => ({
+            ...prev,
+            [reaction + 's']: prev[reaction + 's'] - 1
+          }));
+        } else if (data.action === 'updated') {
+          // If reaction was changed, we need to fetch updated counts
+          fetchUserReaction();
+        }
+        
+        toast.success(data.message);
+      } else {
+        toast.error('Không thể cập nhật phản ứng');
+      }
+    } catch (error) {
+      console.error('Error updating reaction:', error);
+      toast.error('Không thể cập nhật phản ứng');
     }
   };
 
@@ -206,6 +278,33 @@ export default function MangaDetailPage() {
                   Đọc ngay
                 </a>
               )}
+
+              {/* Like/Dislike Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleReaction('like')}
+                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
+                    userReaction === 'like'
+                      ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:shadow-md'
+                  }`}
+                >
+                  <ThumbsUp className={`h-4 w-4 ${userReaction === 'like' ? 'fill-current' : ''}`} />
+                  <span className="hidden sm:inline">{reactionCounts.likes}</span>
+                </button>
+                
+                <button
+                  onClick={() => handleReaction('dislike')}
+                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
+                    userReaction === 'dislike'
+                      ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:shadow-md'
+                  }`}
+                >
+                  <ThumbsDown className={`h-4 w-4 ${userReaction === 'dislike' ? 'fill-current' : ''}`} />
+                  <span className="hidden sm:inline">{reactionCounts.dislikes}</span>
+                </button>
+              </div>
               
               <button className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-all duration-200">
                 <Share2 className="h-5 w-5" />
@@ -235,16 +334,20 @@ export default function MangaDetailPage() {
             {/* Stats */}
             <div className="flex items-center gap-6 mb-8">
               <div className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                <span className="text-lg font-semibold text-gray-900">{manga.rating.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <Bookmark className="h-5 w-5 text-gray-500" />
                 <span className="text-lg font-semibold text-gray-900">{manga.views}</span>
               </div>
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-gray-500" />
                 <span className="text-lg font-semibold text-gray-900">{manga.chaptersCount || manga.chapters?.length || 0}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ThumbsUp className="h-5 w-5 text-green-500" />
+                <span className="text-lg font-semibold text-gray-900">{reactionCounts.likes}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ThumbsDown className="h-5 w-5 text-red-500" />
+                <span className="text-lg font-semibold text-gray-900">{reactionCounts.dislikes}</span>
               </div>
             </div>
 

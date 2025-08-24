@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         .sort(sortObject)
         .skip(skip)
         .limit(limit)
-        .select('title author coverImage rating views totalChapters type genres tags createdAt')
+        .select('title author coverImage views totalChapters type genres tags createdAt')
         .lean(),
       Manga.countDocuments(searchQuery)
     ]);

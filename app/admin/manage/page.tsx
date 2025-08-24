@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import AdminLayout from '@/components/AdminLayout';
 import { 
   Upload, 
@@ -32,7 +33,6 @@ interface MangaForm {
   type: string;
   genres: string[];
   tags: string[];
-  rating: number;
 }
 
 // Chapter Form Interface
@@ -73,8 +73,20 @@ const STATUS_OPTIONS = ['ongoing', 'completed', 'hiatus', 'cancelled'];
 type TabType = 'upload' | 'edit' | 'chapters';
 
 export default function ManageContent() {
-  // Tab state
+  const { data: session } = useSession();
+  
+  // Tab state - default to 'upload' for uploaders/admins, show message for users
   const [activeTab, setActiveTab] = useState<TabType>('upload');
+  
+  // Set appropriate default tab based on user role
+  useEffect(() => {
+    if (session?.user?.role === 'user') {
+      // For regular users, don't set any tab since they can't access upload features
+      setActiveTab('upload'); // This will be overridden by the access denied message
+    } else if (session?.user?.role === 'uploader' || session?.user?.role === 'admin') {
+      setActiveTab('upload');
+    }
+  }, [session?.user?.role]);
   
   // Manga form state
   const [mangaForm, setMangaForm] = useState<MangaForm>({
@@ -86,8 +98,13 @@ export default function ManageContent() {
     type: 'manga',
     genres: [],
     tags: [],
-    rating: 0,
   });
+  
+  // Tags state
+  const [availableTags, setAvailableTags] = useState<any[]>([]);
+  const [tagsLoading, setTagsLoading] = useState(false);
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   
   // Chapter form state
   const [chapterForm, setChapterForm] = useState<ChapterForm>({
@@ -149,6 +166,12 @@ export default function ManageContent() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (activeTab === 'upload') {
+      fetchAvailableTags();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     if (selectedManga && activeTab === 'chapters') {
       fetchChapters(selectedManga._id);
     }
@@ -175,7 +198,6 @@ export default function ManageContent() {
             type: manga.type,
             genres: manga.genres || [],
             tags: manga.tags || [],
-            rating: manga.rating || 0,
           });
           setCoverPreview(manga.coverImage);
           setEditingManga(manga);
@@ -198,6 +220,16 @@ export default function ManageContent() {
     }
   }, [pageFiles]);
 
+  // Auto-fill artist field with current user's username
+  useEffect(() => {
+    if (session?.user?.username && !mangaForm.artist) {
+      setMangaForm(prev => ({
+        ...prev,
+        artist: session.user.username
+      }));
+    }
+  }, [session, mangaForm.artist]);
+
   const fetchMangaList = async () => {
     try {
       setMangaLoading(true);
@@ -211,6 +243,25 @@ export default function ManageContent() {
       toast.error('Không thể tải danh sách manga');
     } finally {
       setMangaLoading(false);
+    }
+  };
+
+  const fetchAvailableTags = async () => {
+    try {
+      setTagsLoading(true);
+      const response = await fetch('/api/tags');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch tags');
+      }
+      
+      const data = await response.json();
+      setAvailableTags(data.tags || []);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+      // Don't show error toast for tags, just log it
+    } finally {
+      setTagsLoading(false);
     }
   };
 
@@ -235,7 +286,7 @@ export default function ManageContent() {
     const { name, value } = e.target;
     setMangaForm(prev => ({
       ...prev,
-      [name]: name === 'rating' ? parseFloat(value) : value
+      [name]: value
     }));
   };
 
@@ -257,6 +308,22 @@ export default function ManageContent() {
       setNewTag('');
     }
   };
+
+  const handleTagSelect = (tag: any) => {
+    if (!mangaForm.tags.includes(tag.name)) {
+      setMangaForm(prev => ({
+        ...prev,
+        tags: [...prev.tags, tag.name]
+      }));
+    }
+    setTagSearchQuery('');
+    setShowTagSuggestions(false);
+  };
+
+  const filteredTags = availableTags.filter(tag => 
+    tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
+    !mangaForm.tags.includes(tag.name)
+  );
 
   const handleRemoveTag = (tag: string) => {
     setMangaForm(prev => ({
@@ -371,12 +438,11 @@ export default function ManageContent() {
       title: '',
       description: '',
       author: '',
-      artist: '',
+      artist: session?.user?.username || '',
       status: 'ongoing',
       type: 'manga',
       genres: [],
       tags: [],
-      rating: 0,
     });
     setCoverImage(null);
     setCoverPreview(null);
@@ -723,7 +789,6 @@ export default function ManageContent() {
           type: data.type,
           genres: data.genres || [],
           tags: data.tags || [],
-          rating: data.rating || 0,
         });
         setCoverPreview(data.coverImage);
         setEditingManga(data);
@@ -858,8 +923,37 @@ export default function ManageContent() {
   });
 
   const renderTabContent = () => {
+    // Check if user has upload permissions first
+    if (session?.user?.role === 'user') {
+      return (
+        <div className="space-y-6">
+          <div className="card p-6">
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📚</div>
+              <h3 className="text-xl font-semibold text-dark-900 mb-2">
+                Content Management
+              </h3>
+              <p className="text-dark-600 mb-4">
+                Welcome to the content management area! This section is for users with upload permissions.
+              </p>
+              <p className="text-sm text-dark-500">
+                Your current role: <span className="font-medium text-blue-600">{session?.user?.role}</span>
+              </p>
+              <p className="text-sm text-dark-500 mt-2">
+                To upload manga and chapters, you need <span className="font-semibold text-green-600">Uploader</span> or <span className="font-semibold text-purple-600">Admin</span> role.
+              </p>
+              <p className="text-sm text-dark-500 mt-2">
+                Contact an administrator to request upload permissions.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
     switch (activeTab) {
       case 'upload':
+        
         return (
           <div className="space-y-6">
             <div className="card p-6">
@@ -909,9 +1003,11 @@ export default function ManageContent() {
                       name="artist"
                       value={mangaForm.artist}
                       onChange={handleMangaInputChange}
-                      className="form-input-beautiful w-full"
-                      placeholder="Nhập tên họa sĩ"
+                      className="form-input-beautiful w-full bg-gray-50"
+                      placeholder="Tự động điền từ người đăng"
+                      readOnly
                     />
+                    <p className="text-xs text-gray-500 mt-1">Tự động điền từ tài khoản của bạn</p>
                   </div>
                   
                   <div>
@@ -948,22 +1044,6 @@ export default function ManageContent() {
                         </option>
                       ))}
                     </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-dark-700 mb-2">
-                      Đánh giá
-                    </label>
-                    <input
-                      type="number"
-                      name="rating"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={mangaForm.rating}
-                      onChange={handleMangaInputChange}
-                      className="form-input-beautiful w-full"
-                    />
                   </div>
                 </div>
 
@@ -1010,15 +1090,95 @@ export default function ManageContent() {
                   <label className="block text-sm font-medium text-dark-700 mb-2">
                     Tags
                   </label>
+                  
+                  {/* Tag Search and Add */}
                   <div className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      className="form-input-beautiful flex-1"
-                      placeholder="Nhập tag mới"
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                    />
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={tagSearchQuery}
+                        onChange={(e) => {
+                          setTagSearchQuery(e.target.value);
+                          setShowTagSuggestions(e.target.value.length > 0);
+                        }}
+                        onFocus={() => setShowTagSuggestions(tagSearchQuery.length > 0)}
+                        className="form-input-beautiful w-full"
+                        placeholder="Tìm kiếm hoặc nhập tag mới"
+                      />
+                      
+                      {/* Tag Suggestions Dropdown */}
+                      {showTagSuggestions && (
+                        <div className="absolute top-full left-0 right-0 bg-white border border-dark-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-10">
+                          {tagsLoading ? (
+                            <div className="p-3 text-center text-dark-500">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 mx-auto"></div>
+                              <p className="mt-1 text-sm">Đang tải tags...</p>
+                            </div>
+                          ) : filteredTags.length > 0 ? (
+                            <>
+                              {/* Existing Tags */}
+                              {filteredTags.map(tag => (
+                                <button
+                                  key={tag._id}
+                                  type="button"
+                                  onClick={() => handleTagSelect(tag)}
+                                  className="w-full text-left p-3 hover:bg-dark-50 border-b border-dark-100 last:border-b-0 flex items-center justify-between"
+                                >
+                                  <span className="text-dark-700">{tag.name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-1 rounded-full text-xs ${
+                                      tag.type === 'tag' 
+                                        ? 'bg-blue-100 text-blue-700' 
+                                        : 'bg-green-100 text-green-700'
+                                    }`}>
+                                      {tag.type}
+                                    </span>
+                                    <span className="text-xs text-dark-500">({tag.count})</span>
+                                  </div>
+                                </button>
+                              ))}
+                              
+                              {/* Add New Tag Option */}
+                              {tagSearchQuery.trim() && !filteredTags.some(tag => tag.name.toLowerCase() === tagSearchQuery.toLowerCase()) && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleAddTag();
+                                    setShowTagSuggestions(false);
+                                  }}
+                                  className="w-full text-left p-3 hover:bg-dark-50 border-t border-dark-200 bg-yellow-50"
+                                >
+                                  <span className="text-yellow-700 font-medium">
+                                    + Thêm tag mới: "{tagSearchQuery}"
+                                  </span>
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <div className="p-3 text-center text-dark-500">
+                              {tagSearchQuery.trim() ? (
+                                <div>
+                                  <p className="text-sm">Không tìm thấy tag</p>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleAddTag();
+                                      setShowTagSuggestions(false);
+                                    }}
+                                    className="mt-2 px-3 py-1 bg-primary-500 text-white rounded-md text-sm hover:bg-primary-600"
+                                  >
+                                    + Thêm tag mới
+                                  </button>
+                                </div>
+                              ) : (
+                                <p className="text-sm">Nhập để tìm kiếm tags</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
                     <button
                       type="button"
                       onClick={handleAddTag}
@@ -1027,6 +1187,8 @@ export default function ManageContent() {
                       <Plus className="h-4 w-4" />
                     </button>
                   </div>
+                  
+                  {/* Selected Tags */}
                   <div className="flex flex-wrap gap-2">
                     {mangaForm.tags.map(tag => (
                       <span
@@ -1043,6 +1205,41 @@ export default function ManageContent() {
                         </button>
                       </span>
                     ))}
+                  </div>
+                  
+                  {/* Available Tags Info */}
+                  <div className="mt-3 p-3 bg-dark-50 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm text-dark-600 mb-2">
+                      <Search className="h-4 w-4" />
+                      <span className="font-medium">Tags có sẵn:</span>
+                      <span className="text-dark-500">
+                        {availableTags.filter(tag => tag.type === 'tag').length} tags, 
+                        {availableTags.filter(tag => tag.type === 'genre').length} genres
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {availableTags.slice(0, 20).map(tag => (
+                        <span
+                          key={tag._id}
+                          className={`px-2 py-1 rounded-full text-xs cursor-pointer transition-colors ${
+                            mangaForm.tags.includes(tag.name)
+                              ? 'bg-primary-500 text-white'
+                              : tag.type === 'tag'
+                              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                          onClick={() => handleTagSelect(tag)}
+                          title={`${tag.name} (${tag.count} manga)`}
+                        >
+                          {tag.name}
+                        </span>
+                      ))}
+                      {availableTags.length > 20 && (
+                        <span className="px-2 py-1 text-xs text-dark-500">
+                          +{availableTags.length - 20} more...
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -1696,52 +1893,75 @@ export default function ManageContent() {
         <div>
           <h1 className="text-3xl font-bold text-dark-900">Quản lý Nội dung</h1>
           <p className="text-dark-600 mt-2">
-            Tải lên, chỉnh sửa manga và quản lý chương
+            {session?.user?.role === 'user' 
+              ? 'Content management area for users with upload permissions'
+              : 'Tải lên, chỉnh sửa manga và quản lý chương'
+            }
           </p>
         </div>
 
         {/* Tabs */}
         <div className="border-b border-dark-200">
           <nav className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('upload')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'upload'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-dark-500 hover:text-dark-700 hover:border-dark-300'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Upload className="h-4 w-4" />
-                {editingManga ? 'Chỉnh sửa' : 'Tải lên Manga'}
+            {/* Only show upload tab for uploaders and admins */}
+            {(session?.user?.role === 'uploader' || session?.user?.role === 'admin') && (
+              <button
+                onClick={() => setActiveTab('upload')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'upload'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-dark-500 hover:text-dark-700 hover:border-dark-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  {editingManga ? 'Chỉnh sửa' : 'Tải lên Manga'}
+                </div>
+              </button>
+            )}
+            
+            {/* Only show edit tab for uploaders and admins */}
+            {(session?.user?.role === 'uploader' || session?.user?.role === 'admin') && (
+              <button
+                onClick={() => setActiveTab('edit')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'edit'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-dark-500 hover:text-dark-700 hover:border-dark-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Edit3 className="h-4 w-4" />
+                  Chỉnh sửa Manga
+                </div>
+              </button>
+            )}
+            
+            {/* Only show chapters tab for uploaders and admins */}
+            {(session?.user?.role === 'uploader' || session?.user?.role === 'admin') && (
+              <button
+                onClick={() => setActiveTab('chapters')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'chapters'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-dark-500 hover:text-dark-700 hover:border-dark-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <FileImage className="h-4 w-4" />
+                  Tải lên Chương
+                </div>
+              </button>
+            )}
+            
+            {/* Show message for users without upload permissions */}
+            {session?.user?.role === 'user' && (
+              <div className="py-2 px-1 border-b-2 border-transparent">
+                <div className="flex items-center gap-2 text-dark-400">
+                  <span className="text-sm">No upload permissions</span>
+                </div>
               </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('edit')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'edit'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-dark-500 hover:text-dark-700 hover:border-dark-300'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Edit3 className="h-4 w-4" />
-                Chỉnh sửa Manga
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('chapters')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'chapters'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-dark-500 hover:text-dark-700 hover:border-dark-300'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <FileImage className="h-4 w-4" />
-                Tải lên Chương
-              </div>
-            </button>
+            )}
           </nav>
         </div>
 

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Comment from '@/models/Comment';
+import Notification from '@/models/Notification';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -109,6 +110,19 @@ export async function DELETE(
     // Soft delete the comment
     comment.isDeleted = true;
     await comment.save();
+
+    // Clean up related notifications
+    try {
+      await Notification.deleteMany({
+        $or: [
+          { 'data.commentId': commentId, type: 'manga_comment' },
+          { 'data.commentId': commentId, type: 'comment_reply' }
+        ]
+      });
+    } catch (notificationError) {
+      // Log error but don't fail the comment deletion
+      console.error('Failed to clean up notifications for deleted comment:', notificationError);
+    }
 
     return NextResponse.json({ message: 'Comment deleted successfully' });
 

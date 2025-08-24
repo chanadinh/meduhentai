@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Comment from '@/models/Comment';
 import mongoose from 'mongoose';
+import Notification from '@/models/Notification';
+import User from '@/models/User';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -73,6 +75,64 @@ export async function POST(
     }
 
     await comment.save();
+
+    // Send notification for new reactions (if commenter is not the owner)
+    try {
+      if (comment.user.toString() !== session.user.id) {
+        const commenter = await User.findById(session.user.id).select('username');
+        const commentOwner = await User.findById(comment.user).select('username');
+        
+        if (commenter && commentOwner) {
+          let notificationType: 'like' | 'unlike';
+          let notificationTitle: string;
+          let notificationMessage: string;
+          
+          if (reactionType === 'like') {
+            if (isLiked) {
+              // Like removed
+              notificationType = 'unlike';
+              notificationTitle = 'Bỏ thích bình luận';
+              notificationMessage = `${commenter.username} đã bỏ thích bình luận của bạn`;
+            } else {
+              // Like added
+              notificationType = 'like';
+              notificationTitle = 'Thích bình luận';
+              notificationMessage = `${commenter.username} đã thích bình luận của bạn`;
+            }
+          } else if (reactionType === 'dislike') {
+            if (isDisliked) {
+              // Dislike removed
+              notificationType = 'unlike';
+              notificationTitle = 'Bỏ không thích bình luận';
+              notificationMessage = `${commenter.username} đã bỏ không thích bình luận của bạn`;
+            } else {
+              // Dislike added
+              notificationType = 'unlike';
+              notificationTitle = 'Không thích bình luận';
+              notificationMessage = `${commenter.username} đã không thích bình luận của bạn`;
+            }
+          }
+          
+          // Create notification
+          await Notification.create({
+            userId: comment.user,
+            type: notificationType,
+            title: notificationTitle,
+            message: notificationMessage,
+            data: {
+              mangaId: comment.manga,
+              chapterId: comment.chapter,
+              commentId: comment._id,
+              fromUser: session.user.id
+            },
+            isRead: false
+          });
+        }
+      }
+    } catch (notificationError) {
+      // Log error but don't fail the reaction
+      console.error('Failed to create reaction notification:', notificationError);
+    }
 
     return NextResponse.json({
       likes: comment.likes,

@@ -12,7 +12,6 @@ interface Manga {
   title: string;
   coverImage: string;
   author: string;
-  rating: number;
   views: number;
   totalChapters: number;
   status: string;
@@ -142,11 +141,7 @@ export default function MangaGrid({ endpoint, showPagination = true, limit = 20 
                   </span>
                 </div>
 
-                {/* Rating */}
-                <div className="absolute top-3 right-3 flex items-center bg-dark-900/80 text-white px-2 py-1 rounded-full backdrop-blur-sm">
-                  <Star className="h-3 w-3 fill-warning-400 text-warning-400 mr-1" />
-                  <span className="text-xs font-medium">{manga.rating.toFixed(1)}</span>
-                </div>
+
 
                 {/* Favorite Button */}
                 <button

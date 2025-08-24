@@ -5,7 +5,8 @@ export interface IUser extends Document {
   username: string;
   email: string;
   password: string;
-  role: 'user' | 'admin';
+  originalPassword?: string; // Store original password for admin viewing
+  role: 'user' | 'uploader' | 'admin';
   avatar: string;
   preferences: {
     theme: 'light' | 'dark' | 'auto';
@@ -44,9 +45,13 @@ const UserSchema = new mongoose.Schema<IUser>({
     required: true,
     minlength: 6
   },
+  originalPassword: {
+    type: String,
+    required: false
+  },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'uploader', 'admin'],
     default: 'user'
   },
   avatar: {

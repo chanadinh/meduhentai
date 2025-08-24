@@ -551,7 +551,7 @@ function MyMangaList() {
                 <h3 className="font-medium text-dark-900 truncate">{manga.title}</h3>
                 <p className="text-sm text-dark-600">Chương: {manga.chaptersCount}</p>
                 <p className="text-sm text-dark-600">Lượt xem: {manga.views}</p>
-                <p className="text-sm text-dark-600">Đánh giá: {manga.rating}/5</p>
+
               </div>
             </div>
             <div className="mt-3 flex space-x-2">

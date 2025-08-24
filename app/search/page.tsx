@@ -136,7 +136,7 @@ function SearchPageContent() {
                   <option value="relevance">Liên quan</option>
                   <option value="createdAt">Ngày tạo</option>
                   <option value="updatedAt">Ngày cập nhật</option>
-                  <option value="rating">Đánh giá</option>
+          
                   <option value="views">Lượt xem</option>
                   <option value="title">Tên</option>
                 </select>
