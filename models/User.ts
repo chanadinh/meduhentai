@@ -19,6 +19,8 @@ export interface IUser extends Document {
   };
   favorites: mongoose.Types.ObjectId[];
   isDeleted: boolean;
+  resetToken?: string;
+  resetTokenExpiry?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -90,6 +92,14 @@ const UserSchema = new mongoose.Schema<IUser>({
   isDeleted: {
     type: Boolean,
     default: false
+  },
+  resetToken: {
+    type: String,
+    required: false
+  },
+  resetTokenExpiry: {
+    type: Date,
+    required: false
   }
 }, {
   timestamps: true

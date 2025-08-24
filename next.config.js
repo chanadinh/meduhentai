@@ -19,6 +19,10 @@ const nextConfig = {
     R2_REGION: process.env.R2_REGION,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    // Email configuration
+    SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
+    EMAIL_FROM: process.env.EMAIL_FROM,
+    SENDGRID_PORT: process.env.SENDGRID_PORT,
   },
 }
 

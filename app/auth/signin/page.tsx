@@ -145,9 +145,9 @@ export default function SignInPage() {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-purple-600 hover:text-purple-500 transition-colors duration-200">
+                <Link href="/auth/forgot-password" className="font-medium text-purple-600 hover:text-purple-500 transition-colors duration-200">
                   Quên mật khẩu?
-                </a>
+                </Link>
               </div>
             </div>
 
