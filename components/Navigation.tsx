@@ -271,8 +271,8 @@ export default function Navigation() {
             <div className="space-y-4">
               {session ? (
                 <>
-                  <div className="flex items-center space-x-3 text-white">
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20">
+                  <div className="flex items-center space-x-3 text-dark-900 bg-white/95 p-3 rounded-lg">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-dark-200">
                       <img 
                         src={session.user.avatar || '/medusa.ico'} 
                         alt="Avatar" 
@@ -280,58 +280,58 @@ export default function Navigation() {
                       />
                     </div>
                     <div>
-                      <p className="font-medium">{session.user.username}</p>
-                      <p className="text-sm text-white/70">{session.user.email}</p>
+                      <p className="font-medium text-dark-900">{session.user.username}</p>
+                      <p className="text-sm text-dark-600">{session.user.email}</p>
                     </div>
                   </div>
                   
                   <div className="space-y-2">
                     <Link 
                       href="/profile" 
-                      className="flex items-center space-x-3 text-white hover:text-primary-200 transition-colors duration-200 p-2 rounded-lg hover:bg-white/10"
+                      className="flex items-center space-x-3 text-dark-900 bg-white/95 hover:bg-white p-3 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <User className="h-5 w-5" />
+                      <User className="h-5 w-5 text-primary-500" />
                       <span>Hồ sơ</span>
                     </Link>
                     
                     <Link 
                       href="/browse" 
-                      className="flex items-center space-x-3 text-white hover:text-primary-200 transition-colors duration-200 p-2 rounded-lg hover:bg-white/10"
+                      className="flex items-center space-x-3 text-dark-900 bg-white/95 hover:bg-white p-3 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <BookOpen className="h-5 w-5" />
+                      <BookOpen className="h-5 w-5 text-primary-500" />
                       <span>Duyệt manga</span>
                     </Link>
                     
                     <Link 
                       href="/user/favorites" 
-                      className="flex items-center space-x-3 text-white hover:text-primary-200 transition-colors duration-200 p-2 rounded-lg hover:bg-white/10"
+                      className="flex items-center space-x-3 text-dark-900 bg-white/95 hover:bg-white p-3 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <Heart className="h-5 w-5" />
+                      <Heart className="h-5 w-5 text-accent-500" />
                       <span>Yêu thích</span>
                     </Link>
                     
                     {session.user.role === 'admin' && (
                       <Link 
                         href="/admin" 
-                        className="flex items-center space-x-3 text-white hover:text-primary-200 transition-colors duration-200 p-2 rounded-lg hover:bg-white/10"
+                        className="flex items-center space-x-3 text-dark-900 bg-white/95 hover:bg-white p-3 rounded-lg transition-colors duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
-                        <Settings className="h-5 w-5" />
+                        <Settings className="h-5 w-5 text-accent-500" />
                         <span>Quản trị</span>
                       </Link>
                     )}
                   </div>
                   
-                  <div className="pt-4 border-t border-white/20">
+                  <div className="pt-4 border-t border-dark-200">
                     <button
                       onClick={() => {
                         handleSignOut();
                         setIsMenuOpen(false);
                       }}
-                      className="flex items-center space-x-3 text-red-200 hover:text-red-100 transition-colors duration-200 p-2 rounded-lg hover:bg-red-500/20 w-full"
+                      className="flex items-center space-x-3 text-red-600 bg-white/95 hover:bg-white p-3 rounded-lg transition-colors duration-200 w-full"
                     >
                       <LogOut className="h-5 w-5" />
                       <span>Đăng xuất</span>
@@ -342,7 +342,7 @@ export default function Navigation() {
                 <div className="space-y-3">
                   <Link 
                     href="/auth/signin" 
-                    className="block text-center text-white hover:text-primary-200 transition-colors duration-200 p-3 rounded-lg hover:bg-white/10"
+                    className="block text-center text-dark-900 bg-white/95 hover:bg-white transition-colors duration-200 p-3 rounded-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Đăng nhập
