@@ -72,16 +72,32 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/profile');
       
-      if (!response.ok) {
+      // Fetch basic profile data
+      const profileResponse = await fetch('/api/profile');
+      if (!profileResponse.ok) {
         throw new Error('Failed to fetch profile');
       }
+      const profileData = await profileResponse.json();
       
-      const data = await response.json();
-      setProfile(data.profile);
+      // Fetch statistics data
+      const statsResponse = await fetch('/api/profile/stats');
+      let stats = { totalViews: 0, totalLikes: 0, totalComments: 0 };
+      
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        stats = statsData.stats;
+      }
+      
+      // Combine profile and stats data
+      const combinedProfile = {
+        ...profileData.profile,
+        stats
+      };
+      
+      setProfile(combinedProfile);
       setFormData({
-        username: data.profile.username
+        username: combinedProfile.username
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
