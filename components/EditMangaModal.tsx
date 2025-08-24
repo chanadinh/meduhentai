@@ -130,8 +130,8 @@ export default function EditMangaModal({ isOpen, onClose, mangaId, onSuccess }: 
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.error('Kích thước ảnh phải nhỏ hơn 5MB');
+      if (file.size > 1024 * 1024 * 1024) { // 1GB limit
+        toast.error('Kích thước ảnh phải nhỏ hơn 1GB');
         return;
       }
       

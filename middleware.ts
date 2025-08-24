@@ -15,10 +15,10 @@ export function middleware(request: NextRequest) {
       if (sizeInBytes > maxSize) {
         return NextResponse.json(
           { 
-            error: 'Request too large. Maximum size is 100MB (Vercel limit).',
+            error: 'Request too large. Maximum size is 100MB (Vercel server limit). Client limit is 1GB but server processing is capped at 100MB.',
             size: sizeInBytes,
             maxSize: maxSize,
-            note: 'Vercel payload includes encoding overhead (~3-4x actual file size)'
+            note: 'Vercel payload includes encoding overhead (~3-4x actual file size). Consider using direct R2 uploads for larger files.'
           },
           { status: 413 }
         );

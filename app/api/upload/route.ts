@@ -29,15 +29,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check file sizes (100MB limit)
-    const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+    // Check file sizes (100MB server limit - Vercel constraint)
+    const maxSize = 100 * 1024 * 1024; // 100MB in bytes (Vercel server limit)
     for (const file of files) {
       if (file.size > maxSize) {
         return NextResponse.json(
           { 
-            error: `File ${file.name} is too large. Maximum size is 100MB.`,
+            error: `File ${file.name} is too large. Maximum size is 100MB (server limit). Client limit is 1GB but server processing is capped at 100MB.`,
             fileSize: file.size,
-            maxSize: maxSize
+            maxSize: maxSize,
+            note: 'Consider using direct R2 uploads for larger files'
           },
           { status: 413 }
         );

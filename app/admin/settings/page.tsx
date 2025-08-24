@@ -9,7 +9,7 @@ export default function AdminSettingsPage() {
     siteDescription: 'Manga reading platform',
     maintenanceMode: false,
     allowRegistration: true,
-    maxUploadSize: 10, // MB
+    maxUploadSize: 1024, // MB (1GB)
     allowedFileTypes: ['jpg', 'jpeg', 'png', 'webp']
   });
 
@@ -99,7 +99,7 @@ export default function AdminSettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Max Upload Size (MB)
+                  Max Upload Size (MB) - Note: Server limit is 100MB
                 </label>
                 <input
                   type="number"

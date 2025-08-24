@@ -265,8 +265,8 @@ export default function ManageContent() {
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.error('Kích thước ảnh phải nhỏ hơn 5MB');
+      if (file.size > 1024 * 1024 * 1024) { // 1GB limit
+        toast.error('Kích thước ảnh phải nhỏ hơn 1GB');
         return;
       }
       
@@ -478,19 +478,19 @@ export default function ManageContent() {
     normalizePageNumbers();
 
     // Check file sizes before uploading (considering Vercel overhead)
-    const maxFileSize = 25 * 1024 * 1024; // 25MB per file (Vercel will see ~100MB)
+    const maxFileSize = 1024 * 1024 * 1024; // 1GB per file (client limit)
     const oversizedFiles = pageFiles.filter(page => page.file.size > maxFileSize);
     if (oversizedFiles.length > 0) {
       const fileNames = oversizedFiles.map(page => page.file.name).join(', ');
-      toast.error(`File quá lớn: ${fileNames}. Kích thước tối đa là 25MB mỗi file (Vercel overhead).`);
+      toast.error(`File quá lớn: ${fileNames}. Kích thước tối đa là 1GB mỗi file.`);
       return;
     }
 
     // Check total payload size (Vercel limit)
     const totalSize = pageFiles.reduce((total, page) => total + page.file.size, 0);
-    const maxTotalSize = 30 * 1024 * 1024; // 30MB total (Vercel will see ~100MB)
+    const maxTotalSize = 1024 * 1024 * 1024; // 1GB total (client limit)
     if (totalSize > maxTotalSize) {
-      toast.error(`Tổng kích thước file quá lớn: ${(totalSize / (1024 * 1024)).toFixed(2)}MB. Tối đa 30MB để tránh lỗi Vercel.`);
+      toast.error(`Tổng kích thước file quá lớn: ${(totalSize / (1024 * 1024 * 1024)).toFixed(2)}GB. Tối đa 1GB để tránh lỗi Vercel.`);
       return;
     }
 
