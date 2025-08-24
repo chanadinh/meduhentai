@@ -13,7 +13,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
-  Filter
+  Filter,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fixR2ImageUrl } from '@/lib/utils';
@@ -111,12 +113,20 @@ export default function ManageContent() {
   // Chapter upload state
   const [pageFiles, setPageFiles] = useState<PageFile[]>([]);
   const [chapterLoading, setChapterLoading] = useState(false);
+  const [chapters, setChapters] = useState<any[]>([]);
+  const [chaptersLoading, setChaptersLoading] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'edit' || activeTab === 'chapters') {
       fetchMangaList();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (selectedManga && activeTab === 'chapters') {
+      fetchChapters(selectedManga._id);
+    }
+  }, [selectedManga, activeTab]);
 
   // Handle edit query parameter from URL
   useEffect(() => {
@@ -175,6 +185,22 @@ export default function ManageContent() {
       toast.error('Không thể tải danh sách manga');
     } finally {
       setMangaLoading(false);
+    }
+  };
+
+  const fetchChapters = async (mangaId: string) => {
+    try {
+      setChaptersLoading(true);
+      const response = await fetch(`/api/chapters?mangaId=${mangaId}`);
+      const data = await response.json();
+      if (data.chapters) {
+        setChapters(data.chapters);
+      }
+    } catch (error) {
+      console.error('Error fetching chapters:', error);
+      toast.error('Không thể tải danh sách chương');
+    } finally {
+      setChaptersLoading(false);
     }
   };
 
@@ -528,6 +554,23 @@ export default function ManageContent() {
     } catch (error) {
       console.error('Error deleting manga:', error);
       toast.error('Không thể xóa manga');
+    }
+  };
+
+  const handleEditChapter = (chapter: any) => {
+    // TODO: Implement chapter editing
+    toast.success('Tính năng chỉnh sửa chương sẽ được phát triển sớm');
+  };
+
+  const handleDeleteChapter = async (chapterId: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa chương này?')) return;
+    
+    try {
+      // TODO: Implement chapter deletion API
+      toast.success('Tính năng xóa chương sẽ được phát triển sớm');
+    } catch (error) {
+      console.error('Error deleting chapter:', error);
+      toast.error('Không thể xóa chương');
     }
   };
 
@@ -894,12 +937,13 @@ export default function ManageContent() {
       case 'chapters':
         return (
           <div className="space-y-6">
+            {/* Chapter Upload Form */}
             <div className="card p-6">
-              <h3 className="text-lg font-semibold text-dark-900 mb-4">Tải lên Chương</h3>
+              <h3 className="text-lg font-semibold text-dark-900 mb-4">Tải lên Chương Mới</h3>
               
               <form onSubmit={handleChapterSubmit} className="space-y-6">
-                {/* Manga Selection */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Manga Selection - Horizontal Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-dark-700 mb-2">
                       Chọn Manga *
@@ -989,56 +1033,86 @@ export default function ManageContent() {
                     </label>
                   </div>
 
-                  {/* Page Grid */}
+                  {/* Page Grid - Enhanced Horizontal Layout */}
                   {pageFiles.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {pageFiles.map((page, index) => (
-                        <div key={index} className="relative group">
-                          <div className="aspect-[3/4] bg-dark-100 rounded-lg overflow-hidden">
-                            <img
-                              src={page.preview}
-                              alt={`Page ${page.pageNumber}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          
-                          {/* Page Number */}
-                          <div className="absolute top-2 left-2 bg-dark-900/80 text-white px-2 py-1 rounded text-xs font-medium">
-                            Trang {page.pageNumber}
-                          </div>
-                          
-                          {/* Remove Button */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-md font-medium text-dark-700">
+                          Trang đã tải lên ({pageFiles.length})
+                        </h4>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-dark-500">Sắp xếp:</span>
                           <button
                             type="button"
-                            onClick={() => removePage(index)}
-                            className="absolute top-2 right-2 bg-error-500 hover:bg-error-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => normalizePageNumbers()}
+                            className="px-3 py-1 bg-primary-100 hover:bg-primary-200 text-primary-700 rounded-md text-sm transition-colors"
                           >
-                            <X className="h-3 w-3" />
+                            Tự động
                           </button>
-                          
-                          {/* Reorder Buttons */}
-                          <div className="absolute bottom-2 left-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {index > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => reorderPages(index, index - 1)}
-                                className="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-1 px-2 rounded text-xs"
-                              >
-                                <ChevronLeft className="h-3 w-3" />
-                              </button>
-                            )}
-                            {index < pageFiles.length - 1 && (
-                              <button
-                                type="button"
-                                onClick={() => reorderPages(index, index + 1)}
-                                className="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-1 px-2 rounded text-xs"
-                              >
-                                <ChevronRight className="h-3 w-3" />
-                              </button>
-                            )}
-                          </div>
                         </div>
-                      ))}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                        {pageFiles.map((page, index) => (
+                          <div key={index} className="relative group bg-white rounded-lg shadow-sm border border-dark-200 hover:shadow-md transition-all duration-200">
+                            <div className="aspect-[3/4] bg-dark-100 rounded-lg overflow-hidden">
+                              <img
+                                src={page.preview}
+                                alt={`Page ${page.pageNumber}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            
+                            {/* Page Number Badge */}
+                            <div className="absolute top-2 left-2 bg-dark-900/90 text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm">
+                              {page.pageNumber}
+                            </div>
+                            
+                            {/* Action Buttons */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                              <div className="absolute top-2 right-2">
+                                <button
+                                  type="button"
+                                  onClick={() => removePage(index)}
+                                  className="bg-error-500 hover:bg-error-600 text-white p-1.5 rounded-full shadow-sm transition-colors"
+                                  title="Xóa trang"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                              
+                              {/* Reorder Controls */}
+                              <div className="absolute bottom-2 left-2 right-2 flex space-x-1">
+                                {index > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => reorderPages(index, index - 1)}
+                                    className="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-1.5 px-2 rounded text-xs shadow-sm transition-colors"
+                                    title="Di chuyển trái"
+                                  >
+                                    <ChevronLeft className="h-3 w-3" />
+                                  </button>
+                                )}
+                                {index < pageFiles.length - 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => reorderPages(index, index + 1)}
+                                    className="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-1.5 px-2 rounded text-xs shadow-sm transition-colors"
+                                    title="Di chuyển phải"
+                                  >
+                                    <ChevronRight className="h-3 w-3" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Drag Handle */}
+                            <div className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="w-2 h-2 bg-dark-400 rounded-full cursor-move"></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                   
@@ -1068,6 +1142,108 @@ export default function ManageContent() {
                   </button>
                 </div>
               </form>
+            </div>
+
+            {/* Chapter Management Section */}
+            <div className="card p-6">
+              <h3 className="text-lg font-semibold text-dark-900 mb-4">Quản lý Chương</h3>
+              
+              {/* Manga Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-dark-700 mb-2">
+                  Lọc theo Manga
+                </label>
+                <select
+                  value={selectedManga?._id || ''}
+                  onChange={(e) => {
+                    const manga = mangaList.find(m => m._id === e.target.value);
+                    setSelectedManga(manga || null);
+                  }}
+                  className="form-input-beautiful w-full max-w-md"
+                >
+                  <option value="">Tất cả manga</option>
+                  {mangaList.map(manga => (
+                    <option key={manga._id} value={manga._id}>
+                      {manga.title} - {manga.author}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Chapters Grid */}
+              {selectedManga && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-md font-medium text-dark-700">
+                      Chương của "{selectedManga.title}"
+                    </h4>
+                    <button
+                      onClick={() => fetchChapters(selectedManga._id)}
+                      className="px-3 py-1 bg-primary-100 hover:bg-primary-200 text-primary-700 rounded-md text-sm transition-colors"
+                    >
+                      Làm mới
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {chaptersLoading ? (
+                      <div className="col-span-full flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                      </div>
+                    ) : chapters.length > 0 ? (
+                      chapters.map((chapter) => (
+                        <div key={chapter._id} className="bg-white rounded-lg p-4 border border-dark-200 hover:shadow-md transition-shadow">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-primary-100 text-primary-700 px-2 py-1 rounded-full text-xs font-medium">
+                                Chương {chapter.chapterNumber}
+                              </span>
+                              {chapter.volume > 1 && (
+                                <span className="bg-secondary-100 text-secondary-700 px-2 py-1 rounded-full text-xs font-medium">
+                                  V{chapter.volume}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <button
+                                onClick={() => handleEditChapter(chapter)}
+                                className="p-1.5 text-primary-600 hover:bg-primary-50 rounded transition-colors"
+                                title="Chỉnh sửa"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteChapter(chapter._id)}
+                                className="p-1.5 text-error-600 hover:bg-error-50 rounded transition-colors"
+                                title="Xóa"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <h5 className="font-medium text-dark-900 mb-2 line-clamp-2">
+                            {chapter.title || `Chương ${chapter.chapterNumber}`}
+                          </h5>
+                          
+                          <div className="flex items-center justify-between text-sm text-dark-500">
+                            <span>{chapter.pages?.length || 0} trang</span>
+                            <span>{new Date(chapter.createdAt).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-full bg-dark-50 rounded-lg p-8 border border-dark-200">
+                        <div className="text-center text-dark-500">
+                          <BookOpen className="h-12 w-12 mx-auto mb-3 text-dark-300" />
+                          <p className="text-lg font-medium mb-2">Chưa có chương nào</p>
+                          <p className="text-sm">Tải lên chương đầu tiên để bắt đầu</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
