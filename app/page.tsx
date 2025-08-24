@@ -147,7 +147,7 @@ export default function HomePage() {
     );
   }
 
-  // Sort manga by ranking (likes first, then views)
+  // Sort manga by ranking (likes first, then views) and limit to top 10
   const sortedPopularManga = popularManga && popularManga.length > 0 
     ? [...popularManga].sort((a, b) => {
         // First sort by likes (descending)
@@ -156,10 +156,17 @@ export default function HomePage() {
         }
         // If likes are equal, sort by views (descending)
         return (b.views || 0) - (a.views || 0);
-      })
+      }).slice(0, 10) // Only show top 10
     : [];
 
   const currentPopularManga = sortedPopularManga.length > 0 ? sortedPopularManga[currentPopularIndex] : sampleManga;
+
+  // Ensure currentPopularIndex doesn't exceed the top 10 limit
+  useEffect(() => {
+    if (sortedPopularManga.length > 0 && currentPopularIndex >= sortedPopularManga.length) {
+      setCurrentPopularIndex(0);
+    }
+  }, [sortedPopularManga.length, currentPopularIndex]);
 
   // Calculate the actual ranking position based on likes and views
   const getRankingPosition = (manga: any) => {
