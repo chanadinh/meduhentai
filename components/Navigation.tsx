@@ -109,14 +109,6 @@ export default function Navigation() {
             )}
           </form>
 
-          {/* Mobile Search Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
-          >
-            <Search className="h-5 w-5 text-white" />
-          </button>
-
           {/* Right Side - User Menu & Mobile Menu Button */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Desktop User Menu */}
@@ -124,32 +116,62 @@ export default function Navigation() {
               {session ? (
                 <>
                   <NotificationDropdown />
-                  <div className="flex items-center space-x-3">
-                    <Link href="/profile" className="flex items-center space-x-2 text-white hover:text-primary-200 transition-colors duration-200">
-                      <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/20">
-                        <img 
-                          src={session.user.avatar || '/medusa.ico'} 
-                          alt="Avatar" 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <span className="font-medium">{session.user.username}</span>
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center space-x-2 text-white hover:text-red-200 transition-colors duration-200"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span className="hidden lg:inline">Đăng xuất</span>
+                  <div className="relative group">
+                    <button className="flex items-center space-x-3 p-2 rounded-xl hover:bg-dark-50 transition-all duration-200">
+                      <img 
+                        src={session.user.avatar || '/medusa.ico'} 
+                        alt="Avatar" 
+                        className="h-8 w-8 rounded-lg border-2 border-dark-200"
+                      />
+                      <span className="font-medium text-dark-700">{session.user.username}</span>
+                      <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
                     </button>
+                    
+                    {/* Desktop Dropdown Menu */}
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-strong py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 border border-dark-100">
+                      <div className="px-4 py-3 border-b border-dark-100">
+                        <p className="text-sm font-medium text-dark-900">{session.user.username}</p>
+                        <p className="text-xs text-dark-500">{session.user.email}</p>
+                      </div>
+                      
+                      <Link href="/profile" className="flex items-center px-4 py-3 text-sm text-dark-700 hover:bg-dark-50 transition-colors duration-200">
+                        <User className="h-4 w-4 mr-3 text-primary-500" />
+                        Hồ sơ
+                      </Link>
+                      <Link href="/browse" className="flex items-center px-4 py-3 text-sm text-dark-700 hover:bg-dark-50 transition-colors duration-200">
+                        <BookOpen className="h-4 w-4 mr-3 text-primary-500" />
+                        Duyệt manga
+                      </Link>
+                      <Link href="/user/favorites" className="flex items-center px-4 py-3 text-sm text-dark-700 hover:bg-dark-50 transition-colors duration-200">
+                        <Heart className="h-4 w-4 mr-3 text-accent-500" />
+                        Yêu thích
+                      </Link>
+                      
+                      {session.user.role === 'admin' && (
+                        <Link href="/admin" className="flex items-center px-4 py-3 text-sm text-dark-700 hover:bg-dark-50 transition-colors duration-200">
+                          <Settings className="h-4 w-4 mr-3 text-accent-500" />
+                          Bảng quản trị
+                        </Link>
+                      )}
+                      
+                      <div className="border-t border-dark-100 my-2"></div>
+                      
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center w-full px-4 py-3 text-sm text-dark-700 hover:bg-dark-50 transition-colors duration-200"
+                      >
+                        <LogOut className="h-4 w-4 mr-3 text-error-500" />
+                        Đăng xuất
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (
-                <div className="flex items-center space-x-3">
-                  <Link href="/auth/signin" className="text-white hover:text-primary-200 transition-colors duration-200">
+                <div className="flex items-center space-x-4">
+                  <Link href="/auth/signin" className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium transition-all duration-200 hover:scale-105 border border-gray-200 hover:border-gray-300">
                     Đăng nhập
                   </Link>
-                  <Link href="/auth/signup" className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors duration-200">
+                  <Link href="/auth/signup" className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full font-medium transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl">
                     Đăng ký
                   </Link>
                 </div>
