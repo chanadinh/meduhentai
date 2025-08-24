@@ -147,6 +147,8 @@ export default function Navigation() {
                         Yêu thích
                       </Link>
                       
+
+                      
                       {session.user.role === 'admin' && (
                         <Link href="/admin" className="flex items-center px-4 py-3 text-sm text-dark-700 hover:bg-dark-50 transition-colors duration-200">
                           <Settings className="h-4 w-4 mr-3 text-accent-500" />
@@ -322,6 +324,8 @@ export default function Navigation() {
                       <Heart className="h-4 w-4 text-accent-500" />
                       <span>Yêu thích</span>
                     </Link>
+                    
+
                     
                     {session.user.role === 'admin' && (
                       <Link 

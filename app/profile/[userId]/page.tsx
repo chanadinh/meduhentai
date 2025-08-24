@@ -10,8 +10,7 @@ import {
   Camera, 
   Trash2,
   Save,
-  Edit3,
-  Upload
+  Edit3
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import EditMangaModal from '@/components/EditMangaModal';
@@ -50,6 +49,9 @@ export default function ProfilePage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
 
+  // Check if user is viewing their own profile
+  const isOwnProfile = session?.user?.id === userId;
+
   useEffect(() => {
     if (status === 'loading') return;
     
@@ -58,14 +60,7 @@ export default function ProfilePage() {
       return;
     }
 
-    // Check if user is viewing their own profile or has permission to view this profile
-    if (session.user?.id !== userId) {
-      // For now, only allow users to view their own profile
-      // In the future, you could add admin permissions or public profiles
-      router.push(`/profile/${session.user?.id}`);
-      return;
-    }
-
+    // Allow viewing any user's profile (public profiles)
     fetchProfile();
   }, [session, status, router, userId]);
 
@@ -73,15 +68,15 @@ export default function ProfilePage() {
     try {
       setLoading(true);
       
-      // Fetch basic profile data
-      const profileResponse = await fetch('/api/profile');
+      // Fetch profile data for the specified userId
+      const profileResponse = await fetch(`/api/profile/${userId}`);
       if (!profileResponse.ok) {
         throw new Error('Failed to fetch profile');
       }
       const profileData = await profileResponse.json();
       
-      // Fetch statistics data
-      const statsResponse = await fetch('/api/profile/stats');
+      // Fetch statistics data for the specified userId
+      const statsResponse = await fetch(`/api/profile/${userId}/stats`);
       let stats = { totalViews: 0, totalLikes: 0, totalComments: 0 };
       
       if (statsResponse.ok) {
@@ -239,51 +234,58 @@ export default function ProfilePage() {
             <div className="relative inline-block">
               <div className="profile-avatar">
                 <img
-                  src={avatarPreview || profile?.avatar || '/medusa.ico'}
+                  src={profile?.avatar || '/medusa.ico'}
                   alt={profile?.username || 'User'}
                   className="w-32 h-32 rounded-full border-4 border-white shadow-strong"
                 />
-                <button
-                  onClick={() => document.getElementById('avatar-input')?.click()}
-                  className="absolute bottom-0 right-0 p-3 bg-primary-600 text-white rounded-full shadow-medium hover:bg-primary-700 transition-colors duration-200"
-                >
-                  <Camera className="h-5 w-5" />
-                </button>
+                {isOwnProfile && (
+                  <>
+                    <button
+                      onClick={() => document.getElementById('avatar-input')?.click()}
+                      className="absolute bottom-0 right-0 p-3 bg-primary-600 text-white rounded-full shadow-medium hover:bg-primary-700 transition-colors duration-200"
+                    >
+                      <Camera className="h-5 w-5" />
+                    </button>
+                    <input
+                      id="avatar-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
+                  </>
+                )}
               </div>
-              <input
-                id="avatar-input"
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-                className="hidden"
-              />
             </div>
             
             <h1 className="text-3xl font-bold text-white mt-4 mb-2">
               {profile?.username || 'User'}
             </h1>
             <p className="text-white/90 text-lg">
-              {profile?.role === 'admin' ? 'Quản trị viên' : 'Thành viên'}
+              {profile?.role === 'admin' ? 'Quản trị viên' : 
+               profile?.role === 'uploader' ? 'Người tải lên' : 'Thành viên'}
             </p>
             <div className="flex items-center justify-center space-x-2 mt-1">
               <p className="text-white/70 text-sm font-mono">
-                ID: {session?.user?.id || 'N/A'}
+                ID: {userId || 'N/A'}
               </p>
-              <button
-                onClick={() => {
-                  if (session?.user?.id) {
-                    navigator.clipboard.writeText(session.user.id);
-                    toast.success('User ID đã được sao chép!');
-                  }
-                }}
-                className="text-white/60 hover:text-white/80 transition-colors"
-                title="Sao chép User ID"
-              >
-                📋
-              </button>
+              {isOwnProfile && (
+                <button
+                  onClick={() => {
+                    if (userId) {
+                      navigator.clipboard.writeText(userId);
+                      toast.success('User ID đã được sao chép!');
+                    }
+                  }}
+                  className="text-white/60 hover:text-white/80 transition-colors"
+                  title="Sao chép User ID"
+                >
+                  📋
+                </button>
+              )}
             </div>
             
-            {avatarFile && (
+            {isOwnProfile && avatarFile && (
               <div className="mt-4 space-x-2 relative z-20">
                 <button
                   onClick={() => {
@@ -309,16 +311,18 @@ export default function ProfilePage() {
               </div>
             )}
             
-            <button
-              onClick={() => {
-                console.log('Remove Avatar button clicked'); // Debug log
-                handleAvatarRemove();
-              }}
-              className="mt-2 text-white/80 hover:text-white text-sm underline cursor-pointer relative z-20"
-              style={{ pointerEvents: 'auto' }}
-            >
-              Xóa avatar
-            </button>
+            {isOwnProfile && (
+              <button
+                onClick={() => {
+                  console.log('Remove Avatar button clicked'); // Debug log
+                  handleAvatarRemove();
+                }}
+                className="mt-2 text-white/80 hover:text-white text-sm underline cursor-pointer relative z-20"
+                style={{ pointerEvents: 'auto' }}
+              >
+                Xóa avatar
+              </button>
+            )}
           </div>
         </div>
 
@@ -328,22 +332,24 @@ export default function ProfilePage() {
           <div className="bg-white rounded-xl p-6 border border-dark-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-dark-900">Thông tin cơ bản</h2>
-              <button
-                onClick={() => setEditing(!editing)}
-                className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200 text-sm"
-              >
-                {editing ? (
-                  <>
-                    <Edit3 className="h-4 w-4 mr-2" />
-                    Chỉnh sửa
-                  </>
-                ) : (
-                  <>
-                    <Edit3 className="h-4 w-4 mr-2" />
-                    Chỉnh sửa
-                  </>
-                )}
-              </button>
+              {isOwnProfile && (
+                <button
+                  onClick={() => setEditing(!editing)}
+                  className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200 text-sm"
+                >
+                  {editing ? (
+                    <>
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Chỉnh sửa
+                    </>
+                  ) : (
+                    <>
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Chỉnh sửa
+                    </>
+                  )}
+                </button>
+              )}
             </div>
             
             <div className="space-y-4">
@@ -376,20 +382,22 @@ export default function ProfilePage() {
                   </label>
                   <div className="flex items-center space-x-2">
                     <p className="text-dark-900 font-mono text-sm">
-                      {session?.user?.id || 'N/A'}
+                      {userId || 'N/A'}
                     </p>
-                    <button
-                      onClick={() => {
-                        if (session?.user?.id) {
-                          navigator.clipboard.writeText(session.user.id);
-                          toast.success('User ID đã được sao chép!');
-                        }
-                      }}
-                      className="text-dark-500 hover:text-primary-600 transition-colors"
-                      title="Sao chép User ID"
-                    >
-                      📋
-                    </button>
+                    {isOwnProfile && (
+                      <button
+                        onClick={() => {
+                          if (userId) {
+                            navigator.clipboard.writeText(userId);
+                            toast.success('User ID đã được sao chép!');
+                          }
+                        }}
+                        className="text-dark-500 hover:text-primary-600 transition-colors"
+                        title="Sao chép User ID"
+                      >
+                        📋
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -461,17 +469,15 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* My Uploaded Manga */}
+          {/* User's Uploaded Manga */}
           <div className="bg-white rounded-xl p-6 border border-dark-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-dark-900">Manga đã tải lên</h2>
-              <Link href="/admin/upload" className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 text-sm">
-                <Upload className="h-4 w-4 mr-2" />
-                Tải lên Manga mới
-              </Link>
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-dark-900">
+                {isOwnProfile ? 'Manga đã tải lên' : `Manga của ${profile?.username}`}
+              </h2>
             </div>
             
-            <MyMangaList />
+            <MyMangaList userId={userId} isOwnProfile={isOwnProfile} />
           </div>
         </div>
       </main>
@@ -480,7 +486,7 @@ export default function ProfilePage() {
 }
 
 // MyMangaList Component
-function MyMangaList() {
+function MyMangaList({ userId, isOwnProfile }: { userId: string; isOwnProfile: boolean }) {
   const [mangas, setMangas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -491,13 +497,13 @@ function MyMangaList() {
   const [editingMangaId, setEditingMangaId] = useState<string>('');
 
   useEffect(() => {
-    fetchMyManga();
-  }, [page]);
+    fetchUserManga();
+  }, [page, userId]);
 
-  const fetchMyManga = async () => {
+  const fetchUserManga = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/manga/my?page=${page}&limit=10`);
+      const response = await fetch(`/api/manga/user/${userId}?page=${page}&limit=10`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch manga');
@@ -513,7 +519,7 @@ function MyMangaList() {
       
       setHasMore(data.pagination.hasNextPage);
     } catch (error) {
-      console.error('Error fetching my manga:', error);
+      console.error('Error fetching user manga:', error);
       toast.error('Không thể tải danh sách manga');
     } finally {
       setLoading(false);
@@ -532,7 +538,7 @@ function MyMangaList() {
   };
 
   const handleEditSuccess = () => {
-    fetchMyManga(); // Refresh the manga list
+    fetchUserManga(); // Refresh the manga list
   };
 
   if (loading && page === 1) {
@@ -577,12 +583,14 @@ function MyMangaList() {
               >
                 Xem
               </Link>
-              <button
-                onClick={() => handleEditManga(manga._id)}
-                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 text-sm flex-1 text-center"
-              >
-                Chỉnh sửa
-              </button>
+              {isOwnProfile && (
+                <button
+                  onClick={() => handleEditManga(manga._id)}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 text-sm flex-1 text-center"
+                >
+                  Chỉnh sửa
+                </button>
+              )}
             </div>
           </div>
         ))}

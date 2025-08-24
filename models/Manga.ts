@@ -9,6 +9,7 @@ export interface IManga extends Document {
   author: string;
   artist: string;
   status: 'ongoing' | 'completed';
+  type: string;
   views: number;
   chaptersCount: number;
   likes: number;
@@ -50,6 +51,10 @@ const MangaSchema = new mongoose.Schema<IManga>({
     type: String,
     enum: ['ongoing', 'completed'],
     default: 'ongoing'
+  },
+  type: {
+    type: String,
+    default: 'manga'
   },
   views: {
     type: Number,

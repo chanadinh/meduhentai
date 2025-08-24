@@ -11,8 +11,6 @@ import {
   User, 
   Heart,
   Play,
-  Share2,
-  MoreHorizontal,
   Bookmark,
   ThumbsUp,
   ThumbsDown
@@ -34,9 +32,14 @@ interface Manga {
   likes: number;
   dislikes: number;
   genres: string[];
-
   chaptersCount: number;
   chapters: Chapter[];
+  userId?: {
+    _id: string;
+    username: string;
+    role: string;
+    avatar: string;
+  };
 }
 
 interface Chapter {
@@ -306,13 +309,7 @@ export default function MangaDetailPage() {
                 </button>
               </div>
               
-              <button className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-all duration-200">
-                <Share2 className="h-5 w-5" />
-              </button>
-              
-              <button className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-all duration-200">
-                <MoreHorizontal className="h-5 w-5" />
-              </button>
+
             </div>
 
             {/* Status and Genres */}
@@ -361,12 +358,27 @@ export default function MangaDetailPage() {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3">Đăng bởi</h3>
                 <div className="flex flex-wrap gap-2">
-                  <Link 
-                    href="/profile/admin" 
-                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-full transition-colors duration-200 cursor-pointer"
-                  >
-                    Admin
-                  </Link>
+                  {manga.userId ? (
+                    <Link 
+                      href={`/profile/${manga.userId._id}`}
+                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-full transition-colors duration-200 cursor-pointer flex items-center gap-2"
+                    >
+                      <span className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
+                        <User className="w-3 h-3 text-purple-600" />
+                      </span>
+                      {manga.userId.username}
+                      {manga.userId.role === 'admin' && (
+                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">Admin</span>
+                      )}
+                      {manga.userId.role === 'uploader' && (
+                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Uploader</span>
+                      )}
+                    </Link>
+                  ) : (
+                    <span className="px-3 py-1 bg-gray-100 text-gray-500 text-sm rounded-full">
+                      Không xác định
+                    </span>
+                  )}
                 </div>
               </div>
               

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Chapter from '@/models/Chapter';
 import Manga from '@/models/Manga';
+import { uploadImage } from '@/lib/r2';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -78,11 +79,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { mangaId, title, chapterNumber, volume, pages } = body;
+    // Parse FormData instead of JSON
+    const formData = await request.formData();
+    const mangaId = formData.get('mangaId') as string;
+    const title = formData.get('title') as string;
+    const chapterNumber = parseInt(formData.get('chapterNumber') as string);
+    const volume = formData.get('volume') as string;
+    const pageFiles = formData.getAll('pages') as File[];
 
     // Validate required fields
-    if (!mangaId || !title || !chapterNumber || !pages || !Array.isArray(pages)) {
+    if (!mangaId || !title || !chapterNumber || !pageFiles || pageFiles.length === 0) {
       return NextResponse.json(
         { error: 'Missing required fields: mangaId, title, chapterNumber, pages' },
         { status: 400 }
@@ -121,22 +127,67 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Upload page images to R2
+    const uploadedPages = [];
+    
+    console.log(`Starting upload of ${pageFiles.length} page images for manga ${mangaId}`);
+    
+    for (let i = 0; i < pageFiles.length; i++) {
+      const file = pageFiles[i];
+      
+      // Generate unique filename
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 15);
+      const extension = file.name.split('.').pop();
+      const filename = `chapters/${mangaId}/${timestamp}-${randomString}-${i + 1}.${extension}`;
+      
+      console.log(`Uploading page ${i + 1}: ${filename} (${file.size} bytes, ${file.type})`);
+      
+      // Convert file to buffer
+      const buffer = await file.arrayBuffer();
+      
+      // Upload to R2
+      const uploadResult = await uploadImage(filename, Buffer.from(buffer), file.type);
+      
+      if (!uploadResult.success) {
+        console.error(`Failed to upload page ${i + 1}:`, uploadResult.error);
+        return NextResponse.json(
+          { error: `Failed to upload page ${i + 1}: ${uploadResult.error}` },
+          { status: 500 }
+        );
+      }
+      
+      console.log(`Page ${i + 1} uploaded successfully: ${uploadResult.url}`);
+      
+      uploadedPages.push({
+        pageNumber: i + 1,
+        imageUrl: uploadResult.url,
+        width: 800,
+        height: 1200
+      });
+    }
+
     // Create the chapter
     const chapter = new Chapter({
       manga: mangaId,
       title,
       chapterNumber,
       volume: volume || 1,
-      pages: pages.map((page: any, index: number) => ({
-        pageNumber: page.pageNumber || index + 1,
-        imageUrl: page.imageUrl,
-        width: page.width || 800,
-        height: page.height || 1200
-      })),
+      pages: uploadedPages,
+      userId: session.user.id
+    });
+
+    console.log('Creating chapter with data:', {
+      manga: mangaId,
+      title,
+      chapterNumber,
+      volume: volume || 1,
+      pagesCount: uploadedPages.length,
       userId: session.user.id
     });
 
     await chapter.save();
+    console.log('Chapter created successfully:', chapter._id);
 
     // Update manga's chapter count
     await Manga.findByIdAndUpdate(mangaId, {
@@ -156,8 +207,18 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Chapters POST error:', error);
+    
+    if (error instanceof Error) {
+      // Log more details for debugging
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to create chapter' },
+      { error: 'Failed to create chapter', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

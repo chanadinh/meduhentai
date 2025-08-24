@@ -58,6 +58,13 @@ export default function HomePage() {
     }
   }, [popularManga]);
 
+  // Ensure currentPopularIndex doesn't exceed the top 10 limit
+  useEffect(() => {
+    if (popularManga && popularManga.length > 0 && currentPopularIndex >= Math.min(popularManga.length, 10)) {
+      setCurrentPopularIndex(0);
+    }
+  }, [popularManga.length, currentPopularIndex]);
+
   const fetchHomeData = async () => {
     try {
       setLoading(true);
@@ -104,6 +111,29 @@ export default function HomePage() {
     }
   };
 
+  // Sort manga by ranking (likes first, then views) and limit to top 10
+  const sortedPopularManga = popularManga && popularManga.length > 0 
+    ? [...popularManga].sort((a, b) => {
+        // First sort by likes (descending)
+        if (a.likes !== b.likes) {
+          return (b.likes || 0) - (a.likes || 0);
+        }
+        // If likes are equal, sort by views (descending)
+        return (b.views || 0) - (a.views || 0);
+      }).slice(0, 10) // Only show top 10
+    : [];
+
+  const currentPopularManga = sortedPopularManga.length > 0 ? sortedPopularManga[currentPopularIndex] : sampleManga;
+
+  // Calculate the actual ranking position based on likes and views
+  const getRankingPosition = (manga: any) => {
+    if (!sortedPopularManga || sortedPopularManga.length === 0) return 1;
+    
+    // Find the position of the current manga in the sorted array
+    const position = sortedPopularManga.findIndex(m => m._id === manga._id);
+    return position + 1; // Add 1 because index is 0-based
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -146,36 +176,6 @@ export default function HomePage() {
       </div>
     );
   }
-
-  // Sort manga by ranking (likes first, then views) and limit to top 10
-  const sortedPopularManga = popularManga && popularManga.length > 0 
-    ? [...popularManga].sort((a, b) => {
-        // First sort by likes (descending)
-        if (a.likes !== b.likes) {
-          return (b.likes || 0) - (a.likes || 0);
-        }
-        // If likes are equal, sort by views (descending)
-        return (b.views || 0) - (a.views || 0);
-      }).slice(0, 10) // Only show top 10
-    : [];
-
-  const currentPopularManga = sortedPopularManga.length > 0 ? sortedPopularManga[currentPopularIndex] : sampleManga;
-
-  // Ensure currentPopularIndex doesn't exceed the top 10 limit
-  useEffect(() => {
-    if (sortedPopularManga.length > 0 && currentPopularIndex >= sortedPopularManga.length) {
-      setCurrentPopularIndex(0);
-    }
-  }, [sortedPopularManga.length, currentPopularIndex]);
-
-  // Calculate the actual ranking position based on likes and views
-  const getRankingPosition = (manga: any) => {
-    if (!sortedPopularManga || sortedPopularManga.length === 0) return 1;
-    
-    // Find the position of the current manga in the sorted array
-    const position = sortedPopularManga.findIndex(m => m._id === manga._id);
-    return position + 1; // Add 1 because index is 0-based
-  };
 
   return (
     <div className="min-h-screen bg-white">

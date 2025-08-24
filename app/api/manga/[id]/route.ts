@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Manga from '@/models/Manga';
 import Chapter from '@/models/Chapter';
 import Notification from '@/models/Notification';
+import User from '@/models/User';
 
 // GET - Fetch a specific manga by ID
 export async function GET(
@@ -21,9 +24,10 @@ export async function GET(
 
     await connectToDatabase();
 
-    // Fetch manga details
+    // Fetch manga details with populated user information
     const manga = await Manga.findById(mangaId)
       .select('-isDeleted')
+      .populate('userId', 'username role avatar')
       .lean();
 
     if (!manga) {
@@ -94,7 +98,33 @@ export async function PUT(
       );
     }
 
+    // Check authentication
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     await connectToDatabase();
+
+    // Check if manga exists and get current data
+    const existingManga = await Manga.findById(mangaId);
+    if (!existingManga) {
+      return NextResponse.json(
+        { error: 'Manga not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check permissions: Only admins can edit any manga, uploaders can only edit their own
+    if (session.user.role !== 'admin' && existingManga.userId.toString() !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Access denied. You can only edit your own manga.' },
+        { status: 403 }
+      );
+    }
 
     const body = await request.json();
     const {
@@ -186,6 +216,15 @@ export async function DELETE(
       );
     }
 
+    // Check authentication
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     await connectToDatabase();
 
     // Check if manga exists
@@ -194,6 +233,14 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'Manga not found' },
         { status: 404 }
+      );
+    }
+
+    // Check permissions: Only admins can delete any manga, uploaders can only delete their own
+    if (session.user.role !== 'admin' && manga.userId.toString() !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Access denied. You can only delete your own manga.' },
+        { status: 403 }
       );
     }
 

@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import Manga from '@/models/Manga';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { uploadImage } from '@/lib/r2';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -97,12 +98,80 @@ export async function POST(request: NextRequest) {
 
     await connectToDatabase();
 
-    const mangaData = await request.json();
+    // Parse FormData instead of JSON
+    const formData = await request.formData();
+    const coverImage = formData.get('coverImage') as File;
+    const dataString = formData.get('data') as string;
     
-    // Add the user ID to the manga data
+    if (!coverImage) {
+      return NextResponse.json(
+        { error: 'Cover image is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!dataString) {
+      return NextResponse.json(
+        { error: 'Manga data is required' },
+        { status: 400 }
+      );
+    }
+
+    // Parse the manga data
+    let mangaData;
+    try {
+      mangaData = JSON.parse(dataString);
+      console.log('Parsed manga data:', mangaData);
+    } catch (parseError) {
+      console.error('Failed to parse manga data:', parseError);
+      return NextResponse.json(
+        { error: 'Invalid manga data format' },
+        { status: 400 }
+      );
+    }
+
+    // Validate required fields
+    if (!mangaData.title || !mangaData.author) {
+      console.error('Missing required fields:', { title: mangaData.title, author: mangaData.author });
+      return NextResponse.json(
+        { error: 'Title and author are required' },
+        { status: 400 }
+      );
+    }
+
+    // Upload cover image to R2
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const extension = coverImage.name.split('.').pop();
+    const filename = `manga-covers/${timestamp}-${randomString}.${extension}`;
+    
+    console.log('Uploading cover image:', {
+      filename,
+      size: coverImage.size,
+      type: coverImage.type
+    });
+    
+    // Convert file to buffer
+    const buffer = await coverImage.arrayBuffer();
+    
+    // Upload to R2
+    const uploadResult = await uploadImage(filename, Buffer.from(buffer), coverImage.type);
+    
+    if (!uploadResult.success) {
+      console.error('Cover image upload failed:', uploadResult.error);
+      return NextResponse.json(
+        { error: `Failed to upload cover image: ${uploadResult.error}` },
+        { status: 500 }
+      );
+    }
+    
+    console.log('Cover image uploaded successfully:', uploadResult.url);
+    
+    // Add the user ID and cover image URL to the manga data
     const newManga = new Manga({
       ...mangaData,
-      userId: session.user.id
+      userId: session.user.id,
+      coverImage: uploadResult.url
     });
 
     const savedManga = await newManga.save();
@@ -122,10 +191,17 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+      
+      // Log more details for debugging
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
     }
     
     return NextResponse.json(
-      { error: 'Failed to create manga' },
+      { error: 'Failed to create manga', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
