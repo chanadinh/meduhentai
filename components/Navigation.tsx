@@ -168,10 +168,10 @@ export default function Navigation() {
                 </>
               ) : (
                 <div className="flex items-center space-x-4">
-                  <Link href="/auth/signin" className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium transition-all duration-200 hover:scale-105 border border-gray-200 hover:border-gray-300">
+                  <Link href="/auth/signin" className="px-6 py-3 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl font-medium transition-all duration-200 hover:scale-105 border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md">
                     Đăng nhập
                   </Link>
-                  <Link href="/auth/signup" className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full font-medium transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl">
+                  <Link href="/auth/signup" className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl">
                     Đăng ký
                   </Link>
                 </div>
@@ -342,14 +342,14 @@ export default function Navigation() {
                 <div className="space-y-3">
                   <Link 
                     href="/auth/signin" 
-                    className="block text-center text-dark-900 bg-white/95 hover:bg-white transition-colors duration-200 p-3 rounded-lg"
+                    className="block text-center px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl font-medium transition-all duration-200 hover:scale-105 border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Đăng nhập
                   </Link>
                   <Link 
                     href="/auth/signup" 
-                    className="block text-center px-4 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors duration-200"
+                    className="block text-center px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Đăng ký

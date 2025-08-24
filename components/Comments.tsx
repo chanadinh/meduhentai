@@ -382,8 +382,8 @@ export default function Comments({ mangaId, chapterId }: CommentsProps) {
           <div className="flex justify-between items-center">
             <button
               type="submit"
-              disabled={!newComment.trim() || submitting}
-              className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              disabled={submitting}
+              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Send className="h-4 w-4" />
               {submitting ? 'Đang đăng...' : 'Đăng bình luận'}

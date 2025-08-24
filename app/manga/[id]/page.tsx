@@ -185,10 +185,10 @@ export default function MangaDetailPage() {
             <div className="flex flex-col sm:flex-row gap-3 mb-4 lg:mb-6">
               <button
                 onClick={handleFavorite}
-                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
                   favorited 
-                    ? 'bg-red-500 hover:bg-red-600 text-white' 
-                    : 'bg-purple-500 hover:bg-purple-600 text-white'
+                    ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:scale-105' 
+                    : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl hover:scale-105'
                 }`}
               >
                 <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${favorited ? 'fill-current' : ''}`} />
@@ -198,9 +198,9 @@ export default function MangaDetailPage() {
               {manga.chapters && manga.chapters.length > 0 && (
                 <a
                   href={`/manga/${manga._id}/read/${manga.chapters[0]._id}`}
-                  className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full font-medium transition-all duration-200 flex items-center gap-2"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
                 >
-                  <Play className="h-5 w-5" />
+                  <Play className="h-4 w-4 sm:h-5 sm:w-5" />
                   Đọc ngay
                 </a>
               )}

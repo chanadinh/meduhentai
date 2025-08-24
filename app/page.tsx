@@ -230,13 +230,13 @@ export default function HomePage() {
                     <div className="flex items-center gap-2 sm:gap-4">
                       <button
                         onClick={prevPopular}
-                        className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-full border border-white/30 backdrop-blur-sm transition-all duration-200 hover:scale-110"
+                        className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-xl border border-white/30 backdrop-blur-sm transition-all duration-200 hover:scale-110 shadow-sm hover:shadow-md"
                       >
                         <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                       <button
                         onClick={nextPopular}
-                        className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-full border border-white/30 backdrop-blur-sm transition-all duration-200 hover:scale-110"
+                        className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-xl border border-white/30 backdrop-blur-sm transition-all duration-200 hover:scale-110 shadow-sm hover:shadow-md"
                       >
                         <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
