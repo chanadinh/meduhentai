@@ -194,31 +194,37 @@ export default function HomePage() {
                 <div className="flex-1 p-4 lg:p-8 flex flex-col lg:ml-64 lg:pt-16">
                   <h1 
                     key={`title-${currentPopularManga._id || currentPopularIndex}`}
-                    className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight drop-shadow-lg transition-all duration-500 ease-in-out animate-slide-in-right text-center lg:text-left"
+                    className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 leading-tight drop-shadow-lg transition-all duration-500 ease-in-out animate-slide-in-right text-center lg:text-left"
                   >
                     {currentPopularManga.title}
                   </h1>
                   
-                  {/* Manga Description and Read Button */}
-                  <div className="mb-4">
-                    <Link 
-                      href={`/manga/${currentPopularManga._id}`}
-                      className="inline-flex items-center px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg border border-purple-500 backdrop-blur-sm transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md mt-2"
-                    >
-                      Đọc ngay
-                    </Link>
-                  </div>
-                  
                   {/* Genres */}
                   <div 
                     key={`genres-${currentPopularManga._id || currentPopularIndex}`}
-                    className="flex flex-wrap gap-2 mb-4 transition-all duration-500 ease-in-out animate-slide-in-up justify-center lg:justify-start"
+                    className="mb-5 transition-all duration-500 ease-in-out animate-slide-in-up"
                   >
-                    {currentPopularManga.genres && currentPopularManga.genres.slice(0, 6).map((genre, index) => (
-                      <span key={index} className="px-2 sm:px-3 py-1 bg-orange-500 text-white text-xs sm:text-sm font-medium rounded-full shadow-sm transition-all duration-300 hover:scale-110 animate-bounce-in" style={{animationDelay: `${index * 0.1}s`}}>
-                        {genre.toUpperCase()}
-                      </span>
-                    ))}
+                    <div className="flex flex-wrap gap-2.5 justify-center lg:justify-start">
+                      {currentPopularManga.genres && currentPopularManga.genres.slice(0, 8).map((genre, index) => (
+                        <span 
+                          key={index} 
+                          className="px-3 py-1.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs font-semibold rounded-lg shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg animate-bounce-in border border-orange-400" 
+                          style={{animationDelay: `${index * 0.08}s`}}
+                        >
+                          {genre.toUpperCase()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Manga Description and Read Button */}
+                  <div className="mb-6">
+                    <Link 
+                      href={`/manga/${currentPopularManga._id}`}
+                      className="inline-flex items-center px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg border border-purple-500 backdrop-blur-sm transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                    >
+                      Đọc ngay
+                    </Link>
                   </div>
                   
                   {/* Navigation */}
