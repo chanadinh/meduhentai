@@ -199,6 +199,16 @@ export default function HomePage() {
                     {currentPopularManga.title}
                   </h1>
                   
+                  {/* Manga Description */}
+                  <div 
+                    key={`desc-${currentPopularManga._id || currentPopularIndex}`}
+                    className="mb-4 transition-all duration-500 ease-in-out animate-slide-in-left"
+                  >
+                    <p className="text-white/90 leading-relaxed text-sm sm:text-base text-center lg:text-left drop-shadow-md line-clamp-3">
+                      {currentPopularManga.description || 'Không có mô tả cho manga này.'}
+                    </p>
+                  </div>
+                  
                   {/* Genres */}
                   <div 
                     key={`genres-${currentPopularManga._id || currentPopularIndex}`}
