@@ -49,7 +49,7 @@ export async function GET(
             { manga: mangaId }
           ]
         })
-          .select('title chapterNumber pages createdAt updatedAt')
+          .select('title chapterNumber pages views createdAt updatedAt')
           .sort({ chapterNumber: 1 })
           .lean();
         console.log(`Found ${chapters.length} chapters for manga ${mangaId}`);
