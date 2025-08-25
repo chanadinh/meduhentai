@@ -215,6 +215,56 @@ export default function ChapterReader() {
   const hasPrevChapter = currentIndex > 0;
   const hasNextChapter = currentIndex < manga.chapters.length - 1;
 
+  // Touch gesture handling for mobile navigation
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let endX = 0;
+    let endY = 0;
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+    
+    const handleTouchEnd = (e: TouchEvent) => {
+      endX = e.changedTouches[0].clientX;
+      endY = e.changedTouches[0].clientY;
+      
+      const diffX = startX - endX;
+      const diffY = startY - endY;
+      
+      // Minimum swipe distance
+      const minSwipeDistance = 50;
+      
+      // Check if it's a horizontal swipe (not vertical scroll)
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
+        if (diffX > 0) {
+          // Swipe left - go to next chapter
+          if (hasNextChapter) {
+            goToNextChapter();
+          }
+        } else {
+          // Swipe right - go to previous chapter
+          if (hasPrevChapter) {
+            goToPrevChapter();
+          }
+        }
+      }
+    };
+    
+    // Only add touch events on mobile
+    if (window.innerWidth < 768) {
+      document.addEventListener('touchstart', handleTouchStart);
+      document.addEventListener('touchend', handleTouchEnd);
+    }
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [hasNextChapter, hasPrevChapter]);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Main Navigation and Chapter Info Bar Container */}
@@ -223,32 +273,35 @@ export default function ChapterReader() {
         
         {/* Chapter Info Bar */}
         <div className="fixed top-16 left-0 right-0 bg-white/95 backdrop-blur-sm z-40 border-b border-gray-200 shadow-lg">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                 <button
                   onClick={() => router.push(`/manga/${manga._id}`)}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium transition-all duration-200 flex items-center gap-2 hover:scale-105"
+                  className="px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium transition-all duration-200 flex items-center gap-2 hover:scale-105 text-sm sm:text-base"
                 >
-                  <Home className="h-4 w-4" />
-                  Back to Manga
+                  <Home className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Back to Manga</span>
+                  <span className="sm:hidden">Back</span>
                 </button>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">{manga.title}</h1>
-                  <p className="text-sm text-gray-600 mt-1">
+                <div className="text-center sm:text-left">
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{manga.title}</h1>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
                     Chapter {currentChapter.chapterNumber}: {currentChapter.title}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-6 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-purple-500" />
-                  <span>{currentChapter.pages.length} pages</span>
+              <div className="flex items-center justify-center sm:justify-end space-x-4 sm:space-x-6 text-xs sm:text-sm text-gray-600">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500" />
+                  <span className="hidden sm:inline">{currentChapter.pages.length} pages</span>
+                  <span className="sm:hidden">{currentChapter.pages.length}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Eye className="h-4 w-4 text-blue-500" />
-                  <span>{currentChapter.views.toLocaleString()} views</span>
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <Eye className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+                  <span className="hidden sm:inline">{currentChapter.views.toLocaleString()} views</span>
+                  <span className="sm:hidden">{currentChapter.views.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -256,18 +309,59 @@ export default function ChapterReader() {
         </div>
       </div>
 
+      {/* Mobile Swipe Navigation Hints */}
+      <div className="lg:hidden fixed top-1/2 left-4 transform -translate-y-1/2 z-30">
+        <div className="bg-black/20 backdrop-blur-sm rounded-full p-2 text-white">
+          <div className="text-xs text-center">
+            <div className="rotate-90">←</div>
+            <div className="text-[10px] mt-1">Swipe</div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="lg:hidden fixed top-1/2 right-4 transform -translate-y-1/2 z-30">
+        <div className="bg-black/20 backdrop-blur-sm rounded-full p-2 text-white">
+          <div className="text-xs text-center">
+            <div className="-rotate-90">→</div>
+            <div className="text-[10px] mt-1">Swipe</div>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
-      <div className="pt-32 pb-24">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="pt-28 sm:pt-32 pb-20 sm:pb-24">
+        {/* Mobile Chapter Progress Indicator */}
+        <div className="lg:hidden mb-4 px-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+            <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
+              <span>Chapter {currentChapter.chapterNumber}</span>
+              <span>{manga.chapters.length} total</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${((currentChapter.chapterNumber) / manga.chapters.length) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto px-2 sm:px-4">
           {currentChapter.pages && currentChapter.pages.length > 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {currentChapter.pages.map((page, index) => (
                 <div key={page._id || index} className="flex justify-center">
                   <img
                     src={page.imageUrl}
                     alt={`Page ${page.pageNumber || index + 1}`}
-                    className="max-w-full h-auto rounded-2xl shadow-xl w-full transition-all duration-300 hover:shadow-2xl"
+                    className="max-w-full h-auto rounded-lg sm:rounded-2xl shadow-lg sm:shadow-xl w-full transition-all duration-300 hover:shadow-xl sm:hover:shadow-2xl cursor-pointer"
                     loading="lazy"
+                    onClick={() => {
+                      // Toggle navigation bars on image tap for mobile
+                      if (window.innerWidth < 768) {
+                        setShowBars(!showBars);
+                      }
+                    }}
                     onError={(e) => {
                       console.error(`Failed to load page ${page.pageNumber || index + 1}:`, page.imageUrl);
                       e.currentTarget.style.display = 'none';
@@ -277,17 +371,17 @@ export default function ChapterReader() {
               ))}
             </div>
           ) : (
-            <div className="text-center text-gray-900 py-16">
-              <div className="bg-white rounded-2xl border border-gray-200 p-8 max-w-md mx-auto shadow-lg">
-                <h2 className="text-2xl font-bold mb-4 text-purple-600">No Pages Available</h2>
-                <p className="text-gray-600 mb-6">
+            <div className="text-center text-gray-900 py-12 sm:py-16">
+              <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-6 sm:p-8 max-w-md mx-auto shadow-lg">
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 text-purple-600">No Pages Available</h2>
+                <p className="text-sm sm:text-base text-gray-600 mb-6">
                   This chapter doesn't have any pages uploaded yet.
                 </p>
                 <button
                   onClick={() => router.push(`/manga/${manga._id}`)}
-                  className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full font-medium transition-all duration-200 flex items-center gap-2 mx-auto"
+                  className="px-4 sm:px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full font-medium transition-all duration-200 flex items-center gap-2 mx-auto text-sm sm:text-base"
                 >
-                  <Home className="h-4 w-4" />
+                  <Home className="h-3 w-3 sm:h-4 sm:w-4" />
                   Back to Manga
                 </button>
               </div>
@@ -298,11 +392,11 @@ export default function ChapterReader() {
 
       {/* Comments Section */}
       <div className="bg-gray-50 border-t border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
-            <div className="flex items-center gap-3 mb-8">
-              <MessageCircle className="h-6 w-6 text-purple-500" />
-              <h2 className="text-2xl font-bold text-gray-900">Bình luận</h2>
+        <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
+          <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-4 sm:p-8 shadow-lg">
+            <div className="flex items-center gap-3 mb-6 sm:mb-8">
+              <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-purple-500" />
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Bình luận</h2>
             </div>
             <Comments mangaId={manga._id} />
           </div>
@@ -311,29 +405,31 @@ export default function ChapterReader() {
 
       {/* Bottom Navigation Bar */}
       <div className={`fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm z-50 border-t border-gray-200 shadow-lg transition-transform duration-300 ${showBars ? 'translate-y-0' : 'translate-y-full'}`}>
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex items-center justify-center sm:justify-start space-x-3 sm:space-x-4">
               <button
                 onClick={goToPrevChapter}
                 disabled={!hasPrevChapter}
-                className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium transition-all duration-200 flex items-center gap-2 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 sm:px-6 py-2 sm:py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium transition-all duration-200 flex items-center gap-2 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
               >
-                <RotateCcw className="h-4 w-4" />
-                Previous Chapter
+                <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Previous Chapter</span>
+                <span className="sm:hidden">Prev</span>
               </button>
               
               <button
                 onClick={goToNextChapter}
                 disabled={!hasNextChapter}
-                className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full font-medium transition-all duration-200 flex items-center gap-2 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 sm:px-6 py-2 sm:py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full font-medium transition-all duration-200 flex items-center gap-2 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
               >
-                Next Chapter
-                <RotateCcw className="h-4 w-4" />
+                <span className="hidden sm:inline">Next Chapter</span>
+                <span className="sm:hidden">Next</span>
+                <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />
               </button>
             </div>
             
-            <div className="text-sm text-gray-500">
+            <div className="text-center sm:text-right text-xs sm:text-sm text-gray-500">
               Chapter {currentChapter.chapterNumber} of {manga.chapters.length}
             </div>
           </div>

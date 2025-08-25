@@ -235,10 +235,10 @@ export default function MangaDetailPage() {
       
       <main className="max-w-7xl mx-auto px-4 py-4 sm:py-8">
         {/* Main Content */}
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left Column - Cover Image */}
           <div className="w-full lg:w-80 flex-shrink-0 flex justify-center lg:justify-start">
-            <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-64 lg:w-80">
+            <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-48 sm:w-64 lg:w-80">
               <img 
                 src={fixR2ImageUrl(manga.coverImage)} 
                 alt={manga.title}
@@ -250,123 +250,121 @@ export default function MangaDetailPage() {
           {/* Right Column - Manga Details */}
           <div className="flex-1">
             {/* Title and Subtitle */}
-            <div className="mb-4 lg:mb-6 text-center lg:text-left">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{manga.title}</h1>
+            <div className="mb-6 lg:mb-6 text-center lg:text-left">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{manga.title}</h1>
               {manga.description && (
-                <p className="text-base sm:text-lg text-gray-600 mb-4">{manga.description}</p>
+                <p className="text-sm sm:text-base lg:text-lg text-gray-600 mb-4 px-4 lg:px-0">{manga.description}</p>
               )}
-              <p className="text-gray-500">by {manga.artist || manga.author}</p>
+              <p className="text-gray-500 text-sm sm:text-base">by {manga.artist || manga.author}</p>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-4 lg:mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 mb-6 lg:mb-6 px-4 lg:px-0">
               <button
                 onClick={handleFavorite}
-                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                className={`px-4 sm:px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
                   favorited 
                     ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:scale-105' 
                     : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl hover:scale-105'
                 }`}
               >
                 <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${favorited ? 'fill-current' : ''}`} />
-                {favorited ? 'Đã yêu thích' : '+ Thêm vào thư viện'}
+                <span className="text-sm sm:text-base">{favorited ? 'Đã yêu thích' : '+ Thêm vào thư viện'}</span>
               </button>
               
               {manga.chapters && manga.chapters.length > 0 && (
                 <a
                   href={`/manga/${manga._id}/read/${manga.chapters[0]._id}`}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
                 >
                   <Play className="h-4 w-4 sm:h-5 sm:w-5" />
-                  Đọc ngay
+                  <span className="text-sm sm:text-base">Đọc ngay</span>
                 </a>
               )}
 
               {/* Like/Dislike Buttons */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-center sm:justify-start">
                 <button
                   onClick={() => handleReaction('like')}
-                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
+                  className={`px-3 sm:px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
                     userReaction === 'like'
                       ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl'
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:shadow-md'
                   }`}
                 >
                   <ThumbsUp className={`h-4 w-4 ${userReaction === 'like' ? 'fill-current' : ''}`} />
-                  <span className="hidden sm:inline">{reactionCounts.likes}</span>
+                  <span className="text-sm">{reactionCounts.likes}</span>
                 </button>
                 
                 <button
                   onClick={() => handleReaction('dislike')}
-                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
+                  className={`px-3 sm:px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
                     userReaction === 'dislike'
                       ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl'
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:shadow-md'
                   }`}
                 >
                   <ThumbsDown className={`h-4 w-4 ${userReaction === 'dislike' ? 'fill-current' : ''}`} />
-                  <span className="hidden sm:inline">{reactionCounts.dislikes}</span>
+                  <span className="text-sm">{reactionCounts.dislikes}</span>
                 </button>
               </div>
-              
-
             </div>
 
             {/* Status and Genres */}
-            <div className="flex flex-wrap gap-2 mb-6">
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+            <div className="flex flex-wrap gap-2 mb-6 px-4 lg:px-0">
+              <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs sm:text-sm font-medium rounded-full">
                 {manga.status === 'completed' ? 'COMPLETED' : 'ONGOING'}
               </span>
               {manga.genres && manga.genres.slice(0, 3).map((genre, index) => (
-                <span key={index} className="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full">
+                <span key={index} className="px-3 py-1 bg-purple-100 text-purple-800 text-xs sm:text-sm font-medium rounded-full">
                   {genre.toUpperCase()}
                 </span>
               ))}
             </div>
 
             {/* Stats */}
-            <div className="flex items-center gap-6 mb-8">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-4 sm:gap-6 mb-8 px-4 lg:px-0">
               <div className="flex items-center gap-2">
-                <Bookmark className="h-5 w-5 text-gray-500" />
-                <span className="text-lg font-semibold text-gray-900">{manga.views}</span>
+                <Bookmark className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
+                <span className="text-sm sm:text-lg font-semibold text-gray-900">{manga.views}</span>
               </div>
               <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-gray-500" />
-                <span className="text-lg font-semibold text-gray-900">{manga.chaptersCount || manga.chapters?.length || 0}</span>
+                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
+                <span className="text-sm sm:text-lg font-semibold text-gray-900">{manga.chaptersCount || manga.chapters?.length || 0}</span>
               </div>
               <div className="flex items-center gap-2">
-                <ThumbsUp className="h-5 w-5 text-green-500" />
-                <span className="text-lg font-semibold text-gray-900">{reactionCounts.likes}</span>
+                <ThumbsUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+                <span className="text-sm sm:text-lg font-semibold text-gray-900">{reactionCounts.likes}</span>
               </div>
               <div className="flex items-center gap-2">
-                <ThumbsDown className="h-5 w-5 text-red-500" />
-                <span className="text-lg font-semibold text-gray-900">{reactionCounts.dislikes}</span>
+                <ThumbsDown className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+                <span className="text-sm sm:text-lg font-semibold text-gray-900">{reactionCounts.dislikes}</span>
               </div>
             </div>
 
             {/* Details Grid */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 px-4 lg:px-0">
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3">Tác giả</h3>
+                <h3 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Tác giả</h3>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs sm:text-sm rounded-full">
                     {manga.author}
                   </span>
                 </div>
               </div>
               
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3">Đăng bởi</h3>
+                <h3 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Đăng bởi</h3>
                 <div className="flex flex-wrap gap-2">
                   {manga.userId ? (
                     <Link 
                       href={`/profile/${manga.userId._id}`}
-                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-full transition-colors duration-200 cursor-pointer flex items-center gap-2"
+                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm rounded-full transition-colors duration-200 cursor-pointer flex items-center gap-2"
                     >
-                      <span className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                        <User className="w-3 h-3 text-purple-600" />
+                      <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-100 flex items-center justify-center">
+                        <User className="w-2 h-2 sm:w-3 sm:h-3 text-purple-600" />
                       </span>
-                      {manga.userId.username}
+                      <span className="truncate">{manga.userId.username}</span>
                       {manga.userId.role === 'admin' && (
                         <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">Admin</span>
                       )}
@@ -375,36 +373,46 @@ export default function MangaDetailPage() {
                       )}
                     </Link>
                   ) : (
-                    <span className="px-3 py-1 bg-gray-100 text-gray-500 text-sm rounded-full">
+                    <span className="px-3 py-1 bg-gray-100 text-gray-500 text-xs sm:text-sm rounded-full">
                       Không xác định
                     </span>
                   )}
                 </div>
               </div>
               
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-3">Thể loại</h3>
+              <div className="sm:col-span-2">
+                <h3 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Thể loại</h3>
                 <div className="flex flex-wrap gap-2">
                   {manga.genres && manga.genres.map((genre, index) => (
-                    <span key={index} className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
+                    <span key={index} className="px-3 py-1 bg-purple-100 text-purple-800 text-xs sm:text-sm rounded-full">
                       {genre}
                     </span>
                   ))}
                 </div>
               </div>
-              
-
             </div>
           </div>
         </div>
 
+        {/* Mobile Floating Action Button for Reading */}
+        {manga.chapters && manga.chapters.length > 0 && (
+          <div className="fixed bottom-4 right-4 z-50 lg:hidden">
+            <a
+              href={`/manga/${manga._id}/read/${manga.chapters[0]._id}`}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+            >
+              <Play className="h-6 w-6" />
+            </a>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="mt-12">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8">
+            <nav className="flex flex-wrap space-x-4 sm:space-x-8 px-4 lg:px-0">
               <button
                 onClick={() => setActiveTab('chapters')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                className={`py-3 sm:py-4 px-2 border-b-2 font-medium text-xs sm:text-sm transition-colors duration-200 ${
                   activeTab === 'chapters'
                     ? 'border-purple-500 text-purple-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -414,7 +422,7 @@ export default function MangaDetailPage() {
               </button>
               <button
                 onClick={() => setActiveTab('comments')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                className={`py-3 sm:py-4 px-2 border-b-2 font-medium text-xs sm:text-sm transition-colors duration-200 ${
                   activeTab === 'comments'
                     ? 'border-purple-500 text-purple-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -424,7 +432,7 @@ export default function MangaDetailPage() {
               </button>
               <button
                 onClick={() => setActiveTab('covers')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                className={`py-3 sm:py-4 px-2 border-b-2 font-medium text-xs sm:text-sm transition-colors duration-200 ${
                   activeTab === 'covers'
                     ? 'border-purple-500 text-purple-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -436,39 +444,39 @@ export default function MangaDetailPage() {
           </div>
 
           {/* Tab Content */}
-          <div className="mt-8">
+          <div className="mt-6 sm:mt-8">
             {activeTab === 'chapters' && (
               <div>
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h3 className="font-semibold text-gray-900">No Volume</h3>
+                  <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 border-b border-gray-200">
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">No Volume</h3>
                   </div>
                   
                   {manga.chapters && manga.chapters.length > 0 ? (
                     <div className="divide-y divide-gray-200">
                       {manga.chapters.map((chapter) => (
-                        <div key={chapter._id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-200">
-                          <div className="flex items-center justify-between">
+                        <div key={chapter._id} className="px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 transition-colors duration-200">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                             <div className="flex items-center space-x-3">
-                              <Play className="h-4 w-4 text-purple-500" />
+                              <Play className="h-4 w-4 text-purple-500 flex-shrink-0" />
                               <a
                                 href={`/manga/${manga._id}/read/${chapter._id}`}
-                                className="font-medium text-gray-900 hover:text-purple-600 transition-colors duration-200 cursor-pointer"
+                                className="font-medium text-gray-900 hover:text-purple-600 transition-colors duration-200 cursor-pointer text-sm sm:text-base"
                               >
                                 Ch. {chapter.chapterNumber} - {chapter.title}
                               </a>
                             </div>
-                            <div className="flex items-center space-x-4">
-                              <span className="text-sm text-gray-500">No Group</span>
-                              <span className="text-sm text-gray-500">{formatDate(chapter.createdAt)}</span>
+                            <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-500">
+                              <span className="hidden sm:inline">No Group</span>
+                              <span>{formatDate(chapter.createdAt)}</span>
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="px-6 py-8 text-center text-gray-500">
-                      Chưa có chương nào
+                    <div className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                      <p className="text-sm sm:text-base">Chưa có chương nào</p>
                     </div>
                   )}
                 </div>
@@ -483,8 +491,8 @@ export default function MangaDetailPage() {
 
             {activeTab === 'covers' && (
               <div>
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <div className="bg-gray-100 rounded-lg overflow-hidden">
                       <img 
                         src={fixR2ImageUrl(manga.coverImage)} 
@@ -502,3 +510,4 @@ export default function MangaDetailPage() {
     </div>
   );
 }
+
