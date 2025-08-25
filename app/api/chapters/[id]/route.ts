@@ -58,7 +58,7 @@ export async function PUT(
 
     const { id } = params;
     const body = await request.json();
-    const { title, chapterNumber, volume, pages } = body;
+    const { title, chapterNumber, pages } = body;
 
     await connectToDatabase();
 
@@ -108,7 +108,6 @@ export async function PUT(
     const updateData: any = {};
     if (title !== undefined) updateData.title = title;
     if (chapterNumber !== undefined) updateData.chapterNumber = chapterNumber;
-    if (volume !== undefined) updateData.volume = volume;
     if (pages !== undefined) {
       updateData.pages = pages.map((page: any, index: number) => ({
         pageNumber: page.pageNumber || index + 1,

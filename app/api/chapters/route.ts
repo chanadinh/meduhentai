@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const mangaId = searchParams.get('mangaId');
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = parseInt(searchParams.get('limit') || '10');
 
     if (!mangaId) {
       return NextResponse.json(
@@ -30,19 +30,13 @@ export async function GET(request: NextRequest) {
 
     // Fetch chapters for the manga
     const [chapters, total] = await Promise.all([
-      Chapter.find({ 
-        manga: mangaId,
-        isDeleted: { $ne: true } 
-      })
+      Chapter.find({ mangaId: mangaId })
         .sort({ chapterNumber: 1 })
         .skip(skip)
         .limit(limit)
-        .select('title chapterNumber volume pages createdAt updatedAt')
+        .select('title chapterNumber pages createdAt updatedAt')
         .lean(),
-      Chapter.countDocuments({ 
-        manga: mangaId,
-        isDeleted: { $ne: true } 
-      })
+      Chapter.countDocuments({ mangaId: mangaId })
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -93,7 +87,6 @@ export async function POST(request: NextRequest) {
     let mangaId: string;
     let title: string;
     let chapterNumber: number;
-    let volume: string;
     let pageFiles: File[];
     let uploadedPages: any[];
     let isJsonRequest = false;
@@ -105,7 +98,6 @@ export async function POST(request: NextRequest) {
       mangaId = formData.get('mangaId') as string;
       title = formData.get('title') as string;
       chapterNumber = parseInt(formData.get('chapterNumber') as string);
-      volume = formData.get('volume') as string;
       pageFiles = formData.getAll('pages') as File[];
       uploadedPages = [];
 
@@ -113,7 +105,6 @@ export async function POST(request: NextRequest) {
         mangaId,
         title,
         chapterNumber,
-        volume,
         pageFilesCount: pageFiles.length,
         pageFilesInfo: pageFiles.map(f => ({
           name: f.name,
@@ -128,7 +119,6 @@ export async function POST(request: NextRequest) {
       mangaId = jsonData.mangaId;
       title = jsonData.title;
       chapterNumber = parseInt(jsonData.chapterNumber);
-      volume = jsonData.volume;
       pageFiles = [];
       uploadedPages = jsonData.pages || [];
       isJsonRequest = true;
@@ -137,7 +127,6 @@ export async function POST(request: NextRequest) {
         mangaId,
         title,
         chapterNumber,
-        volume,
         uploadedPagesCount: uploadedPages.length,
         uploadedPages: uploadedPages
       });
@@ -302,7 +291,6 @@ export async function POST(request: NextRequest) {
       manga: mangaId,
       title,
       chapterNumber,
-      volume: volume || 1,
       pages: finalUploadedPages,
       userId: session.user.id
     });
@@ -311,7 +299,6 @@ export async function POST(request: NextRequest) {
       manga: mangaId,
       title,
       chapterNumber,
-      volume: volume || 1,
       pagesCount: finalUploadedPages.length,
       userId: session.user.id
     });
@@ -332,7 +319,6 @@ export async function POST(request: NextRequest) {
         _id: chapter._id,
         title: chapter.title,
         chapterNumber: chapter.chapterNumber,
-        volume: chapter.volume,
         pagesCount: chapter.pages.length
       }
     }, { status: 201 });
