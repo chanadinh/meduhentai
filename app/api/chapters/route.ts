@@ -37,13 +37,23 @@ export async function GET(request: NextRequest) {
 
     // Fetch chapters for the manga
     const [chapters, total] = await Promise.all([
-      Chapter.find({ mangaId: mangaId })
+      Chapter.find({ 
+        $or: [
+          { mangaId: mangaId },
+          { manga: mangaId }
+        ]
+      })
         .sort({ chapterNumber: 1 })
         .skip(skip)
         .limit(limit)
         .select('title chapterNumber pages createdAt updatedAt')
         .lean(),
-      Chapter.countDocuments({ mangaId: mangaId })
+      Chapter.countDocuments({ 
+        $or: [
+          { mangaId: mangaId },
+          { manga: mangaId }
+        ]
+      })
     ]);
 
     const totalPages = Math.ceil(total / limit);

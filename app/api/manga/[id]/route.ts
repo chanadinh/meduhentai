@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Manga from '@/models/Manga';
-import Chapter from '@/models/Chapter';
 import Notification from '@/models/Notification';
 import User from '@/models/User';
 import mongoose from 'mongoose';
@@ -39,21 +38,29 @@ export async function GET(
     }
 
     // Fetch chapters for this manga
-    const Chapter = mongoose.models.Chapter;
-    if (!Chapter) {
-      console.log('Chapter model not found');
-      return NextResponse.json(
-        { error: 'Chapter model not found' },
-        { status: 500 }
-      );
+    let chapters = [];
+    try {
+      const Chapter = mongoose.models.Chapter;
+      if (Chapter) {
+        // Check for chapters with both old and new field names
+        chapters = await Chapter.find({ 
+          $or: [
+            { mangaId: mangaId },
+            { manga: mangaId }
+          ]
+        })
+          .select('title chapterNumber pages createdAt updatedAt')
+          .sort({ chapterNumber: 1 })
+          .lean();
+        console.log(`Found ${chapters.length} chapters for manga ${mangaId}`);
+      } else {
+        console.log('Chapter model not available');
+      }
+    } catch (error) {
+      console.error('Error fetching chapters:', error);
+      // Continue without chapters if there's an error
+      chapters = [];
     }
-
-    const chapters = await Chapter.find({ 
-      mangaId: mangaId
-    })
-      .select('title chapterNumber pages createdAt updatedAt')
-      .sort({ chapterNumber: 1 })
-      .lean();
 
     // Update views count
     await Manga.findByIdAndUpdate(mangaId, { $inc: { views: 1 } });
