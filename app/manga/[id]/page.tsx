@@ -179,17 +179,27 @@ export default function MangaDetailPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatExactTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 1) return '1 ngày trước';
+    if (diffMinutes < 1) return 'Vừa cập nhật';
+    if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+    if (diffHours < 24) return `${diffHours} giờ trước`;
     if (diffDays < 7) return `${diffDays} ngày trước`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} tuần trước`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} tháng trước`;
-    return `${Math.floor(diffDays / 365)} năm trước`;
+    
+    // For older dates, show exact date and time
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (loading) {
@@ -467,8 +477,8 @@ export default function MangaDetailPage() {
                               </a>
                             </div>
                             <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-500">
-                              <span className="hidden sm:inline">No Group</span>
-                              <span>{formatDate(chapter.createdAt)}</span>
+                              <span className="hidden sm:inline">Không có nhóm</span>
+                              <span>{formatExactTime(chapter.createdAt)}</span>
                             </div>
                           </div>
                         </div>
