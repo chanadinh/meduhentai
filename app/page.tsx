@@ -18,6 +18,7 @@ interface Manga {
   status: string;
   genres: string[];
   likes?: number;
+  updatedAt?: string;
 }
 
 export default function HomePage() {
@@ -36,7 +37,8 @@ export default function HomePage() {
     author: 'Tác giả Mẫu',
     status: 'ongoing',
     genres: ['SUGGESTIVE', 'ACTION', 'ADVENTURE', 'COMEDY', 'FANTASY', 'ISEKAI'],
-    likes: 567
+    likes: 567,
+    updatedAt: new Date().toISOString()
   };
   const [loading, setLoading] = useState(true);
   const [currentPopularIndex, setCurrentPopularIndex] = useState(0);
@@ -80,7 +82,7 @@ export default function HomePage() {
       }
       
       // Fetch latest manga
-      const latestResponse = await fetch('/api/manga?sort=createdAt&limit=12');
+      const latestResponse = await fetch('/api/manga?sortBy=updatedAt&sortOrder=desc&limit=12');
       if (latestResponse.ok) {
         const latestData = await latestResponse.json();
         console.log('Latest manga data:', latestData);
@@ -132,6 +134,30 @@ export default function HomePage() {
     // Find the position of the current manga in the sorted array
     const position = sortedPopularManga.findIndex(m => m._id === manga._id);
     return position + 1; // Add 1 because index is 0-based
+  };
+
+  // Format time to show exact timestamp
+  const formatExactTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffMinutes < 1) return 'Vừa cập nhật';
+    if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+    
+    // For older dates, show exact date and time
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (loading) {
@@ -331,19 +357,7 @@ export default function HomePage() {
                         <span className="font-medium">{manga.author || 'Chưa có tác giả'}</span>
                         <span>•</span>
                         <span className="text-purple-600 font-medium">
-                          {(() => {
-                            // Use the index to create realistic time progression since manga are sorted by creation date
-                            const index = latestManga.findIndex(m => m._id === manga._id);
-                            if (index === -1) return 'Vừa cập nhật';
-                            
-                            const now = new Date();
-                            const hoursAgo = index * 2; // Each manga is roughly 2 hours apart
-                            
-                            if (hoursAgo < 1) return 'Vừa cập nhật';
-                            if (hoursAgo < 24) return `${hoursAgo} giờ trước`;
-                            const daysAgo = Math.floor(hoursAgo / 24);
-                            return `${daysAgo} ngày trước`;
-                          })()}
+                          {manga.updatedAt ? formatExactTime(manga.updatedAt) : 'Không có thông tin'}
                         </span>
                       </div>
                     </div>

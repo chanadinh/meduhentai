@@ -21,6 +21,9 @@ interface Stats {
   totalChapters: number;
   totalUsers: number;
   totalComments: number;
+  recentManga?: string;
+  recentChapter?: string;
+  recentUser?: string;
 }
 
 export default function AdminDashboard() {
@@ -57,6 +60,30 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Format time to show exact timestamp
+  const formatExactTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffMinutes < 1) return 'Vừa cập nhật';
+    if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+    
+    // For older dates, show exact date and time
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (status === 'loading' || loading) {
@@ -184,7 +211,9 @@ export default function AdminDashboard() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-dark-900">Manga mới được thêm</p>
-                <p className="text-xs text-dark-600">2 giờ trước</p>
+                <p className="text-xs text-dark-600">
+                  {stats.recentManga ? formatExactTime(stats.recentManga) : 'Không có dữ liệu'}
+                </p>
               </div>
             </div>
 
@@ -194,7 +223,9 @@ export default function AdminDashboard() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-dark-900">Chương mới được cập nhật</p>
-                <p className="text-xs text-dark-600">5 giờ trước</p>
+                <p className="text-xs text-dark-600">
+                  {stats.recentChapter ? formatExactTime(stats.recentChapter) : 'Không có dữ liệu'}
+                </p>
               </div>
             </div>
 
@@ -204,7 +235,9 @@ export default function AdminDashboard() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-dark-900">Người dùng mới đăng ký</p>
-                <p className="text-xs text-dark-600">1 ngày trước</p>
+                <p className="text-xs text-dark-600">
+                  {stats.recentUser ? formatExactTime(stats.recentUser) : 'Không có dữ liệu'}
+                </p>
               </div>
             </div>
           </div>
