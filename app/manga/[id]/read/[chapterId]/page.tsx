@@ -160,60 +160,7 @@ export default function ChapterReader() {
   const hasPrevChapter = currentIndex > 0;
   const hasNextChapter = currentIndex < (manga?.chapters.length || 0) - 1;
 
-  // Touch gesture handling for mobile navigation
-  useEffect(() => {
-    // Don't set up touch events if we don't have the required data
-    if (!manga || !currentChapter) {
-      return;
-    }
 
-    let startX = 0;
-    let startY = 0;
-    let endX = 0;
-    let endY = 0;
-    
-    const handleTouchStart = (e: TouchEvent) => {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-    };
-    
-    const handleTouchEnd = (e: TouchEvent) => {
-      endX = e.changedTouches[0].clientX;
-      endY = e.changedTouches[0].clientY;
-      
-      const diffX = startX - endX;
-      const diffY = startY - endY;
-      
-      // Minimum swipe distance
-      const minSwipeDistance = 50;
-      
-      // Check if it's a horizontal swipe (not vertical scroll)
-      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
-        if (diffX > 0) {
-          // Swipe left - go to next chapter
-          if (hasNextChapter) {
-            goToNextChapter();
-          }
-        } else {
-          // Swipe right - go to previous chapter
-          if (hasPrevChapter) {
-            goToPrevChapter();
-          }
-        }
-      }
-    };
-    
-    // Only add touch events on mobile
-    if (window.innerWidth < 768) {
-      document.addEventListener('touchstart', handleTouchStart);
-      document.addEventListener('touchend', handleTouchEnd);
-    }
-    
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [manga, currentChapter, hasNextChapter, hasPrevChapter]);
 
   if (loading) {
     return (
@@ -309,24 +256,7 @@ export default function ChapterReader() {
         </div>
       </div>
 
-      {/* Mobile Swipe Navigation Hints */}
-      <div className="lg:hidden fixed top-1/2 left-4 transform -translate-y-1/2 z-30">
-        <div className="bg-black/20 backdrop-blur-sm rounded-full p-2 text-white">
-          <div className="text-xs text-center">
-            <div className="rotate-90">←</div>
-            <div className="text-[10px] mt-1">Swipe</div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="lg:hidden fixed top-1/2 right-4 transform -translate-y-1/2 z-30">
-        <div className="bg-black/20 backdrop-blur-sm rounded-full p-2 text-white">
-          <div className="text-xs text-center">
-            <div className="-rotate-90">→</div>
-            <div className="text-[10px] mt-1">Swipe</div>
-          </div>
-        </div>
-      </div>
+
 
       {/* Main Content */}
       <div className="pt-28 sm:pt-32 pb-20 sm:pb-24">
