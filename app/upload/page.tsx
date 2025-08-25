@@ -11,7 +11,8 @@ import {
   Save, 
   Plus,
   Trash2,
-  Edit3
+  Edit3,
+  ImageIcon
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import toast from 'react-hot-toast';
@@ -31,6 +32,7 @@ interface ChapterForm {
   title: string;
   chapterNumber: number;
   volume: string;
+  mangaId: string;
   pages: Array<{
     pageNumber: number;
     imageUrl: string;
@@ -66,6 +68,14 @@ export default function UploadPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'manga' | 'chapter'>('manga');
   
+  // Upload method state
+  const [uploadMethod, setUploadMethod] = useState<'server' | 'r2'>('r2');
+  const [showCompressionSettings, setShowCompressionSettings] = useState(false);
+  const [compressionOptions, setCompressionOptions] = useState({
+    quality: 0.8,
+    maxSizeMB: 2.0
+  });
+  
   // Manga form state
   const [mangaForm, setMangaForm] = useState<MangaForm>({
     title: '',
@@ -86,6 +96,7 @@ export default function UploadPage() {
     title: '',
     chapterNumber: 1,
     volume: '',
+    mangaId: '',
     pages: []
   });
   
@@ -195,53 +206,13 @@ export default function UploadPage() {
     try {
       setMangaLoading(true);
       
-      const formData = new FormData();
-      formData.append('coverImage', coverImage);
-      formData.append('data', JSON.stringify(mangaForm));
-
-      // Debug FormData contents
-      console.log('FormData contents:');
-      Array.from(formData.entries()).forEach(([key, value]) => {
-        console.log(`${key}:`, value);
-      });
-      console.log('Cover image details:', {
-        name: coverImage.name,
-        size: coverImage.size,
-        type: coverImage.type
-      });
-
-      const response = await fetch('/api/manga', {
-        method: 'POST',
-        body: formData,
-      });
-
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Server error response:', error);
-        throw new Error(error.error || error.details || 'Failed to upload manga');
+      if (uploadMethod === 'r2') {
+        // R2 Direct Upload Method
+        await handleR2MangaUpload();
+      } else {
+        // Server Upload Method
+        await handleServerMangaUpload();
       }
-
-      const data = await response.json();
-      toast.success('Manga đã được tải lên thành công!');
-      
-      // Reset form
-      setMangaForm({
-        title: '',
-        description: '',
-        author: '',
-        artist: '',
-        status: 'ongoing',
-        type: 'manga',
-        genres: [],
-      });
-      setCoverImage(null);
-      setCoverPreview(null);
-      
-      // Refresh manga list
-      fetchUserManga();
       
     } catch (error) {
       console.error('Error uploading manga:', error);
@@ -249,6 +220,106 @@ export default function UploadPage() {
     } finally {
       setMangaLoading(false);
     }
+  };
+
+  const handleR2MangaUpload = async () => {
+    try {
+      // Get presigned URL for cover image
+      const presignedResponse = await fetch('/api/upload/direct-r2', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'manga-cover',
+          fileName: `cover_${Date.now()}.${coverImage!.name.split('.').pop()}`,
+        }),
+      });
+
+      if (!presignedResponse.ok) {
+        throw new Error('Failed to get presigned URL for cover');
+      }
+
+      const { presignedUrl, fileKey } = await presignedResponse.json();
+
+      // Upload cover image directly to R2
+      const uploadResponse = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: coverImage,
+        headers: {
+          'Content-Type': coverImage!.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload cover image to R2');
+      }
+
+      // Create manga with R2 cover image URL
+      const mangaData = {
+        ...mangaForm,
+        coverImage: `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${fileKey}`,
+      };
+
+      const response = await fetch('/api/manga', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(mangaData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || error.details || 'Failed to create manga');
+      }
+
+      toast.success('Manga đã được tải lên thành công qua R2!');
+      resetMangaForm();
+      fetchUserManga();
+      
+    } catch (error) {
+      console.error('R2 upload failed:', error);
+      toast.error('R2 upload failed, trying server upload as fallback...');
+      
+      // Fallback to server upload
+      await handleServerMangaUpload();
+    }
+  };
+
+  const handleServerMangaUpload = async () => {
+    const formData = new FormData();
+    formData.append('coverImage', coverImage!);
+    formData.append('data', JSON.stringify(mangaForm));
+    formData.append('uploadMethod', 'server');
+
+    const response = await fetch('/api/manga', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || error.details || 'Failed to upload manga');
+    }
+
+    toast.success('Manga đã được tải lên thành công qua server!');
+    resetMangaForm();
+    fetchUserManga();
+  };
+
+  const resetMangaForm = () => {
+    setMangaForm({
+      title: '',
+      description: '',
+      author: '',
+      artist: '',
+      status: 'ongoing',
+      type: 'manga',
+      genres: [],
+    });
+    setCoverImage(null);
+    setCoverPreview(null);
   };
 
   const handleChapterSubmit = async (e: React.FormEvent) => {
@@ -267,38 +338,13 @@ export default function UploadPage() {
     try {
       setChapterLoading(true);
       
-      const formData = new FormData();
-      formData.append('mangaId', selectedManga._id);
-      formData.append('title', chapterForm.title);
-      formData.append('chapterNumber', chapterForm.chapterNumber.toString());
-      formData.append('volume', chapterForm.volume);
-      
-      // Append page files
-      pageFiles.forEach((file, index) => {
-        formData.append('pages', file);
-      });
-
-      const response = await fetch('/api/chapters', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to upload chapter');
+      if (uploadMethod === 'r2') {
+        // R2 Direct Upload Method
+        await handleR2ChapterUpload();
+      } else {
+        // Server Upload Method
+        await handleServerChapterUpload();
       }
-
-      toast.success('Chương đã được tải lên thành công!');
-      
-      // Reset form
-      setChapterForm({
-        title: '',
-        chapterNumber: 1,
-        volume: '',
-        pages: []
-      });
-      setSelectedManga(null);
-      setPageFiles([]);
       
     } catch (error) {
       console.error('Error uploading chapter:', error);
@@ -306,6 +352,130 @@ export default function UploadPage() {
     } finally {
       setChapterLoading(false);
     }
+  };
+
+  const handleR2ChapterUpload = async () => {
+    try {
+      // Get presigned URL for R2 upload
+      const presignedResponse = await fetch('/api/upload/direct-r2', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mangaId: selectedManga._id,
+          title: chapterForm.title,
+          chapterNumber: chapterForm.chapterNumber,
+          volume: chapterForm.volume,
+          pageCount: pageFiles.length,
+        }),
+      });
+
+      if (!presignedResponse.ok) {
+        throw new Error('Failed to get presigned URLs');
+      }
+
+      const { presignedUrls, chapterId } = await presignedResponse.json();
+
+      // Upload each page directly to R2
+      const uploadPromises = pageFiles.map(async (file, index) => {
+        const presignedUrl = presignedUrls[index];
+        if (!presignedUrl) {
+          throw new Error(`No presigned URL for page ${index + 1}`);
+        }
+
+        const uploadResponse = await fetch(presignedUrl, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'Content-Type': file.type,
+          },
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`Failed to upload page ${index + 1} to R2`);
+        }
+
+        return {
+          pageNumber: index + 1,
+          imageUrl: `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${chapterId}/page_${index + 1}.${file.name.split('.').pop()}`,
+          width: 800,
+          height: 1200
+        };
+      });
+
+      const uploadedPages = await Promise.all(uploadPromises);
+
+      // Create chapter with uploaded pages
+      const chapterResponse = await fetch('/api/chapters', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mangaId: selectedManga._id,
+          title: chapterForm.title,
+          chapterNumber: chapterForm.chapterNumber,
+          volume: chapterForm.volume,
+          pages: uploadedPages,
+        }),
+      });
+
+      if (!chapterResponse.ok) {
+        throw new Error('Failed to create chapter');
+      }
+
+      toast.success('Chương đã được tải lên thành công qua R2!');
+      resetChapterForm();
+      
+    } catch (error) {
+      console.error('R2 upload failed:', error);
+      toast.error('R2 upload failed, trying server upload as fallback...');
+      
+      // Fallback to server upload
+      await handleServerChapterUpload();
+    }
+  };
+
+  const handleServerChapterUpload = async () => {
+    const formData = new FormData();
+    formData.append('mangaId', selectedManga._id);
+    formData.append('title', chapterForm.title);
+    formData.append('chapterNumber', chapterForm.chapterNumber.toString());
+    formData.append('volume', chapterForm.volume);
+    formData.append('uploadMethod', 'server');
+    formData.append('compressionQuality', compressionOptions.quality.toString());
+    formData.append('maxSizeMB', compressionOptions.maxSizeMB.toString());
+    
+    // Append page files
+    pageFiles.forEach((file, index) => {
+      formData.append('pages', file);
+    });
+
+    const response = await fetch('/api/chapters', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to upload chapter');
+    }
+
+    toast.success('Chương đã được tải lên thành công qua server!');
+    resetChapterForm();
+  };
+
+  const resetChapterForm = () => {
+    setChapterForm({
+      title: '',
+      chapterNumber: 1,
+      volume: '',
+      mangaId: '',
+      pages: []
+    });
+    setSelectedManga(null);
+    setPageFiles([]);
   };
 
   if (status === 'loading') {
@@ -401,6 +571,51 @@ export default function UploadPage() {
         {activeTab === 'manga' ? (
           <div className="bg-white rounded-xl p-6 border border-dark-200">
             <h2 className="text-xl font-semibold text-dark-900 mb-6">Tải lên Manga mới</h2>
+            
+            {/* Upload Method Toggle */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-gray-700">Phương thức tải lên:</span>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setUploadMethod('server')}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                      uploadMethod === 'server'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    Server Upload
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUploadMethod('r2')}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                      uploadMethod === 'r2'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    R2 Direct Upload
+                  </button>
+                </div>
+              </div>
+              
+              <div className="text-sm text-gray-600">
+                {uploadMethod === 'server' ? (
+                  <div className="flex items-center space-x-2 text-blue-600">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>Server Upload: Tải lên qua server (giới hạn 10MB, có nén ảnh)</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2 text-green-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>R2 Direct Upload: Tải lên trực tiếp lên R2 (không giới hạn kích thước, không nén)</span>
+                  </div>
+                )}
+              </div>
+            </div>
             
             <form onSubmit={handleMangaSubmit} className="space-y-6">
               {/* Cover Image */}
@@ -575,6 +790,51 @@ export default function UploadPage() {
           <div className="bg-white rounded-xl p-6 border border-dark-200">
             <h2 className="text-xl font-semibold text-dark-900 mb-6">Tải lên Chương mới</h2>
             
+            {/* Upload Method Toggle */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-gray-700">Phương thức tải lên:</span>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setUploadMethod('server')}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                      uploadMethod === 'server'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    Server Upload
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUploadMethod('r2')}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                      uploadMethod === 'r2'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    R2 Direct Upload
+                  </button>
+                </div>
+              </div>
+              
+              <div className="text-sm text-gray-600">
+                {uploadMethod === 'server' ? (
+                  <div className="flex items-center space-x-2 text-blue-600">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>Server Upload: Tải lên qua server (giới hạn 100MB, có nén ảnh)</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2 text-green-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>R2 Direct Upload: Tải lên trực tiếp lên R2 (không giới hạn kích thước, không nén)</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <form onSubmit={handleChapterSubmit} className="space-y-6">
               {/* Manga Selection */}
               <div>
@@ -586,6 +846,7 @@ export default function UploadPage() {
                   onChange={(e) => {
                     const manga = mangaList.find(m => m._id === e.target.value);
                     setSelectedManga(manga);
+                    setChapterForm(prev => ({ ...prev, mangaId: e.target.value }));
                   }}
                   className="form-input-beautiful w-full"
                   required
@@ -642,22 +903,95 @@ export default function UploadPage() {
                 </div>
               </div>
 
-              {/* Page Files */}
+              {/* Page Upload */}
               <div>
                 <label className="block text-sm font-medium text-dark-700 mb-2">
-                  Ảnh chương
+                  Trang chương *
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handlePageFilesChange}
-                  className="block w-full text-sm text-dark-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                  required
-                />
-                <p className="text-xs text-dark-500 mt-1">
-                  Chọn tất cả ảnh chương (JPG, PNG, GIF). Thứ tự file sẽ quyết định thứ tự trang.
-                </p>
+                
+                {/* Upload Area */}
+                <div className="mb-6">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dark-300 border-dashed rounded-xl cursor-pointer bg-dark-50 hover:bg-dark-100 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <ImageIcon className="w-8 h-8 mb-2 text-dark-400" />
+                      <p className="mb-2 text-sm text-dark-500">
+                        <span className="font-semibold">Click để tải</span> trang chương
+                      </p>
+                      <p className="text-xs text-dark-400">
+                        PNG, JPG hoặc WEBP 
+                        {uploadMethod === 'server' 
+                          ? ' (TỐI ĐA 25MB mỗi ảnh - Server limit)' 
+                          : ' (Không giới hạn kích thước - R2 direct)'
+                        }
+                      </p>
+                      <p className="text-xs text-dark-500 mt-1">
+                        {uploadMethod === 'server' 
+                          ? 'Ảnh sẽ được nén tự động để giảm payload size'
+                          : 'Ảnh sẽ được tải lên trực tiếp lên R2 không qua server'
+                        }
+                      </p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePageFilesChange}
+                    />
+                  </label>
+                  
+                  {/* Compression Settings */}
+                  {uploadMethod === 'server' && (
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 text-green-700">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm font-medium">⚡ Cài đặt nén ảnh:</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowCompressionSettings(!showCompressionSettings)}
+                          className="text-green-600 hover:text-green-800 text-sm"
+                        >
+                          {showCompressionSettings ? 'Ẩn' : 'Hiện'}
+                        </button>
+                      </div>
+                      
+                      {showCompressionSettings && (
+                        <div className="mt-3 space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs text-green-700 mb-1">Chất lượng:</label>
+                              <select
+                                value={compressionOptions.quality}
+                                onChange={(e) => setCompressionOptions(prev => ({ ...prev, quality: parseFloat(e.target.value) }))}
+                                className="w-full text-xs border border-green-200 rounded px-2 py-1"
+                              >
+                                <option value={0.9}>90% (Chất lượng cao)</option>
+                                <option value={0.8}>80% (Chất lượng tốt)</option>
+                                <option value={0.7}>70% (Chất lượng trung bình)</option>
+                                <option value={0.6}>60% (Chất lượng thấp)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs text-green-700 mb-1">Kích thước tối đa:</label>
+                              <select
+                                value={compressionOptions.maxSizeMB}
+                                onChange={(e) => setCompressionOptions(prev => ({ ...prev, maxSizeMB: parseFloat(e.target.value) }))}
+                                className="w-full text-xs border border-green-200 rounded px-2 py-1"
+                              >
+                                <option value={1.0}>1.0 MB</option>
+                                <option value={2.0}>2.0 MB</option>
+                                <option value={5.0}>5.0 MB</option>
+                                <option value={10.0}>10.0 MB</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 
                 {pageFiles.length > 0 && (
                   <div className="mt-4">
