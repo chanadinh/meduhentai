@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import AuthProvider from '@/components/AuthProvider'
+import VisitorTracker from '@/components/VisitorTracker'
 
 export const metadata: Metadata = {
   title: 'Meduhentai - Đọc Manga Hentai Online',
@@ -26,6 +27,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <AuthProvider>
+          <VisitorTracker />
           {children}
         </AuthProvider>
       </body>

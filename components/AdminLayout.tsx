@@ -27,7 +27,7 @@ const navigation = [
   { name: 'Tải lên Blob', href: '/admin/upload/direct', icon: Upload },
   { name: 'Tải lên R2', href: '/admin/upload/direct-r2', icon: Upload },
   { name: 'Người dùng', href: '/admin/users', icon: Users },
-
+  { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { name: 'Cài đặt', href: '/admin/settings', icon: Settings },
 ];
 
