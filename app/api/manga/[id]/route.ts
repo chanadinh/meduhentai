@@ -6,6 +6,7 @@ import Manga from '@/models/Manga';
 import Chapter from '@/models/Chapter';
 import Notification from '@/models/Notification';
 import User from '@/models/User';
+import mongoose from 'mongoose';
 
 // GET - Fetch a specific manga by ID
 export async function GET(
@@ -38,11 +39,19 @@ export async function GET(
     }
 
     // Fetch chapters for this manga
+    const Chapter = mongoose.models.Chapter;
+    if (!Chapter) {
+      console.log('Chapter model not found');
+      return NextResponse.json(
+        { error: 'Chapter model not found' },
+        { status: 500 }
+      );
+    }
+
     const chapters = await Chapter.find({ 
-      manga: mangaId,
-      isDeleted: { $ne: true }
+      mangaId: mangaId
     })
-      .select('title chapterNumber createdAt pages views')
+      .select('title chapterNumber pages createdAt updatedAt')
       .sort({ chapterNumber: 1 })
       .lean();
 
