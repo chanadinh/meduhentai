@@ -238,16 +238,14 @@ export default function MangaDetailPage() {
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-12">
           {/* Left Column - Cover Image */}
           <div className="w-full lg:w-80 flex-shrink-0 flex justify-center lg:justify-start">
-            <div className="rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-48 sm:w-64 lg:w-80 lg:mx-0 bg-transparent">
+            <div className="rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-48 sm:w-64 lg:w-80 lg:mx-0">
               <img 
                 src={fixR2ImageUrl(manga.coverImage)} 
                 alt={manga.title}
-                className="w-full h-auto object-cover block"
+                className="w-full h-auto object-cover"
                 style={{ 
-                  display: 'block', 
-                  maxWidth: '100%',
-                  height: 'auto',
-                  verticalAlign: 'top',
+                  display: 'block',
+                  fontSize: '0',
                   lineHeight: '0'
                 }}
               />
