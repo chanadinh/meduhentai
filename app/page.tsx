@@ -96,7 +96,7 @@ export default function HomePage() {
       }
       
       // Fetch latest manga
-      const latestResponse = await fetch('/api/manga?sortBy=latestChapter&sortOrder=desc&limit=12');
+      const latestResponse = await fetch('/api/manga?sortBy=latestChapter&sortOrder=desc&limit=15');
       if (latestResponse.ok) {
         const latestData = await latestResponse.json();
         console.log('Latest manga data:', latestData);
@@ -349,7 +349,7 @@ export default function HomePage() {
           </div>
           
           <div className="manga-grid">
-            {(latestManga && latestManga.length > 0 ? latestManga.slice(0, 12) : [sampleManga, sampleManga, sampleManga, sampleManga, sampleManga]).map((manga) => (
+            {(latestManga && latestManga.length > 0 ? latestManga.slice(0, 15) : Array(15).fill(sampleManga)).map((manga) => (
               <Link key={manga._id} href={`/manga/${manga._id}`} className="group block">
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1 cursor-pointer">
                   <div className="relative">
@@ -379,6 +379,17 @@ export default function HomePage() {
                 </div>
               </Link>
             ))}
+          </div>
+          
+          {/* See More Button */}
+          <div className="text-center mt-8">
+            <Link 
+              href="/browse" 
+              className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl border border-purple-500"
+            >
+              <span>Xem thêm</span>
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Link>
           </div>
         </section>
       </main>
