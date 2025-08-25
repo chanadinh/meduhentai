@@ -235,10 +235,10 @@ export default function MangaDetailPage() {
       
       <main className="max-w-7xl mx-auto px-4 py-4 sm:py-8">
         {/* Main Content */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-12">
           {/* Left Column - Cover Image */}
           <div className="w-full lg:w-80 flex-shrink-0 flex justify-center lg:justify-start">
-            <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-48 sm:w-64 lg:w-80">
+            <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-48 sm:w-64 lg:w-80 lg:mx-0">
               <img 
                 src={fixR2ImageUrl(manga.coverImage)} 
                 alt={manga.title}
@@ -248,9 +248,9 @@ export default function MangaDetailPage() {
           </div>
 
           {/* Right Column - Manga Details */}
-          <div className="flex-1">
+          <div className="flex-1 lg:pl-4">
             {/* Title and Subtitle */}
-            <div className="mb-6 lg:mb-6 text-center lg:text-left">
+            <div className="mb-6 lg:mb-8 text-center lg:text-left">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{manga.title}</h1>
               {manga.description && (
                 <p className="text-sm sm:text-base lg:text-lg text-gray-600 mb-4 px-4 lg:px-0">{manga.description}</p>
@@ -259,7 +259,7 @@ export default function MangaDetailPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6 lg:mb-6 px-4 lg:px-0">
+            <div className="flex flex-col sm:flex-row gap-3 mb-6 lg:mb-8 px-4 lg:px-0">
               <button
                 onClick={handleFavorite}
                 className={`px-4 sm:px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
@@ -311,7 +311,7 @@ export default function MangaDetailPage() {
             </div>
 
             {/* Status and Genres */}
-            <div className="flex flex-wrap gap-2 mb-6 px-4 lg:px-0">
+            <div className="flex flex-wrap gap-2 mb-6 lg:mb-8 px-4 lg:px-0">
               <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs sm:text-sm font-medium rounded-full">
                 {manga.status === 'completed' ? 'COMPLETED' : 'ONGOING'}
               </span>
@@ -323,7 +323,7 @@ export default function MangaDetailPage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 sm:flex sm:items-center gap-4 sm:gap-6 mb-8 px-4 lg:px-0">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-4 sm:gap-6 mb-8 lg:mb-10 px-4 lg:px-0">
               <div className="flex items-center gap-2">
                 <Bookmark className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
                 <span className="text-sm sm:text-lg font-semibold text-gray-900">{manga.views}</span>
@@ -343,7 +343,7 @@ export default function MangaDetailPage() {
             </div>
 
             {/* Details Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 px-4 lg:px-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8 mb-8 lg:mb-12 px-4 lg:px-0">
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Tác giả</h3>
                 <div className="flex flex-wrap gap-2">
@@ -407,12 +407,12 @@ export default function MangaDetailPage() {
         )}
 
         {/* Tabs */}
-        <div className="mt-12">
+        <div className="mt-12 lg:mt-16">
           <div className="border-b border-gray-200">
             <nav className="flex flex-wrap space-x-4 sm:space-x-8 px-4 lg:px-0">
               <button
                 onClick={() => setActiveTab('chapters')}
-                className={`py-3 sm:py-4 px-2 border-b-2 font-medium text-xs sm:text-sm transition-colors duration-200 ${
+                className={`py-3 sm:py-4 lg:py-5 px-2 border-b-2 font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 ${
                   activeTab === 'chapters'
                     ? 'border-purple-500 text-purple-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -422,7 +422,7 @@ export default function MangaDetailPage() {
               </button>
               <button
                 onClick={() => setActiveTab('comments')}
-                className={`py-3 sm:py-4 px-2 border-b-2 font-medium text-xs sm:text-sm transition-colors duration-200 ${
+                className={`py-3 sm:py-4 lg:py-5 px-2 border-b-2 font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 ${
                   activeTab === 'comments'
                     ? 'border-purple-500 text-purple-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -432,7 +432,7 @@ export default function MangaDetailPage() {
               </button>
               <button
                 onClick={() => setActiveTab('covers')}
-                className={`py-3 sm:py-4 px-2 border-b-2 font-medium text-xs sm:text-sm transition-colors duration-200 ${
+                className={`py-3 sm:py-4 lg:py-5 px-2 border-b-2 font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 ${
                   activeTab === 'covers'
                     ? 'border-purple-500 text-purple-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -444,29 +444,29 @@ export default function MangaDetailPage() {
           </div>
 
           {/* Tab Content */}
-          <div className="mt-6 sm:mt-8">
+          <div className="mt-6 sm:mt-8 lg:mt-10">
             {activeTab === 'chapters' && (
               <div>
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                  <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 border-b border-gray-200">
-                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">No Volume</h3>
+                  <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 bg-gray-50 border-b border-gray-200">
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base lg:text-lg">No Volume</h3>
                   </div>
                   
                   {manga.chapters && manga.chapters.length > 0 ? (
                     <div className="divide-y divide-gray-200">
                       {manga.chapters.map((chapter) => (
-                        <div key={chapter._id} className="px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 transition-colors duration-200">
+                        <div key={chapter._id} className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 hover:bg-gray-50 transition-colors duration-200">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                             <div className="flex items-center space-x-3">
                               <Play className="h-4 w-4 text-purple-500 flex-shrink-0" />
                               <a
                                 href={`/manga/${manga._id}/read/${chapter._id}`}
-                                className="font-medium text-gray-900 hover:text-purple-600 transition-colors duration-200 cursor-pointer text-sm sm:text-base"
+                                className="font-medium text-gray-900 hover:text-purple-600 transition-colors duration-200 cursor-pointer text-sm sm:text-base lg:text-lg"
                               >
                                 Ch. {chapter.chapterNumber} - {chapter.title}
                               </a>
                             </div>
-                            <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-500">
+                            <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm lg:text-base text-gray-500">
                               <span className="hidden sm:inline">No Group</span>
                               <span>{formatDate(chapter.createdAt)}</span>
                             </div>
@@ -475,8 +475,8 @@ export default function MangaDetailPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="px-4 sm:px-6 py-8 text-center text-gray-500">
-                      <p className="text-sm sm:text-base">Chưa có chương nào</p>
+                    <div className="px-4 sm:px-6 lg:px-8 py-8 lg:py-12 text-center text-gray-500">
+                      <p className="text-sm sm:text-base lg:text-lg">Chưa có chương nào</p>
                     </div>
                   )}
                 </div>
@@ -491,8 +491,8 @@ export default function MangaDetailPage() {
 
             {activeTab === 'covers' && (
               <div>
-                <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 lg:p-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
                     <div className="bg-gray-100 rounded-lg overflow-hidden">
                       <img 
                         src={fixR2ImageUrl(manga.coverImage)} 
