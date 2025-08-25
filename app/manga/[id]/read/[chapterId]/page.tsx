@@ -242,7 +242,13 @@ export default function ChapterReader() {
     );
   }
 
-  if (!manga || !currentChapter) {
+  // Additional safety check to ensure all data is loaded
+  if (!manga || !currentChapter || !currentChapter.pages) {
+    console.log('Component not ready:', { 
+      hasManga: !!manga, 
+      hasCurrentChapter: !!currentChapter, 
+      hasPages: currentChapter?.pages 
+    });
     return (
       <div className="min-h-screen bg-white">
         <Navigation />
@@ -268,6 +274,13 @@ export default function ChapterReader() {
       </div>
     );
   }
+
+  console.log('Component ready, rendering with:', { 
+    mangaTitle: manga.title, 
+    chapterTitle: currentChapter.title, 
+    pagesCount: currentChapter.pages.length,
+    views: currentChapter.views
+  });
 
   const currentIndex = manga.chapters.findIndex(c => c._id === currentChapter._id);
   const hasPrevChapter = currentIndex > 0;
@@ -308,8 +321,8 @@ export default function ChapterReader() {
                 </div>
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Eye className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
-                  <span className="hidden sm:inline">{(currentChapter.views || 0).toLocaleString()} views</span>
-                  <span className="sm:hidden">{(currentChapter.views || 0).toLocaleString()}</span>
+                  <span className="hidden sm:inline">{(currentChapter?.views || 0).toLocaleString()} views</span>
+                  <span className="sm:hidden">{(currentChapter?.views || 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>
