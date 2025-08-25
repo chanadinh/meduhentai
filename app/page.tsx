@@ -63,7 +63,7 @@ export default function HomePage() {
     if (popularManga && popularManga.length > 0 && currentPopularIndex >= Math.min(popularManga.length, 10)) {
       setCurrentPopularIndex(0);
     }
-  }, [popularManga.length, currentPopularIndex]);
+  }, [popularManga, currentPopularIndex]);
 
   const fetchHomeData = async () => {
     try {
