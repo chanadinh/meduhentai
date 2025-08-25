@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Home, RotateCcw, RotateCw, MessageCircle, Eye, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -141,7 +141,7 @@ export default function ChapterReader() {
     }
   };
 
-  const goToNextChapter = useCallback(() => {
+  const goToNextChapter = () => {
     if (manga && currentChapter) {
       const currentIndex = manga.chapters.findIndex(c => c._id === currentChapter._id);
       if (currentIndex < manga.chapters.length - 1) {
@@ -149,9 +149,9 @@ export default function ChapterReader() {
         router.push(`/manga/${manga._id}/read/${nextChapter._id}`);
       }
     }
-  }, [manga, currentChapter, router]);
+  };
 
-  const goToPrevChapter = useCallback(() => {
+  const goToPrevChapter = () => {
     if (manga && currentChapter) {
       const currentIndex = manga.chapters.findIndex(c => c._id === currentChapter._id);
       if (currentIndex > 0) {
@@ -159,58 +159,7 @@ export default function ChapterReader() {
         router.push(`/manga/${manga._id}/read/${prevChapter._id}`);
       }
     }
-  }, [manga, currentChapter, router]);
-
-  // Touch gesture handling for mobile navigation
-  useEffect(() => {
-    // Don't set up touch events if we don't have the required data
-    if (!manga || !currentChapter) {
-      return;
-    }
-
-    let startX = 0;
-    let startY = 0;
-    let endX = 0;
-    let endY = 0;
-    
-    const handleTouchStart = (e: TouchEvent) => {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-    };
-    
-    const handleTouchEnd = (e: TouchEvent) => {
-      endX = e.changedTouches[0].clientX;
-      endY = e.changedTouches[0].clientY;
-      
-      const diffX = startX - endX;
-      const diffY = startY - endY;
-      
-      // Minimum swipe distance
-      const minSwipeDistance = 50;
-      
-      // Check if it's a horizontal swipe (not vertical scroll)
-      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
-        if (diffX > 0) {
-          // Swipe left - go to next chapter
-          goToNextChapter();
-        } else {
-          // Swipe right - go to previous chapter
-          goToPrevChapter();
-        }
-      }
-    };
-    
-    // Only add touch events on mobile
-    if (window.innerWidth < 768) {
-      document.addEventListener('touchstart', handleTouchStart);
-      document.addEventListener('touchend', handleTouchEnd);
-    }
-    
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [manga, currentChapter, router, goToNextChapter, goToPrevChapter]);
+  };
 
   if (loading) {
     return (
@@ -265,6 +214,56 @@ export default function ChapterReader() {
   const currentIndex = manga.chapters.findIndex(c => c._id === currentChapter._id);
   const hasPrevChapter = currentIndex > 0;
   const hasNextChapter = currentIndex < manga.chapters.length - 1;
+
+  // Touch gesture handling for mobile navigation
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let endX = 0;
+    let endY = 0;
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+    
+    const handleTouchEnd = (e: TouchEvent) => {
+      endX = e.changedTouches[0].clientX;
+      endY = e.changedTouches[0].clientY;
+      
+      const diffX = startX - endX;
+      const diffY = startY - endY;
+      
+      // Minimum swipe distance
+      const minSwipeDistance = 50;
+      
+      // Check if it's a horizontal swipe (not vertical scroll)
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
+        if (diffX > 0) {
+          // Swipe left - go to next chapter
+          if (hasNextChapter) {
+            goToNextChapter();
+          }
+        } else {
+          // Swipe right - go to previous chapter
+          if (hasPrevChapter) {
+            goToPrevChapter();
+          }
+        }
+      }
+    };
+    
+    // Only add touch events on mobile
+    if (window.innerWidth < 768) {
+      document.addEventListener('touchstart', handleTouchStart);
+      document.addEventListener('touchend', handleTouchEnd);
+    }
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [hasNextChapter, hasPrevChapter]);
 
   return (
     <div className="min-h-screen bg-white">
