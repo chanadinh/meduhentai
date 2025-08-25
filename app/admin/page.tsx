@@ -21,7 +21,6 @@ interface Stats {
   totalChapters: number;
   totalUsers: number;
   totalComments: number;
-  recentManga?: string;
   recentChapter?: string;
   recentUser?: string;
 }
@@ -212,7 +211,7 @@ export default function AdminDashboard() {
               <div className="flex-1">
                 <p className="text-sm font-medium text-dark-900">Manga mới được thêm</p>
                 <p className="text-xs text-dark-600">
-                  {stats.recentManga ? formatExactTime(stats.recentManga) : 'Không có dữ liệu'}
+                  {stats.recentChapter ? formatExactTime(stats.recentChapter) : 'Không có dữ liệu'}
                 </p>
               </div>
             </div>

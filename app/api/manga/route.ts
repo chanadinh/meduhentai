@@ -21,8 +21,9 @@ export async function GET(request: NextRequest) {
 
     // Build sort object
     let sortObject: any = {};
+    let pipeline: any[] = [];
+    
     switch (sortBy) {
-
       case 'views':
         sortObject = { views: sortOrder === 'desc' ? -1 : 1 };
         break;
@@ -32,26 +33,89 @@ export async function GET(request: NextRequest) {
       case 'lastUpdated':
         sortObject = { updatedAt: sortOrder === 'desc' ? -1 : 1 };
         break;
+      case 'latestChapter':
+        // Use aggregation pipeline to sort by latest chapter update time
+        pipeline = [
+          { $match: { isDeleted: { $ne: true } } },
+          {
+            $lookup: {
+              from: 'chapters',
+              localField: '_id',
+              foreignField: 'manga',
+              as: 'chapters',
+              pipeline: [
+                { $match: { isDeleted: { $ne: true } } },
+                { $sort: { updatedAt: -1 } },
+                { $limit: 1 }
+              ]
+            }
+          },
+          {
+            $addFields: {
+              latestChapterUpdate: {
+                $ifNull: [
+                  { $arrayElemAt: ['$chapters.updatedAt', 0] },
+                  new Date(0) // Default to epoch if no chapters
+                ]
+              }
+            }
+          },
+          { $sort: { latestChapterUpdate: sortOrder === 'desc' ? -1 : 1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $project: {
+              title: 1,
+              coverImage: 1,
+              views: 1,
+              chaptersCount: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              genres: 1,
+              description: 1,
+              author: 1,
+              likes: 1,
+              latestChapter: { $arrayElemAt: ['$chapters', 0] }
+            }
+          }
+        ];
+        break;
       case 'createdAt':
       default:
         sortObject = { createdAt: sortOrder === 'desc' ? -1 : 1 };
         break;
     }
 
-    // Add secondary sort by createdAt for consistency
-    if (sortBy !== 'createdAt') {
-      sortObject.createdAt = -1;
-    }
+    let mangas: any[] = [];
+    let total: number = 0;
 
-    const [mangas, total] = await Promise.all([
-      Manga.find({ isDeleted: { $ne: true } })
-        .sort(sortObject)
-        .skip(skip)
-        .limit(limit)
-        .select('title coverImage views chaptersCount createdAt updatedAt genres description author likes')
-        .lean(),
-      Manga.countDocuments({ isDeleted: { $ne: true } })
-    ]);
+    if (sortBy === 'latestChapter') {
+      // Use aggregation pipeline for latest chapter sorting
+      const [mangaResults, totalResult] = await Promise.all([
+        Manga.aggregate(pipeline),
+        Manga.countDocuments({ isDeleted: { $ne: true } })
+      ]);
+      mangas = mangaResults;
+      total = totalResult;
+    } else {
+      // Add secondary sort by createdAt for consistency
+      if (sortBy !== 'createdAt') {
+        sortObject.createdAt = -1;
+      }
+      
+      // Use regular find for other sort methods
+      const [mangaResults, totalResult] = await Promise.all([
+        Manga.find({ isDeleted: { $ne: true } })
+          .sort(sortObject)
+          .skip(skip)
+          .limit(limit)
+          .select('title coverImage views chaptersCount createdAt updatedAt genres description author likes')
+          .lean(),
+        Manga.countDocuments({ isDeleted: { $ne: true } })
+      ]);
+      mangas = mangaResults;
+      total = totalResult;
+    }
 
     const hasNextPage = skip + limit < total;
     const hasPreviousPage = page > 1;

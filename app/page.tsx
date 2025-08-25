@@ -19,6 +19,13 @@ interface Manga {
   genres: string[];
   likes?: number;
   updatedAt?: string;
+  latestChapter?: {
+    _id: string;
+    chapterNumber: number;
+    title: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 export default function HomePage() {
@@ -38,7 +45,14 @@ export default function HomePage() {
     status: 'ongoing',
     genres: ['SUGGESTIVE', 'ACTION', 'ADVENTURE', 'COMEDY', 'FANTASY', 'ISEKAI'],
     likes: 567,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    latestChapter: {
+      _id: 'sample-chapter-1',
+      chapterNumber: 15,
+      title: 'Chương cuối cùng',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
   };
   const [loading, setLoading] = useState(true);
   const [currentPopularIndex, setCurrentPopularIndex] = useState(0);
@@ -82,7 +96,7 @@ export default function HomePage() {
       }
       
       // Fetch latest manga
-      const latestResponse = await fetch('/api/manga?sortBy=updatedAt&sortOrder=desc&limit=12');
+      const latestResponse = await fetch('/api/manga?sortBy=latestChapter&sortOrder=desc&limit=12');
       if (latestResponse.ok) {
         const latestData = await latestResponse.json();
         console.log('Latest manga data:', latestData);
@@ -357,7 +371,7 @@ export default function HomePage() {
                         <span className="font-medium">{manga.author || 'Chưa có tác giả'}</span>
                         <span>•</span>
                         <span className="text-purple-600 font-medium">
-                          {manga.updatedAt ? formatExactTime(manga.updatedAt) : 'Không có thông tin'}
+                          {manga.latestChapter?.updatedAt ? formatExactTime(manga.latestChapter.updatedAt) : 'Không có chương'}
                         </span>
                       </div>
                     </div>

@@ -25,12 +25,11 @@ export async function GET(request: NextRequest) {
     await connectToDatabase();
 
     // Fetch counts and recent activity in parallel
-    const [totalManga, totalChapters, totalUsers, totalComments, recentManga, recentChapter, recentUser] = await Promise.all([
+    const [totalManga, totalChapters, totalUsers, totalComments, recentChapter, recentUser] = await Promise.all([
       Manga.countDocuments({ isDeleted: { $ne: true } }),
       Chapter.countDocuments({ isDeleted: { $ne: true } }),
       User.countDocuments({ isDeleted: { $ne: true } }),
       Comment.countDocuments({ isDeleted: { $ne: true } }),
-      Manga.findOne({ isDeleted: { $ne: true } }, { updatedAt: 1 }).sort({ updatedAt: -1 }),
       Chapter.findOne({ isDeleted: { $ne: true } }, { updatedAt: 1 }).sort({ updatedAt: -1 }),
       User.findOne({ isDeleted: { $ne: true } }, { createdAt: 1 }).sort({ createdAt: -1 })
     ]);
@@ -41,7 +40,6 @@ export async function GET(request: NextRequest) {
         totalChapters,
         totalUsers,
         totalComments,
-        recentManga: recentManga?.updatedAt?.toISOString(),
         recentChapter: recentChapter?.updatedAt?.toISOString(),
         recentUser: recentUser?.createdAt?.toISOString()
       }
