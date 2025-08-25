@@ -14,12 +14,19 @@ export async function GET() {
     // Check if we can query chapters
     let chaptersCount = 0;
     let sampleChapter = null;
+    let chaptersWithMangaRefs = [];
     
     if (Chapter) {
       try {
         chaptersCount = await Chapter.countDocuments();
         if (chaptersCount > 0) {
-          sampleChapter = await Chapter.findOne().select('_id title chapterNumber').lean();
+          sampleChapter = await Chapter.findOne().select('_id title chapterNumber mangaId manga').lean();
+          
+          // Get a few chapters to see their structure
+          chaptersWithMangaRefs = await Chapter.find()
+            .select('_id title chapterNumber mangaId manga')
+            .limit(5)
+            .lean();
         }
       } catch (error) {
         console.error('Error querying chapters:', error);
@@ -39,7 +46,8 @@ export async function GET() {
         mongoUriLength,
         hasChapterModel,
         chaptersCount,
-        sampleChapter
+        sampleChapter,
+        chaptersWithMangaRefs
       },
       models: Object.keys(mongoose.models),
       timestamp: new Date().toISOString()
