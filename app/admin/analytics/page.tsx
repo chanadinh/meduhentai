@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Users, Eye, TrendingUp, Globe, Smartphone, Monitor, Tablet } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 
@@ -20,7 +20,7 @@ interface AnalyticsData {
   }>;
 }
 
-export default function AnalyticsDashboard() {
+function AnalyticsDashboardContent() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,10 +106,8 @@ export default function AnalyticsDashboard() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <div className="pt-20 pb-8">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center text-gray-500">No analytics data available</div>
-          </div>
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center text-gray-500">No analytics data available</div>
         </div>
       </div>
     );
@@ -252,5 +250,29 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AnalyticsDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="pt-20 pb-8">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-64 mb-8"></div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <AnalyticsDashboardContent />
+    </Suspense>
   );
 }
