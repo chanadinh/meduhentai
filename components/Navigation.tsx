@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { Search, Menu, X, User, LogOut, BookOpen, Heart, Settings } from 'lucide-react';
+import { Search, Menu, X, User, LogOut, BookOpen, Heart, Settings, Upload } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 import { useRouter } from 'next/navigation';
 
@@ -147,7 +147,12 @@ export default function Navigation() {
                         Yêu thích
                       </Link>
                       
-
+                      {(session.user.role === 'uploader' || session.user.role === 'admin') && (
+                        <Link href="/upload" className="flex items-center px-4 py-3 text-sm text-dark-700 hover:bg-dark-50 transition-colors duration-200">
+                          <Upload className="h-4 w-4 mr-3 text-primary-500" />
+                          Tải lên
+                        </Link>
+                      )}
                       
                       {session.user.role === 'admin' && (
                         <Link href="/admin" className="flex items-center px-4 py-3 text-sm text-dark-700 hover:bg-dark-50 transition-colors duration-200">
@@ -325,6 +330,16 @@ export default function Navigation() {
                       <span>Yêu thích</span>
                     </Link>
                     
+                    {(session.user.role === 'uploader' || session.user.role === 'admin') && (
+                      <Link 
+                        href="/upload" 
+                        className="flex items-center space-x-3 text-dark-900 bg-white/95 hover:bg-white p-3 rounded-lg transition-colors duration-200"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Upload className="h-4 w-4 text-primary-500" />
+                        <span>Tải lên</span>
+                      </Link>
+                    )}
 
                     
                     {session.user.role === 'admin' && (
