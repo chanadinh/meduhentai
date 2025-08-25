@@ -161,64 +161,6 @@ export default function ChapterReader() {
     }
   };
 
-  // Touch gesture handling for mobile navigation
-  useEffect(() => {
-    let startX = 0;
-    let startY = 0;
-    let endX = 0;
-    let endY = 0;
-    
-    const handleTouchStart = (e: TouchEvent) => {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-    };
-    
-    const handleTouchEnd = (e: TouchEvent) => {
-      endX = e.changedTouches[0].clientX;
-      endY = e.changedTouches[0].clientY;
-      
-      const diffX = startX - endX;
-      const diffY = startY - endY;
-      
-      // Minimum swipe distance
-      const minSwipeDistance = 50;
-      
-      // Check if it's a horizontal swipe (not vertical scroll)
-      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
-        if (diffX > 0) {
-          // Swipe left - go to next chapter
-          if (manga && currentChapter) {
-            const currentIndex = manga.chapters.findIndex(c => c._id === currentChapter._id);
-            if (currentIndex < manga.chapters.length - 1) {
-              const nextChapter = manga.chapters[currentIndex + 1];
-              router.push(`/manga/${manga._id}/read/${nextChapter._id}`);
-            }
-          }
-        } else {
-          // Swipe right - go to previous chapter
-          if (manga && currentChapter) {
-            const currentIndex = manga.chapters.findIndex(c => c._id === currentChapter._id);
-            if (currentIndex > 0) {
-              const prevChapter = manga.chapters[currentIndex - 1];
-              router.push(`/manga/${manga._id}/read/${prevChapter._id}`);
-            }
-          }
-        }
-      }
-    };
-    
-    // Only add touch events on mobile
-    if (window.innerWidth < 768) {
-      document.addEventListener('touchstart', handleTouchStart);
-      document.addEventListener('touchend', handleTouchEnd);
-    }
-    
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [manga, currentChapter, router]);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -242,13 +184,7 @@ export default function ChapterReader() {
     );
   }
 
-  // Additional safety check to ensure all data is loaded
-  if (!manga || !currentChapter || !currentChapter.pages) {
-    console.log('Component not ready:', { 
-      hasManga: !!manga, 
-      hasCurrentChapter: !!currentChapter, 
-      hasPages: currentChapter?.pages 
-    });
+  if (!manga || !currentChapter) {
     return (
       <div className="min-h-screen bg-white">
         <Navigation />
@@ -275,16 +211,59 @@ export default function ChapterReader() {
     );
   }
 
-  console.log('Component ready, rendering with:', { 
-    mangaTitle: manga.title, 
-    chapterTitle: currentChapter.title, 
-    pagesCount: currentChapter.pages.length,
-    views: currentChapter.views
-  });
-
   const currentIndex = manga.chapters.findIndex(c => c._id === currentChapter._id);
   const hasPrevChapter = currentIndex > 0;
   const hasNextChapter = currentIndex < manga.chapters.length - 1;
+
+  // Touch gesture handling for mobile navigation
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let endX = 0;
+    let endY = 0;
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+    
+    const handleTouchEnd = (e: TouchEvent) => {
+      endX = e.changedTouches[0].clientX;
+      endY = e.changedTouches[0].clientY;
+      
+      const diffX = startX - endX;
+      const diffY = startY - endY;
+      
+      // Minimum swipe distance
+      const minSwipeDistance = 50;
+      
+      // Check if it's a horizontal swipe (not vertical scroll)
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
+        if (diffX > 0) {
+          // Swipe left - go to next chapter
+          if (hasNextChapter) {
+            goToNextChapter();
+          }
+        } else {
+          // Swipe right - go to previous chapter
+          if (hasPrevChapter) {
+            goToPrevChapter();
+          }
+        }
+      }
+    };
+    
+    // Only add touch events on mobile
+    if (window.innerWidth < 768) {
+      document.addEventListener('touchstart', handleTouchStart);
+      document.addEventListener('touchend', handleTouchEnd);
+    }
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [hasNextChapter, hasPrevChapter]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -321,8 +300,8 @@ export default function ChapterReader() {
                 </div>
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Eye className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
-                  <span className="hidden sm:inline">{(currentChapter?.views || 0).toLocaleString()} views</span>
-                  <span className="sm:hidden">{(currentChapter?.views || 0).toLocaleString()}</span>
+                  <span className="hidden sm:inline">{currentChapter.views.toLocaleString()} views</span>
+                  <span className="sm:hidden">{currentChapter.views.toLocaleString()}</span>
                 </div>
               </div>
             </div>

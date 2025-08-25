@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
-import mongoose from 'mongoose';
+import Chapter from '@/models/Chapter';
+import Manga from '@/models/Manga';
+import Notification from '@/models/Notification';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
-// GET - Get a specific chapter
+// GET - Fetch a specific chapter
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -17,17 +19,11 @@ export async function GET(
 
     await connectToDatabase();
 
-    const Chapter = mongoose.models.Chapter;
-    if (!Chapter) {
-      return NextResponse.json(
-        { error: 'Chapter model not found' },
-        { status: 500 }
-      );
-    }
+    const chapter = await Chapter.findById(id)
+      .populate('manga', 'title author')
+      .lean();
 
-    const chapter = await Chapter.findById(id).lean();
-
-    if (!chapter) {
+    if (!chapter || chapter.isDeleted) {
       return NextResponse.json(
         { error: 'Chapter not found' },
         { status: 404 }
@@ -62,23 +58,13 @@ export async function PUT(
 
     const { id } = params;
     const body = await request.json();
-    const { title, chapterNumber, pages } = body;
+    const { title, chapterNumber, volume, pages } = body;
 
     await connectToDatabase();
 
-    const Chapter = mongoose.models.Chapter;
-    const Manga = mongoose.models.Manga;
-    
-    if (!Chapter || !Manga) {
-      return NextResponse.json(
-        { error: 'Models not found' },
-        { status: 500 }
-      );
-    }
-
     // Find the chapter and check permissions
     const chapter = await Chapter.findById(id);
-    if (!chapter) {
+    if (!chapter || chapter.isDeleted) {
       return NextResponse.json(
         { error: 'Chapter not found' },
         { status: 404 }
@@ -86,7 +72,7 @@ export async function PUT(
     }
 
     // Check if user owns the manga or is admin
-    const manga = await Manga.findById(chapter.mangaId);
+    const manga = await Manga.findById(chapter.manga);
     if (!manga) {
       return NextResponse.json(
         { error: 'Manga not found' },
@@ -104,9 +90,10 @@ export async function PUT(
     // Check if new chapter number conflicts with existing chapters (excluding current chapter)
     if (chapterNumber && chapterNumber !== chapter.chapterNumber) {
       const existingChapter = await Chapter.findOne({
-        mangaId: chapter.mangaId,
+        manga: chapter.manga,
         chapterNumber: chapterNumber,
-        _id: { $ne: id }
+        _id: { $ne: id },
+        isDeleted: { $ne: true }
       });
 
       if (existingChapter) {
@@ -121,6 +108,7 @@ export async function PUT(
     const updateData: any = {};
     if (title !== undefined) updateData.title = title;
     if (chapterNumber !== undefined) updateData.chapterNumber = chapterNumber;
+    if (volume !== undefined) updateData.volume = volume;
     if (pages !== undefined) {
       updateData.pages = pages.map((page: any, index: number) => ({
         pageNumber: page.pageNumber || index + 1,
@@ -133,12 +121,12 @@ export async function PUT(
     const updatedChapter = await Chapter.findByIdAndUpdate(
       id,
       updateData,
-      { new: true }
+      { new: true, runValidators: true }
     );
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Chapter updated successfully',
-      chapter: updatedChapter 
+      chapter: updatedChapter
     });
 
   } catch (error) {
@@ -150,7 +138,7 @@ export async function PUT(
   }
 }
 
-// DELETE - Delete a chapter
+// DELETE - Delete a chapter (soft delete)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -169,19 +157,9 @@ export async function DELETE(
 
     await connectToDatabase();
 
-    const Chapter = mongoose.models.Chapter;
-    const Manga = mongoose.models.Manga;
-    
-    if (!Chapter || !Manga) {
-      return NextResponse.json(
-        { error: 'Models not found' },
-        { status: 500 }
-      );
-    }
-
     // Find the chapter and check permissions
     const chapter = await Chapter.findById(id);
-    if (!chapter) {
+    if (!chapter || chapter.isDeleted) {
       return NextResponse.json(
         { error: 'Chapter not found' },
         { status: 404 }
@@ -189,7 +167,7 @@ export async function DELETE(
     }
 
     // Check if user owns the manga or is admin
-    const manga = await Manga.findById(chapter.mangaId);
+    const manga = await Manga.findById(chapter.manga);
     if (!manga) {
       return NextResponse.json(
         { error: 'Manga not found' },
@@ -204,16 +182,26 @@ export async function DELETE(
       );
     }
 
-    // Delete the chapter
-    await Chapter.findByIdAndDelete(id);
+    // Soft delete the chapter
+    await Chapter.findByIdAndUpdate(id, { isDeleted: true });
 
     // Update manga's chapter count
-    await Manga.findByIdAndUpdate(chapter.mangaId, {
+    await Manga.findByIdAndUpdate(chapter.manga, {
       $inc: { chaptersCount: -1 }
     });
 
-    return NextResponse.json({ 
-      message: 'Chapter deleted successfully' 
+    // Clean up related notifications
+    try {
+      await Notification.deleteMany({
+        'data.chapterId': id
+      });
+    } catch (notificationError) {
+      // Log error but don't fail the chapter deletion
+      console.error('Failed to clean up notifications for deleted chapter:', notificationError);
+    }
+
+    return NextResponse.json({
+      message: 'Chapter deleted successfully'
     });
 
   } catch (error) {

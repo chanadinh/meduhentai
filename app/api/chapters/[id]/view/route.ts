@@ -1,23 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import mongoose from 'mongoose';
+import Chapter from '@/models/Chapter';
 
+// POST - Increment chapter view count
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id: chapterId } = params;
+    const chapterId = params.id;
 
-    await connectToDatabase();
-
-    const Chapter = mongoose.models.Chapter;
-    if (!Chapter) {
+    if (!chapterId) {
       return NextResponse.json(
-        { error: 'Chapter model not found' },
-        { status: 500 }
+        { error: 'Chapter ID is required' },
+        { status: 400 }
       );
     }
+
+    await connectToDatabase();
 
     // Increment view count
     const chapter = await Chapter.findByIdAndUpdate(
@@ -39,9 +39,9 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('Chapter view update error:', error);
+    console.error('Chapter view error:', error);
     return NextResponse.json(
-      { error: 'Failed to update view count' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

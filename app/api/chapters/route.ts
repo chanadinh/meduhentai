@@ -2,19 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
-import mongoose from 'mongoose';
+import Chapter from '@/models/Chapter';
+import Manga from '@/models/Manga';
 import { uploadImage } from '@/lib/r2';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
-// GET - Get chapters for a manga
+// GET - Fetch chapters for a manga
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const mangaId = searchParams.get('mangaId');
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const limit = parseInt(searchParams.get('limit') || '20');
 
     if (!mangaId) {
       return NextResponse.json(
@@ -25,34 +26,22 @@ export async function GET(request: NextRequest) {
 
     await connectToDatabase();
 
-    const Chapter = mongoose.models.Chapter;
-    if (!Chapter) {
-      return NextResponse.json(
-        { error: 'Chapter model not found' },
-        { status: 500 }
-      );
-    }
-
     const skip = (page - 1) * limit;
 
     // Fetch chapters for the manga
     const [chapters, total] = await Promise.all([
       Chapter.find({ 
-        $or: [
-          { mangaId: mangaId },
-          { manga: mangaId }
-        ]
+        manga: mangaId,
+        isDeleted: { $ne: true } 
       })
         .sort({ chapterNumber: 1 })
         .skip(skip)
         .limit(limit)
-        .select('title chapterNumber pages createdAt updatedAt')
+        .select('title chapterNumber volume pages createdAt updatedAt')
         .lean(),
       Chapter.countDocuments({ 
-        $or: [
-          { mangaId: mangaId },
-          { manga: mangaId }
-        ]
+        manga: mangaId,
+        isDeleted: { $ne: true } 
       })
     ]);
 
@@ -104,6 +93,7 @@ export async function POST(request: NextRequest) {
     let mangaId: string;
     let title: string;
     let chapterNumber: number;
+    let volume: string;
     let pageFiles: File[];
     let uploadedPages: any[];
     let isJsonRequest = false;
@@ -115,6 +105,7 @@ export async function POST(request: NextRequest) {
       mangaId = formData.get('mangaId') as string;
       title = formData.get('title') as string;
       chapterNumber = parseInt(formData.get('chapterNumber') as string);
+      volume = formData.get('volume') as string;
       pageFiles = formData.getAll('pages') as File[];
       uploadedPages = [];
 
@@ -122,6 +113,7 @@ export async function POST(request: NextRequest) {
         mangaId,
         title,
         chapterNumber,
+        volume,
         pageFilesCount: pageFiles.length,
         pageFilesInfo: pageFiles.map(f => ({
           name: f.name,
@@ -136,6 +128,7 @@ export async function POST(request: NextRequest) {
       mangaId = jsonData.mangaId;
       title = jsonData.title;
       chapterNumber = parseInt(jsonData.chapterNumber);
+      volume = jsonData.volume;
       pageFiles = [];
       uploadedPages = jsonData.pages || [];
       isJsonRequest = true;
@@ -144,6 +137,7 @@ export async function POST(request: NextRequest) {
         mangaId,
         title,
         chapterNumber,
+        volume,
         uploadedPagesCount: uploadedPages.length,
         uploadedPages: uploadedPages
       });
@@ -191,14 +185,6 @@ export async function POST(request: NextRequest) {
 
     // Check if user owns the manga or is admin
     console.log('Checking manga ownership...');
-    const Manga = mongoose.models.Manga;
-    if (!Manga) {
-      console.error('Manga model not found');
-      return NextResponse.json(
-        { error: 'Manga model not found' },
-        { status: 500 }
-      );
-    }
     const manga = await Manga.findById(mangaId);
     if (!manga) {
       console.log('Manga not found:', mangaId);
@@ -225,26 +211,25 @@ export async function POST(request: NextRequest) {
 
     // Check if chapter number already exists for this manga
     console.log('Checking for existing chapter...');
-    const Chapter = mongoose.models.Chapter;
-    if (!Chapter) {
-      console.error('Chapter model not found');
-      return NextResponse.json(
-        { error: 'Chapter model not found' },
-        { status: 500 }
-      );
-    }
     const existingChapter = await Chapter.findOne({
-      mangaId: mangaId,
-      chapterNumber: chapterNumber
+      manga: mangaId,
+      chapterNumber: chapterNumber,
+      isDeleted: { $ne: true }
     });
 
     if (existingChapter) {
-      console.log('Chapter number already exists:', existingChapter._id);
+      console.log('Chapter already exists:', {
+        mangaId,
+        chapterNumber,
+        existingChapterId: existingChapter._id
+      });
       return NextResponse.json(
         { error: `Chapter ${chapterNumber} already exists for this manga` },
         { status: 400 }
       );
     }
+
+    console.log('No existing chapter found, proceeding with upload...');
 
     // Handle page images - either upload new files or use pre-uploaded URLs
     let finalUploadedPages: any[];
@@ -310,23 +295,36 @@ export async function POST(request: NextRequest) {
       console.log('All pages uploaded successfully');
     }
 
+    console.log('All pages uploaded successfully, creating chapter...');
+
     // Create the chapter
-    console.log('Creating new chapter...');
     const chapter = new Chapter({
+      manga: mangaId,
       title,
       chapterNumber,
+      volume: volume || 1,
       pages: finalUploadedPages,
-      mangaId: mangaId,
+      userId: session.user.id
+    });
+
+    console.log('Chapter object created:', {
+      manga: mangaId,
+      title,
+      chapterNumber,
+      volume: volume || 1,
+      pagesCount: finalUploadedPages.length,
       userId: session.user.id
     });
 
     await chapter.save();
-    console.log('Chapter created successfully:', chapter._id);
+    console.log('Chapter saved to database successfully:', chapter._id);
 
     // Update manga's chapter count
+    console.log('Updating manga chapter count...');
     await Manga.findByIdAndUpdate(mangaId, {
       $inc: { chaptersCount: 1 }
     });
+    console.log('Manga chapter count updated');
 
     return NextResponse.json({
       message: 'Chapter created successfully',
@@ -334,9 +332,10 @@ export async function POST(request: NextRequest) {
         _id: chapter._id,
         title: chapter.title,
         chapterNumber: chapter.chapterNumber,
-        pagesCount: finalUploadedPages.length
+        volume: chapter.volume,
+        pagesCount: chapter.pages.length
       }
-    });
+    }, { status: 201 });
 
   } catch (error) {
     console.error('Chapters POST error:', error);

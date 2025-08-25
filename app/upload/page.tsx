@@ -27,6 +27,18 @@ interface MangaForm {
   genres: string[];
 }
 
+interface ChapterForm {
+  title: string;
+  chapterNumber: number;
+  volume: string;
+  pages: Array<{
+    pageNumber: number;
+    imageUrl: string;
+    width: number;
+    height: number;
+  }>;
+}
+
 const GENRES = [
   'Action', 'Adventure', 'Anal', 'Ahegao', 'BDSM', 'Beach', 'Big Dick', 'Bikini', 
   'Blindfold', 'Blonde', 'Bondage', 'Bukkake', 'Bunny Costume', 'Cheating', 
@@ -70,9 +82,11 @@ export default function UploadPage() {
   const [mangaLoading, setMangaLoading] = useState(false);
   
   // Chapter form state
-  const [chapterForm, setChapterForm] = useState({
+  const [chapterForm, setChapterForm] = useState<ChapterForm>({
     title: '',
-    chapterNumber: '',
+    chapterNumber: 1,
+    volume: '',
+    pages: []
   });
   
   const [selectedManga, setSelectedManga] = useState<any>(null);
@@ -120,7 +134,7 @@ export default function UploadPage() {
       const response = await fetch('/api/manga/my');
       if (response.ok) {
         const data = await response.json();
-        setMangaList(data.manga);
+        setMangaList(data.mangas || []);
       }
     } catch (error) {
       console.error('Error fetching user manga:', error);
@@ -158,6 +172,16 @@ export default function UploadPage() {
   const handlePageFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setPageFiles(files);
+    
+    // Create page objects for the form
+    const pages = files.map((file, index) => ({
+      pageNumber: index + 1,
+      imageUrl: '', // Will be set after upload
+      width: 800,
+      height: 1200
+    }));
+    
+    setChapterForm(prev => ({ ...prev, pages }));
   };
 
   const handleMangaSubmit = async (e: React.FormEvent) => {
@@ -246,7 +270,8 @@ export default function UploadPage() {
       const formData = new FormData();
       formData.append('mangaId', selectedManga._id);
       formData.append('title', chapterForm.title);
-      formData.append('chapterNumber', chapterForm.chapterNumber);
+      formData.append('chapterNumber', chapterForm.chapterNumber.toString());
+      formData.append('volume', chapterForm.volume);
       
       // Append page files
       pageFiles.forEach((file, index) => {
@@ -268,7 +293,9 @@ export default function UploadPage() {
       // Reset form
       setChapterForm({
         title: '',
-        chapterNumber: '',
+        chapterNumber: 1,
+        volume: '',
+        pages: []
       });
       setSelectedManga(null);
       setPageFiles([]);
@@ -594,10 +621,23 @@ export default function UploadPage() {
                   <input
                     type="number"
                     value={chapterForm.chapterNumber}
-                    onChange={(e) => setChapterForm(prev => ({ ...prev, chapterNumber: e.target.value }))}
+                    onChange={(e) => setChapterForm(prev => ({ ...prev, chapterNumber: parseInt(e.target.value) }))}
                     className="form-input-beautiful w-full"
                     min="1"
                     required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 mb-2">
+                    Volume
+                  </label>
+                  <input
+                    type="text"
+                    value={chapterForm.volume}
+                    onChange={(e) => setChapterForm(prev => ({ ...prev, volume: e.target.value }))}
+                    className="form-input-beautiful w-full"
+                    placeholder="Optional"
                   />
                 </div>
               </div>

@@ -1,12 +1,42 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 
-const chapterSchema = new mongoose.Schema({
+// Chapter interface
+export interface IChapter extends Document {
+  title: string;
+  chapterNumber: number;
+  volume: number;
+  manga: mongoose.Types.ObjectId;
+  pages: Array<{
+    pageNumber: number;
+    imageUrl: string;
+    width: number;
+    height: number;
+  }>;
+  views: number;
+  isDeleted: boolean;
+  userId: mongoose.Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Chapter schema
+const ChapterSchema = new mongoose.Schema<IChapter>({
   title: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
   chapterNumber: {
     type: Number,
+    required: true
+  },
+  volume: {
+    type: Number,
+    default: 1
+  },
+  manga: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Manga',
     required: true
   },
   pages: [{
@@ -18,31 +48,38 @@ const chapterSchema = new mongoose.Schema({
       type: String,
       required: true
     },
-    width: Number,
-    height: Number
+    width: {
+      type: Number,
+      default: 800
+    },
+    height: {
+      type: Number,
+      default: 1200
+    }
   }],
-  mangaId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Manga',
-    required: true
-  },
   views: {
     type: Number,
     default: 0
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  isDeleted: {
+    type: Boolean,
+    default: false
   },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   }
 }, {
   timestamps: true
 });
 
-// Index for efficient queries
-chapterSchema.index({ mangaId: 1, chapterNumber: 1 });
+// Create indexes for better query performance
+ChapterSchema.index({ manga: 1, chapterNumber: 1 });
+ChapterSchema.index({ manga: 1, createdAt: -1 });
+ChapterSchema.index({ userId: 1 });
 
-export default mongoose.models.Chapter || mongoose.model('Chapter', chapterSchema);
+// Export the model with proper typing
+const Chapter: Model<IChapter> = mongoose.models.Chapter || mongoose.model<IChapter>('Chapter', ChapterSchema);
+
+export default Chapter;

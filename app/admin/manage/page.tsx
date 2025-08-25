@@ -38,7 +38,7 @@ interface ChapterForm {
   mangaId: string;
   title: string;
   chapterNumber: number;
-  pages: File[];
+  volume: number;
 }
 
 // Page File Interface
@@ -111,11 +111,11 @@ export default function ManageContent() {
   });
   
   // Chapter form state
-  const [chapterForm, setChapterForm] = useState({
+  const [chapterForm, setChapterForm] = useState<ChapterForm>({
     mangaId: '',
     title: '',
     chapterNumber: 1,
-    pages: [] as File[]
+    volume: 1,
   });
   
   // UI state
@@ -143,7 +143,7 @@ export default function ManageContent() {
     mangaId: '',
     title: '',
     chapterNumber: 1,
-    pages: [] as File[]
+    volume: 1,
   });
   const [editChapterLoading, setEditChapterLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -403,7 +403,7 @@ export default function ManageContent() {
     const { name, value } = e.target;
     setChapterForm(prev => ({
       ...prev,
-      [name]: name === 'chapterNumber' ? parseInt(value) : value
+      [name]: name === 'chapterNumber' || name === 'volume' ? parseInt(value) : value
     }));
   };
 
@@ -545,7 +545,7 @@ export default function ManageContent() {
         mangaId: '',
         title: '',
         chapterNumber: 1,
-        pages: [] as File[]
+        volume: 1,
       });
       setSelectedManga(null);
       setPageFiles([]);
@@ -792,10 +792,10 @@ export default function ManageContent() {
       // Set editing state
       setEditingChapter(fullChapter);
       setEditChapterForm({
-        mangaId: fullChapter.mangaId,
+        mangaId: fullChapter.manga._id || fullChapter.manga,
         title: fullChapter.title || '',
         chapterNumber: fullChapter.chapterNumber || 1,
-        pages: fullChapter.pages.map(page => new File([page], page.name))
+        volume: fullChapter.volume || 1,
       });
       setShowEditModal(true);
     } catch (error) {
@@ -845,16 +845,9 @@ export default function ManageContent() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          mangaId: editChapterForm.mangaId,
           title: editChapterForm.title,
           chapterNumber: editChapterForm.chapterNumber,
-          pages: editChapterForm.pages.map(page => ({
-            name: page.name,
-            size: page.size,
-            type: page.type,
-            lastModified: page.lastModified,
-            webkitRelativePath: page.webkitRelativePath
-          }))
+          volume: editChapterForm.volume,
         }),
       });
       
@@ -1314,6 +1307,20 @@ export default function ManageContent() {
                       className="form-input-beautiful w-full"
                     />
                   </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-dark-700 mb-2">
+                      Volume
+                    </label>
+                    <input
+                      type="number"
+                      name="volume"
+                      min="1"
+                      value={chapterForm.volume}
+                      onChange={handleChapterInputChange}
+                      className="form-input-beautiful w-full"
+                    />
+                  </div>
                 </div>
 
                 {/* Page Upload */}
@@ -1623,6 +1630,11 @@ export default function ManageContent() {
                               <span className="bg-primary-100 text-primary-700 px-2 py-1 rounded-full text-xs font-medium">
                                 Chương {chapter.chapterNumber}
                               </span>
+                              {chapter.volume > 1 && (
+                                <span className="bg-secondary-100 text-secondary-700 px-2 py-1 rounded-full text-xs font-medium">
+                                  V{chapter.volume}
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center space-x-1">
                               <button
@@ -1799,6 +1811,20 @@ export default function ManageContent() {
                     min="1"
                     value={editChapterForm.chapterNumber}
                     onChange={(e) => setEditChapterForm(prev => ({ ...prev, chapterNumber: parseInt(e.target.value) }))}
+                    className="form-input-beautiful w-full"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 mb-2">
+                    Volume
+                  </label>
+                  <input
+                    type="number"
+                    name="volume"
+                    min="1"
+                    value={editChapterForm.volume}
+                    onChange={(e) => setEditChapterForm(prev => ({ ...prev, volume: parseInt(e.target.value) }))}
                     className="form-input-beautiful w-full"
                   />
                 </div>
