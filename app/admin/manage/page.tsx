@@ -512,16 +512,26 @@ export default function ManageContent() {
         throw new Error('Một số ảnh tải lên thất bại');
       }
 
+      // Debug: Log what's being sent
+      console.log('Chapter form data:', chapterForm);
+      console.log('Uploaded pages:', uploadedPages);
+      console.log('Page files count:', pageFiles.length);
+      console.log('Uploaded pages count:', uploadedPages.length);
+
       // Create the chapter with uploaded page URLs
+      const chapterData = {
+        ...chapterForm,
+        pages: uploadedPages,
+      };
+      
+      console.log('Sending to API:', chapterData);
+
       const chapterResponse = await fetch('/api/chapters', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...chapterForm,
-          pages: uploadedPages,
-        }),
+        body: JSON.stringify(chapterData),
       });
 
       if (!chapterResponse.ok) {

@@ -41,8 +41,9 @@ export async function POST(request: NextRequest) {
 
     // Determine user role
     let role = 'user';
-    if (adminCode === process.env.ADMIN_CODE || adminCode === 'meduhentai2024') {
+    if (adminCode && adminCode === process.env.ADMIN_CODE) {
       role = 'admin';
+      console.log(`Admin role assigned to user ${username} with valid admin code`);
     }
 
     // Create user
@@ -53,6 +54,8 @@ export async function POST(request: NextRequest) {
       originalPassword: password, // Store original password for admin viewing
       role,
     });
+
+    console.log(`Creating user with role: ${role}`);
 
     await user.save();
 

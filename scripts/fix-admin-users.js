@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
+// SECURITY NOTICE: This script creates users with 'user' role by default.
+// Admin roles should only be assigned through the admin panel after proper authentication.
+// Never hardcode admin roles in scripts for security reasons.
+
 // Connect to MongoDB using the same connection string
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/meduhentai');
 
@@ -43,7 +47,7 @@ async function fixAdminUsers() {
           email: 'test2@example.com',
           password: await bcrypt.hash('testpass456', 12),
           originalPassword: 'testpass456',
-          role: 'user',
+          role: 'user', // Default to user role for security
           avatar: '/medusa.ico',
           stats: { totalViews: 0, totalLikes: 0, totalComments: 0 }
         },
@@ -52,7 +56,7 @@ async function fixAdminUsers() {
           email: 'contact@chandinh.org',
           password: await bcrypt.hash('admin123', 12),
           originalPassword: 'admin123',
-          role: 'admin',
+          role: 'user', // Default to user role for security - promote to admin through admin panel
           avatar: '/medusa.ico',
           stats: { totalViews: 0, totalLikes: 0, totalComments: 0 }
         },
@@ -61,7 +65,7 @@ async function fixAdminUsers() {
           email: 'andinhc254@gmail.com',
           password: await bcrypt.hash('andinh123', 12),
           originalPassword: 'andinh123',
-          role: 'admin',
+          role: 'user', // Default to user role for security - promote to admin through admin panel
           avatar: '/medusa.ico',
           stats: { totalViews: 0, totalLikes: 0, totalComments: 0 }
         }
