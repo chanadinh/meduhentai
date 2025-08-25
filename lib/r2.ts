@@ -43,6 +43,14 @@ export async function uploadImage(
     // Validate configuration before attempting upload
     validateR2Config();
     
+    console.log('R2 upload attempt:', {
+      key,
+      bufferSize: buffer.length,
+      contentType,
+      bucket: R2_BUCKET_NAME,
+      endpoint: R2_ENDPOINT
+    });
+    
     const command = new PutObjectCommand({
       Bucket: R2_BUCKET_NAME!,
       Key: key,
@@ -52,6 +60,12 @@ export async function uploadImage(
     });
 
     const result = await s3Client.send(command);
+    console.log('R2 upload successful:', {
+      key,
+      etag: result.ETag,
+      url: getPublicImageUrl(key)
+    });
+    
     return {
       success: true,
       key,
@@ -59,7 +73,37 @@ export async function uploadImage(
       url: getPublicImageUrl(key),
     };
   } catch (error) {
-    console.error('Error uploading to R2:', error);
+    console.error('Error uploading to R2:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      name: error instanceof Error ? error.name : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined,
+      key,
+      bufferSize: buffer.length,
+      contentType
+    });
+    
+    // Check for specific AWS/R2 errors
+    if (error instanceof Error) {
+      if (error.name === 'AccessDenied') {
+        return {
+          success: false,
+          error: 'Access denied to R2 bucket. Check credentials and permissions.',
+        };
+      }
+      if (error.name === 'NoSuchBucket') {
+        return {
+          success: false,
+          error: 'R2 bucket does not exist. Check bucket name configuration.',
+        };
+      }
+      if (error.name === 'InvalidAccessKeyId') {
+        return {
+          success: false,
+          error: 'Invalid R2 access key. Check credentials.',
+        };
+      }
+    }
+    
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

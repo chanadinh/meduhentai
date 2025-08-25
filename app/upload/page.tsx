@@ -97,17 +97,26 @@ export default function UploadPage() {
   useEffect(() => {
     if (status === 'loading') return;
     
+    console.log('Session status:', status);
+    console.log('Session data:', session);
+    console.log('User role:', session?.user?.role);
+    
     if (!session) {
+      console.log('No session, redirecting to signin');
       router.push('/auth/signin');
       return;
     }
 
     // Check if user has upload permissions
     if (session.user?.role !== 'uploader' && session.user?.role !== 'admin') {
+      console.log('User role not allowed:', session.user?.role);
+      console.log('Redirecting to home');
       router.push('/');
       return;
     }
 
+    console.log('User has upload permissions, proceeding');
+    
     // Auto-fill artist field with current user's username
     if (session.user?.username && !mangaForm.artist) {
       setMangaForm(prev => ({
@@ -135,6 +144,22 @@ export default function UploadPage() {
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size (max 10MB)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`File size too large. Maximum allowed: ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
+        e.target.value = '';
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Invalid file type. Allowed types: ${allowedTypes.join(', ')}`);
+        e.target.value = '';
+        return;
+      }
+
       setCoverImage(file);
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -174,14 +199,29 @@ export default function UploadPage() {
       formData.append('coverImage', coverImage);
       formData.append('data', JSON.stringify(mangaForm));
 
+      // Debug FormData contents
+      console.log('FormData contents:');
+      Array.from(formData.entries()).forEach(([key, value]) => {
+        console.log(`${key}:`, value);
+      });
+      console.log('Cover image details:', {
+        name: coverImage.name,
+        size: coverImage.size,
+        type: coverImage.type
+      });
+
       const response = await fetch('/api/manga', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to upload manga');
+        console.error('Server error response:', error);
+        throw new Error(error.error || error.details || 'Failed to upload manga');
       }
 
       const data = await response.json();
@@ -280,7 +320,22 @@ export default function UploadPage() {
   }
 
   if (!session || (session.user?.role !== 'uploader' && session.user?.role !== 'admin')) {
-    return null;
+    return (
+      <div className="min-h-screen bg-dark-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-dark-900 mb-4">Access Denied</h1>
+          <p className="text-dark-600 mb-4">
+            You don't have permission to upload content. Only uploaders and admins can access this page.
+          </p>
+          <button
+            onClick={() => router.push('/')}
+            className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+          >
+            Go Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -288,6 +343,20 @@ export default function UploadPage() {
       <Navigation />
       
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Debug Information */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <h3 className="text-sm font-medium text-yellow-800 mb-2">Debug Info (Development Only)</h3>
+            <div className="text-xs text-yellow-700 space-y-1">
+              <p>Session Status: {status}</p>
+              <p>User ID: {session?.user?.id || 'None'}</p>
+              <p>Username: {session?.user?.username || 'None'}</p>
+              <p>User Role: {session?.user?.role || 'None'}</p>
+              <p>Has Upload Permission: {(session?.user?.role === 'uploader' || session?.user?.role === 'admin') ? 'Yes' : 'No'}</p>
+            </div>
+          </div>
+        )}
+        
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-dark-900">Tải lên Nội dung</h1>
           <p className="text-dark-600 mt-2">

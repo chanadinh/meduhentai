@@ -98,14 +98,135 @@ export async function POST(request: NextRequest) {
 
     await connectToDatabase();
 
-    // Parse FormData instead of JSON
-    const formData = await request.formData();
-    const coverImage = formData.get('coverImage') as File;
-    const dataString = formData.get('data') as string;
+    // Debug request details
+    console.log('Request details:', {
+      method: request.method,
+      url: request.url,
+      headers: Object.fromEntries(request.headers.entries()),
+      contentType: request.headers.get('content-type'),
+      contentLength: request.headers.get('content-length')
+    });
+
+    // Check content type first to determine how to parse the request
+    const contentType = request.headers.get('content-type') || '';
+    let formData;
+    let coverImage;
+    let dataString;
+    let isJsonRequest = false;
     
-    if (!coverImage) {
+    if (contentType.includes('multipart/form-data')) {
+      // Handle FormData request (from upload page)
+      try {
+        formData = await request.formData();
+        coverImage = formData.get('coverImage') as File;
+        dataString = formData.get('data') as string;
+        console.log('Processing as FormData request');
+      } catch (formDataError) {
+        console.error('FormData parsing failed:', formDataError);
+        return NextResponse.json(
+          { error: 'Failed to parse FormData request' },
+          { status: 400 }
+        );
+      }
+    } else if (contentType.includes('application/json')) {
+      // Handle JSON request (from admin manage page)
+      try {
+        const jsonData = await request.json();
+        console.log('Parsed as JSON:', jsonData);
+        
+        // Check if this is a valid manga creation request
+        if (jsonData.title && jsonData.author && jsonData.coverImage) {
+          isJsonRequest = true;
+          coverImage = null; // No file to upload
+          dataString = JSON.stringify(jsonData);
+          console.log('Processing as JSON request with pre-uploaded image');
+        } else {
+          return NextResponse.json(
+            { error: 'Invalid JSON request. Must include title, author, and coverImage URL' },
+            { status: 400 }
+          );
+        }
+      } catch (jsonError) {
+        console.error('JSON parsing failed:', jsonError);
+        return NextResponse.json(
+          { error: 'Failed to parse JSON request' },
+          { status: 400 }
+        );
+      }
+    } else {
       return NextResponse.json(
-        { error: 'Cover image is required' },
+        { error: 'Request must be multipart/form-data or application/json' },
+        { status: 400 }
+      );
+    }
+    
+    console.log('Received form data:', {
+      hasCoverImage: !!coverImage,
+      coverImageSize: coverImage?.size,
+      coverImageType: coverImage?.type,
+      coverImageName: coverImage?.name,
+      hasData: !!dataString,
+      dataLength: dataString?.length
+    });
+    
+    // Handle cover image - either upload new file or use pre-uploaded URL
+    let coverImageUrl: string;
+    
+    if (coverImage && !isJsonRequest) {
+      // Validate file size (max 10MB) - only for FormData requests
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      if (coverImage.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `File size too large. Maximum allowed: ${MAX_FILE_SIZE / (1024 * 1024)}MB` },
+          { status: 400 }
+        );
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(coverImage.type)) {
+        return NextResponse.json(
+          { error: `Invalid file type. Allowed types: ${allowedTypes.join(', ')}` },
+          { status: 400 }
+        );
+      }
+      
+      // Upload new cover image to R2
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 15);
+      const extension = coverImage?.name.split('.').pop(); // Use optional chaining
+      const filename = `manga-covers/${timestamp}-${randomString}.${extension}`;
+      
+      console.log('Uploading cover image:', {
+        filename,
+        size: coverImage?.size, // Use optional chaining
+        type: coverImage?.type // Use optional chaining
+      });
+      
+      // Convert file to buffer
+      const buffer = await coverImage?.arrayBuffer(); // Use optional chaining
+      
+      // Upload to R2
+      const uploadResult = await uploadImage(filename, Buffer.from(buffer), coverImage?.type); // Use optional chaining
+      
+      if (!uploadResult.success) {
+        console.error('Cover image upload failed:', uploadResult.error);
+        return NextResponse.json(
+          { error: `Failed to upload cover image: ${uploadResult.error}` },
+          { status: 500 }
+        );
+      }
+      
+      console.log('Cover image uploaded successfully:', uploadResult.url);
+      coverImageUrl = uploadResult.url;
+    } else if (isJsonRequest) {
+      // Use pre-uploaded image URL from JSON request
+      const parsedData = JSON.parse(dataString);
+      coverImageUrl = parsedData.coverImage;
+      console.log('Using pre-uploaded image URL:', coverImageUrl);
+    } else {
+      return NextResponse.json(
+        { error: 'No cover image provided' },
         { status: 400 }
       );
     }
@@ -139,42 +260,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload cover image to R2
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(2, 15);
-    const extension = coverImage.name.split('.').pop();
-    const filename = `manga-covers/${timestamp}-${randomString}.${extension}`;
-    
-    console.log('Uploading cover image:', {
-      filename,
-      size: coverImage.size,
-      type: coverImage.type
-    });
-    
-    // Convert file to buffer
-    const buffer = await coverImage.arrayBuffer();
-    
-    // Upload to R2
-    const uploadResult = await uploadImage(filename, Buffer.from(buffer), coverImage.type);
-    
-    if (!uploadResult.success) {
-      console.error('Cover image upload failed:', uploadResult.error);
-      return NextResponse.json(
-        { error: `Failed to upload cover image: ${uploadResult.error}` },
-        { status: 500 }
-      );
-    }
-    
-    console.log('Cover image uploaded successfully:', uploadResult.url);
-    
     // Add the user ID and cover image URL to the manga data
     const newManga = new Manga({
       ...mangaData,
       userId: session.user.id,
-      coverImage: uploadResult.url
+      coverImage: coverImageUrl
+    });
+
+    console.log('Attempting to save manga:', {
+      title: newManga.title,
+      author: newManga.author,
+      userId: newManga.userId,
+      coverImage: newManga.coverImage
     });
 
     const savedManga = await newManga.save();
+    console.log('Manga saved successfully:', savedManga._id);
 
     return NextResponse.json({ 
       message: 'Manga created successfully',
@@ -186,9 +287,18 @@ export async function POST(request: NextRequest) {
     
     if (error instanceof Error) {
       if (error.name === 'ValidationError') {
+        console.error('MongoDB validation error:', error.message);
         return NextResponse.json(
           { error: 'Validation error', details: error.message },
           { status: 400 }
+        );
+      }
+      
+      if (error.name === 'MongoServerError') {
+        console.error('MongoDB server error:', error.message);
+        return NextResponse.json(
+          { error: 'Database error', details: error.message },
+          { status: 500 }
         );
       }
       
@@ -201,7 +311,7 @@ export async function POST(request: NextRequest) {
     }
     
     return NextResponse.json(
-      { error: 'Failed to create manga', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Không thể tạo manga', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

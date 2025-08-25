@@ -1,48 +1,68 @@
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 async function checkUsers() {
-  let client;
-  
   try {
     // Connect to MongoDB
-    client = new MongoClient(process.env.MONGODB_URI);
-    await client.connect();
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/meduhentai');
     console.log('Connected to MongoDB');
+    console.log('Database:', mongoose.connection.db.databaseName);
+    
+    // User Schema
+    const userSchema = new mongoose.Schema({
+      username: String,
+      email: String,
+      password: String,
+      role: String,
+      avatar: String,
+      createdAt: Date,
+      updatedAt: Date
+    });
 
-    const db = client.db();
-    const usersCollection = db.collection('users');
-
+    const User = mongoose.model('User', userSchema);
+    
     // Find all users
-    const users = await usersCollection.find({ isDeleted: { $ne: true } })
-      .project({ username: 1, email: 1, role: 1, originalPassword: 1, createdAt: 1 })
-      .sort({ createdAt: -1 })
-      .toArray();
-
-    console.log('\n=== USERS IN DATABASE ===\n');
+    const users = await User.find({});
+    console.log(`\nFound ${users.length} users in database`);
     
     if (users.length === 0) {
-      console.log('No users found in database');
+      console.log('No users found');
       return;
     }
 
-    users.forEach((user, index) => {
-      console.log(`${index + 1}. Username: ${user.username}`);
-      console.log(`   Email: ${user.email}`);
-      console.log(`   Role: ${user.role}`);
-      console.log(`   Password: ${user.originalPassword || 'Not available (created before password storage feature)'}`);
-      console.log(`   Created: ${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}`);
-      console.log('');
-    });
+    console.log('\n=== CURRENT USERS AND ROLES ===\n');
+    
+    for (const user of users) {
+      console.log(`Username: ${user.username}`);
+      console.log(`Email: ${user.email}`);
+      console.log(`Current Role: ${user.role}`);
+      console.log(`User ID: ${user._id}`);
+      console.log('---');
+    }
 
-    console.log(`Total users: ${users.length}`);
+    // Check specific users
+    console.log('\n=== CHECKING SPECIFIC USERS ===\n');
+    
+    const testUsers = ['testuser2', 'Admin', 'andinhc254@gmail.com'];
+    
+    for (const username of testUsers) {
+      const user = await User.findOne({ username });
+      if (user) {
+        console.log(`✅ Found user: ${username}`);
+        console.log(`   Role: ${user.role}`);
+        console.log(`   Can upload: ${user.role === 'uploader' || user.role === 'admin' ? 'YES' : 'NO'}`);
+      } else {
+        console.log(`❌ User not found: ${username}`);
+      }
+      console.log('---');
+    }
 
   } catch (error) {
     console.error('Error:', error);
   } finally {
-    if (client) {
-      await client.close();
-      console.log('Disconnected from MongoDB');
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.close();
+      console.log('\nDisconnected from MongoDB');
     }
   }
 }
