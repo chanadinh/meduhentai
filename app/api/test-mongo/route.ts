@@ -15,6 +15,7 @@ export async function GET() {
     let chaptersCount = 0;
     let sampleChapter = null;
     let chaptersWithMangaRefs = [];
+    let testQueryResult = null;
     
     if (Chapter) {
       try {
@@ -27,6 +28,17 @@ export async function GET() {
             .select('_id title chapterNumber mangaId manga')
             .limit(5)
             .lean();
+          
+          // Test the exact query that the manga API uses
+          if (chaptersWithMangaRefs.length > 0) {
+            const testMangaId = chaptersWithMangaRefs[0].mangaId;
+            testQueryResult = await Chapter.find({ 
+              $or: [
+                { mangaId: testMangaId },
+                { manga: testMangaId }
+              ]
+            }).select('_id title chapterNumber').lean();
+          }
         }
       } catch (error) {
         console.error('Error querying chapters:', error);
@@ -47,7 +59,9 @@ export async function GET() {
         hasChapterModel,
         chaptersCount,
         sampleChapter,
-        chaptersWithMangaRefs
+        chaptersWithMangaRefs,
+        testQueryResult,
+        testQueryMangaId: chaptersWithMangaRefs.length > 0 ? chaptersWithMangaRefs[0].mangaId : null
       },
       models: Object.keys(mongoose.models),
       timestamp: new Date().toISOString()
