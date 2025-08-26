@@ -36,6 +36,17 @@ export default function LatestUpdates() {
       const data = await response.json();
       
       if (data.mangas) {
+        console.log('LatestUpdates Debug - Received data:', 
+          data.mangas.slice(0, 2).map(m => ({
+            title: m.title,
+            latestChapterUpdate: m.latestChapterUpdate,
+            latestChapter: m.latestChapter ? {
+              title: m.latestChapter.title,
+              createdAt: m.latestChapter.createdAt,
+              updatedAt: m.latestChapter.updatedAt
+            } : null
+          }))
+        );
         setLatestUpdates(data.mangas);
       }
     } catch (error) {
@@ -124,7 +135,7 @@ export default function LatestUpdates() {
             <div className="flex items-center justify-between text-xs text-dark-500">
               <span className="flex items-center">
                 <Clock className="h-3 w-3 mr-1" />
-                <span title="Thời gian chương mới nhất được tạo">Cập nhật: {formatDate(manga.latestChapterUpdate)}</span>
+                {formatDate(manga.latestChapterUpdate)}
               </span>
               <div className="flex items-center">
                 <Eye className="h-3 w-3 mr-1" />

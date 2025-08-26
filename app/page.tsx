@@ -18,7 +18,7 @@ interface Manga {
   status: string;
   genres: string[];
   likes?: number;
-  latestChapterUpdate?: string; // Latest chapter creation time
+  updatedAt?: string;
   latestChapter?: {
     _id: string;
     chapterNumber: number;
@@ -45,7 +45,7 @@ export default function HomePage() {
     status: 'ongoing',
     genres: ['SUGGESTIVE', 'ACTION', 'ADVENTURE', 'COMEDY', 'FANTASY', 'ISEKAI'],
     likes: 567,
-    latestChapterUpdate: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     latestChapter: {
       _id: 'sample-chapter-1',
       chapterNumber: 15,
