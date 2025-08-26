@@ -19,19 +19,21 @@ export async function POST(
 
     await connectToDatabase();
 
-    // Increment view count
-    const chapter = await Chapter.findByIdAndUpdate(
-      chapterId,
-      { $inc: { views: 1 } },
-      { new: true }
+    // Increment view count without updating timestamps
+    const result = await Chapter.updateOne(
+      { _id: chapterId },
+      { $inc: { views: 1 } }
     );
 
-    if (!chapter) {
+    if (result.matchedCount === 0) {
       return NextResponse.json(
         { error: 'Chapter not found' },
         { status: 404 }
       );
     }
+
+    // Get the updated chapter to return the new view count
+    const chapter = await Chapter.findById(chapterId);
 
     return NextResponse.json({ 
       message: 'View count updated',

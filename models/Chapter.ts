@@ -71,21 +71,28 @@ const ChapterSchema = new mongoose.Schema<IChapter>({
     required: true
   }
 }, {
-  timestamps: true
+  timestamps: false // Disable automatic timestamps
 });
 
-// Pre-save middleware to only update updatedAt for actual content changes
+// Pre-save middleware to handle timestamps manually
 ChapterSchema.pre('save', function(next) {
-  // Only update updatedAt if it's a new document or if content fields have changed
-  if (this.isNew || 
-      this.isModified('title') || 
-      this.isModified('chapterNumber') || 
-      this.isModified('volume') || 
-      this.isModified('pages') || 
-      this.isModified('isDeleted') || 
-      this.isModified('userId')) {
-    this.updatedAt = new Date();
+  const now = new Date();
+  
+  if (this.isNew) {
+    // New document: set both timestamps
+    this.createdAt = now;
+    this.updatedAt = now;
+  } else if (this.isModified('title') || 
+             this.isModified('chapterNumber') || 
+             this.isModified('volume') || 
+             this.isModified('pages') || 
+             this.isModified('isDeleted') || 
+             this.isModified('userId')) {
+    // Content changed: only update updatedAt
+    this.updatedAt = now;
   }
+  // View count changes: don't update any timestamps
+  
   next();
 });
 
