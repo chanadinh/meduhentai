@@ -69,62 +69,17 @@ const ChapterSchema = new mongoose.Schema<IChapter>({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
-  timestamps: false // Disable automatic timestamps
-});
-
-// Pre-save middleware to handle timestamps manually
-ChapterSchema.pre('save', function(next) {
-  const now = new Date();
-  
-  if (this.isNew) {
-    // New document: set both timestamps
-    this.createdAt = now;
-    this.updatedAt = now;
-  } else if (this.isModified('title') || 
-             this.isModified('chapterNumber') || 
-             this.isModified('volume') || 
-             this.isModified('pages') || 
-             this.isModified('isDeleted') || 
-             this.isModified('userId')) {
-    // Content changed: only update updatedAt
-    this.updatedAt = now;
-  }
-  // View count changes: don't update any timestamps
-  
-  next();
-});
-
-// Pre-update middleware to prevent timestamp updates for view count changes
-ChapterSchema.pre('updateOne', function(next) {
-  // If this is just a view count update, don't update the updatedAt timestamp
-  const update = this.getUpdate();
-  
-  // Check if this is only updating views field
-  if (update && typeof update === 'object' && '$inc' in update && 
-      update.$inc && typeof update.$inc === 'object' && 'views' in update.$inc && 
-      Object.keys(update).length === 1) {
-    // This is just a view count update, don't update timestamps
-    this.setOptions({ timestamps: false });
-  }
-  
-  next();
-});
-
-ChapterSchema.pre('findOneAndUpdate', function(next) {
-  // If this is just a view count update, don't update the updatedAt timestamp
-  const update = this.getUpdate();
-  
-  // Check if this is only updating views field
-  if (update && typeof update === 'object' && '$inc' in update && 
-      update.$inc && typeof update.$inc === 'object' && 'views' in update.$inc && 
-      Object.keys(update).length === 1) {
-    // This is just a view count update, don't update timestamps
-    this.setOptions({ timestamps: false });
-  }
-  
-  next();
+  timestamps: true // Enable automatic timestamps
 });
 
 // Create indexes for better query performance
