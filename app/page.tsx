@@ -19,6 +19,7 @@ interface Manga {
   genres: string[];
   likes?: number;
   updatedAt?: string;
+  latestChapterUpdate?: string; // Add this field for chapter creation time
   latestChapter?: {
     _id: string;
     chapterNumber: number;
@@ -371,7 +372,7 @@ export default function HomePage() {
                         <span className="font-medium">{manga.author || 'Chưa có tác giả'}</span>
                         <span>•</span>
                         <span className="text-purple-600 font-medium">
-                          {manga.latestChapter?.updatedAt ? formatExactTime(manga.latestChapter.updatedAt) : 'Không có chương'}
+                          {manga.latestChapterUpdate ? formatExactTime(manga.latestChapterUpdate) : 'Không có chương'}
                         </span>
                       </div>
                     </div>

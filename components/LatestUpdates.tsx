@@ -40,11 +40,19 @@ export default function LatestUpdates() {
         console.log('LatestUpdates Debug - First manga data:', {
           title: data.mangas[0]?.title,
           latestChapterUpdate: data.mangas[0]?.latestChapterUpdate,
+          latestChapterUpdateType: typeof data.mangas[0]?.latestChapterUpdate,
           latestChapter: data.mangas[0]?.latestChapter ? {
             title: data.mangas[0].latestChapter.title,
             createdAt: data.mangas[0].latestChapter.createdAt,
             updatedAt: data.mangas[0].latestChapter.updatedAt
           } : null
+        });
+        
+        // Also log what's actually being displayed
+        console.log('LatestUpdates Debug - Time being displayed:', {
+          rawValue: data.mangas[0]?.latestChapterUpdate,
+          formattedValue: data.mangas[0]?.latestChapterUpdate ? 
+            new Date(data.mangas[0].latestChapterUpdate).toISOString() : null
         });
         setLatestUpdates(data.mangas);
       }
