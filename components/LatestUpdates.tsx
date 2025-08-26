@@ -36,7 +36,16 @@ export default function LatestUpdates() {
       const data = await response.json();
       
       if (data.mangas) {
-
+        // Debug: Log the first manga to see what timestamps we're getting
+        console.log('LatestUpdates Debug - First manga data:', {
+          title: data.mangas[0]?.title,
+          latestChapterUpdate: data.mangas[0]?.latestChapterUpdate,
+          latestChapter: data.mangas[0]?.latestChapter ? {
+            title: data.mangas[0].latestChapter.title,
+            createdAt: data.mangas[0].latestChapter.createdAt,
+            updatedAt: data.mangas[0].latestChapter.updatedAt
+          } : null
+        });
         setLatestUpdates(data.mangas);
       }
     } catch (error) {
