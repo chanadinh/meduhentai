@@ -275,13 +275,13 @@ export default function UploadPage() {
         throw new Error(error.error || error.details || 'Failed to create manga');
       }
 
-      toast.success('Manga đã được tải lên thành công qua R2!');
+      toast.success('Manga đã được tải lên thành công qua Server 2!');
       resetMangaForm();
       fetchUserManga();
       
     } catch (error) {
-      console.error('R2 upload failed:', error);
-      toast.error('R2 upload failed, trying server upload as fallback...');
+      console.error('Server 2 upload failed:', error);
+      toast.error('Server 2 upload failed, trying Server 1 as fallback...');
       
       // Fallback to server upload
       await handleServerMangaUpload();
@@ -304,7 +304,7 @@ export default function UploadPage() {
       throw new Error(error.error || error.details || 'Failed to upload manga');
     }
 
-    toast.success('Manga đã được tải lên thành công qua server!');
+          toast.success('Manga đã được tải lên thành công qua Server 1!');
     resetMangaForm();
     fetchUserManga();
   };
@@ -427,12 +427,12 @@ export default function UploadPage() {
         throw new Error('Failed to create chapter');
       }
 
-      toast.success('Chương đã được tải lên thành công qua R2!');
+      toast.success('Chương đã được tải lên thành công qua Server 2!');
       resetChapterForm();
       
     } catch (error) {
-      console.error('R2 upload failed:', error);
-      toast.error('R2 upload failed, trying server upload as fallback...');
+      console.error('Server 2 upload failed:', error);
+      toast.error('Server 2 upload failed, trying Server 1 as fallback...');
       
       // Fallback to server upload
       await handleServerChapterUpload();
@@ -464,7 +464,7 @@ export default function UploadPage() {
       throw new Error(error.error || 'Failed to upload chapter');
     }
 
-    toast.success('Chương đã được tải lên thành công qua server!');
+          toast.success('Chương đã được tải lên thành công qua Server 1!');
     resetChapterForm();
   };
 
@@ -588,7 +588,7 @@ export default function UploadPage() {
                         : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
                     }`}
                   >
-                    Server Upload
+                    Server 1
                   </button>
                   <button
                     type="button"
@@ -599,7 +599,7 @@ export default function UploadPage() {
                         : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
                     }`}
                   >
-                    R2 Direct Upload
+                    Server 2
                   </button>
                 </div>
               </div>
@@ -608,12 +608,12 @@ export default function UploadPage() {
                 {uploadMethod === 'server' ? (
                   <div className="flex items-center space-x-2 text-blue-600">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span>Server Upload: Tải lên qua server (giới hạn 10MB, có nén ảnh)</span>
+                    <span>Server 1: Tải lên qua server (giới hạn 10MB, có nén ảnh)</span>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2 text-green-600">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>R2 Direct Upload: Tải lên trực tiếp lên R2 (không giới hạn kích thước, không nén)</span>
+                    <span>Server 2: Tải lên trực tiếp (không giới hạn kích thước, không nén)</span>
                   </div>
                 )}
               </div>
@@ -806,7 +806,7 @@ export default function UploadPage() {
                         : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
                     }`}
                   >
-                    Server Upload
+                    Server 1
                   </button>
                   <button
                     type="button"
@@ -817,7 +817,7 @@ export default function UploadPage() {
                         : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
                     }`}
                   >
-                    R2 Direct Upload
+                    Server 2
                   </button>
                 </div>
               </div>
@@ -826,12 +826,12 @@ export default function UploadPage() {
                 {uploadMethod === 'server' ? (
                   <div className="flex items-center space-x-2 text-blue-600">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span>Server Upload: Tải lên qua server (giới hạn 100MB, có nén ảnh)</span>
+                    <span>Server 1: Tải lên qua server (giới hạn 100MB, có nén ảnh)</span>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2 text-green-600">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>R2 Direct Upload: Tải lên trực tiếp lên R2 (không giới hạn kích thước, không nén)</span>
+                    <span>Server 2: Tải lên trực tiếp (không giới hạn kích thước, không nén)</span>
                   </div>
                 )}
               </div>
