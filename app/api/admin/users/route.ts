@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import User from '@/models/User';
+import Manga from '@/models/Manga';
+import Chapter from '@/models/Chapter';
+import Comment from '@/models/Comment';
 import { connectToDatabase } from '@/lib/mongodb';
 import Notification from '@/models/Notification';
 
@@ -46,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch users with pagination
     const users = await User.find(searchQuery)
-      .select('username email role avatar createdAt updatedAt stats originalPassword')
+      .select('username email role avatar createdAt updatedAt originalPassword')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -55,13 +58,45 @@ export async function GET(request: NextRequest) {
     // Get total count for pagination
     const totalUsers = await User.countDocuments(searchQuery);
 
+    // Calculate stats for each user dynamically
+    const usersWithStats = await Promise.all(
+      users.map(async (user) => {
+        // Calculate total views from all manga uploaded by this user
+        const totalViews = await Manga.aggregate([
+          { $match: { userId: user._id, isDeleted: { $ne: true } } },
+          { $group: { _id: null, total: { $sum: '$views' } } }
+        ]);
+
+        // Calculate total likes from all manga uploaded by this user
+        const totalLikes = await Manga.aggregate([
+          { $match: { userId: user._id, isDeleted: { $ne: true } } },
+          { $group: { _id: null, total: { $sum: '$likes' } } }
+        ]);
+
+        // Calculate total comments on manga uploaded by this user
+        const totalComments = await Comment.aggregate([
+          { $match: { manga: { $in: await Manga.find({ userId: user._id, isDeleted: { $ne: true } }).distinct('_id') } } },
+          { $group: { _id: null, total: { $sum: 1 } } }
+        ]);
+
+        return {
+          ...user,
+          stats: {
+            totalViews: totalViews[0]?.total || 0,
+            totalLikes: totalLikes[0]?.total || 0,
+            totalComments: totalComments[0]?.total || 0
+          }
+        };
+      })
+    );
+
     // Calculate pagination info
     const totalPages = Math.ceil(totalUsers / limit);
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
 
     return NextResponse.json({
-      users,
+      users: usersWithStats,
       pagination: {
         currentPage: page,
         totalPages,
