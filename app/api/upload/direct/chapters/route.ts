@@ -18,9 +18,9 @@ export async function POST(request: Request): Promise<NextResponse> {
           throw new Error('Not authenticated');
         }
 
-        // Check if user has admin privileges
-        if (session.user.role !== 'admin') {
-          throw new Error('Not authorized - admin access required');
+        // Check if user has admin or uploader privileges
+        if (session.user.role !== 'admin' && session.user.role !== 'uploader') {
+          throw new Error('Not authorized - admin or uploader access required');
         }
 
         return {

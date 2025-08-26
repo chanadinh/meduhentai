@@ -225,7 +225,7 @@ export default function UploadPage() {
   const handleR2MangaUpload = async () => {
     try {
       // Get presigned URL for cover image
-      const presignedResponse = await fetch('/api/upload/direct-r2', {
+      const presignedResponse = await fetch('/api/upload/user-r2', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -233,6 +233,7 @@ export default function UploadPage() {
         body: JSON.stringify({
           type: 'manga-cover',
           fileName: `cover_${Date.now()}.${coverImage!.name.split('.').pop()}`,
+          contentType: coverImage!.type,
         }),
       });
 
@@ -258,7 +259,7 @@ export default function UploadPage() {
       // Create manga with R2 cover image URL
       const mangaData = {
         ...mangaForm,
-        coverImage: `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${fileKey}`,
+        coverImage: `https://${process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN}/${fileKey}`,
       };
 
       const response = await fetch('/api/manga', {
@@ -357,12 +358,13 @@ export default function UploadPage() {
   const handleR2ChapterUpload = async () => {
     try {
       // Get presigned URL for R2 upload
-      const presignedResponse = await fetch('/api/upload/direct-r2', {
+      const presignedResponse = await fetch('/api/upload/user-r2', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          type: 'chapter-pages',
           mangaId: selectedManga._id,
           title: chapterForm.title,
           chapterNumber: chapterForm.chapterNumber,
@@ -375,7 +377,7 @@ export default function UploadPage() {
         throw new Error('Failed to get presigned URLs');
       }
 
-      const { presignedUrls, chapterId } = await presignedResponse.json();
+      const { presignedUrls, fileKeys, chapterId } = await presignedResponse.json();
 
       // Upload each page directly to R2
       const uploadPromises = pageFiles.map(async (file, index) => {
@@ -398,7 +400,7 @@ export default function UploadPage() {
 
         return {
           pageNumber: index + 1,
-          imageUrl: `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${chapterId}/page_${index + 1}.${file.name.split('.').pop()}`,
+          imageUrl: `https://${process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN}/${fileKeys[index]}`,
           width: 800,
           height: 1200
         };

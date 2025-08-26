@@ -32,10 +32,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user has admin privileges
-    if (session.user.role !== 'admin') {
+    // Check if user has admin or uploader privileges
+    if (session.user.role !== 'admin' && session.user.role !== 'uploader') {
       return NextResponse.json(
-        { error: 'Not authorized - admin access required' },
+        { error: 'Not authorized - admin or uploader access required' },
         { status: 403 }
       );
     }
