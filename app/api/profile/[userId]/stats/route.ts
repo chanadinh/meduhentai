@@ -1,8 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import Manga from '@/models/Manga';
-import Chapter from '@/models/Chapter';
-import Comment from '@/models/Comment';
 import { getUserStats } from '@/lib/user-stats';
 
 // Force dynamic rendering for this route
@@ -23,10 +19,8 @@ export async function GET(
       );
     }
 
-    await connectToDatabase();
-
-    // Use the utility function to get user stats (with caching)
-    const stats = await getUserStats(userId, false);
+    // Use the utility function to get user stats (always fresh calculation)
+    const stats = await getUserStats(userId);
 
     return NextResponse.json({ stats });
 

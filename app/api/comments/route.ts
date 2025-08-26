@@ -6,7 +6,7 @@ import Comment from '@/models/Comment';
 import User from '@/models/User';
 import Manga from '@/models/Manga';
 import Notification from '@/models/Notification';
-import { updateUserStats } from '@/lib/user-stats';
+
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -240,16 +240,7 @@ export async function POST(request: NextRequest) {
       console.error('Failed to create notification for manga uploader:', notificationError);
     }
 
-    // Update user stats after comment is created
-    try {
-      const manga = await Manga.findById(mangaId).select('userId');
-      if (manga?.userId) {
-        await updateUserStats(manga.userId.toString());
-      }
-    } catch (statsError) {
-      // Log error but don't fail the comment creation
-      console.error('Failed to update user stats:', statsError);
-    }
+
 
     return NextResponse.json({ comment }, { status: 201 });
 

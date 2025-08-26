@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import Chapter from '@/models/Chapter';
 import Manga from '@/models/Manga';
-import { updateUserStats } from '@/lib/user-stats';
 
 // POST - Increment chapter view count
 export async function POST(
@@ -39,16 +38,12 @@ export async function POST(
 
     // Also increment manga view count
     if (chapter?.manga) {
-      console.log(`Incrementing manga view count for manga ${chapter.manga}`);
       await Manga.findByIdAndUpdate(chapter.manga, {
         $inc: { views: 1 }
       });
     }
 
-    // Update user stats after chapter view count change
-    if (chapter?.userId) {
-      await updateUserStats(chapter.userId.toString());
-    }
+
 
     return NextResponse.json({ 
       message: 'View count updated',

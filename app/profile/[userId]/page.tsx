@@ -140,8 +140,6 @@ export default function ProfilePage() {
           ...prev,
           stats: statsData.stats
         } : null);
-        
-        toast.success('Thống kê đã được cập nhật!');
       }
     } catch (error) {
       console.error('Error refreshing stats:', error);
