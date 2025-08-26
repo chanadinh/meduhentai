@@ -29,18 +29,22 @@ export async function updateUserStats(userId: string) {
       { $group: { _id: null, total: { $sum: 1 } } }
     ]);
 
-    // Update user stats in the database
-    await User.findByIdAndUpdate(userId, {
-      'stats.totalViews': totalViews[0]?.total || 0,
-      'stats.totalLikes': totalLikes[0]?.total || 0,
-      'stats.totalComments': totalComments[0]?.total || 0
-    });
-
-    return {
+    const stats = {
       totalViews: totalViews[0]?.total || 0,
       totalLikes: totalLikes[0]?.total || 0,
       totalComments: totalComments[0]?.total || 0
     };
+
+    console.log(`Updating user stats for ${userId}:`, stats);
+
+    // Update user stats in the database
+    await User.findByIdAndUpdate(userId, {
+      'stats.totalViews': stats.totalViews,
+      'stats.totalLikes': stats.totalLikes,
+      'stats.totalComments': stats.totalComments
+    });
+
+    return stats;
   } catch (error) {
     console.error('Error updating user stats:', error);
     throw error;

@@ -41,6 +41,7 @@ export async function POST(
         // Update user stats after manga stats change
         const manga = await Manga.findById(mangaId);
         if (manga?.userId) {
+          console.log(`Updating user stats after reaction removal for manga ${mangaId}, user ${manga.userId}`);
           await updateUserStats(manga.userId.toString());
         }
 
@@ -51,11 +52,11 @@ export async function POST(
         });
       } else {
         // Change reaction from like to dislike or vice versa
+        const oldReaction = existingReaction.reaction; // Store the old reaction before updating
         existingReaction.reaction = reaction;
         await existingReaction.save();
 
         // Update manga counts (decrease old reaction, increase new reaction)
-        const oldReaction = existingReaction.reaction === 'like' ? 'dislike' : 'like';
         await Manga.findByIdAndUpdate(mangaId, {
           $inc: { 
             [oldReaction + 's']: -1,
@@ -66,6 +67,7 @@ export async function POST(
         // Update user stats after manga stats change
         const manga = await Manga.findById(mangaId);
         if (manga?.userId) {
+          console.log(`Updating user stats after reaction update for manga ${mangaId}, user ${manga.userId}`);
           await updateUserStats(manga.userId.toString());
         }
 
@@ -84,11 +86,12 @@ export async function POST(
         $inc: { [reaction + 's']: 1 }
       });
 
-      // Update user stats after manga stats change
-      const manga = await Manga.findById(mangaId);
-      if (manga?.userId) {
-        await updateUserStats(manga.userId.toString());
-      }
+        // Update user stats after manga stats change
+        const manga = await Manga.findById(mangaId);
+        if (manga?.userId) {
+          console.log(`Updating user stats after new reaction for manga ${mangaId}, user ${manga.userId}`);
+          await updateUserStats(manga.userId.toString());
+        }
 
       return NextResponse.json({ 
         message: 'Reaction added',
