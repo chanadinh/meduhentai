@@ -142,18 +142,7 @@ export async function GET(request: NextRequest) {
         Manga.countDocuments({ isDeleted: { $ne: true } })
       ]);
       
-      // Debug: Log what's being returned for the first few manga
-      console.log('API Debug - First 2 manga results:', 
-        mangaResults.slice(0, 2).map(m => ({
-          title: m.title,
-          latestChapterUpdate: m.latestChapterUpdate,
-          latestChapter: m.latestChapter ? {
-            title: m.latestChapter.title,
-            createdAt: m.latestChapter.createdAt,
-            updatedAt: m.latestChapter.updatedAt
-          } : null
-        }))
-      );
+
       
       mangas = mangaResults;
       total = totalResult;

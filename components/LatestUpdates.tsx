@@ -27,26 +27,6 @@ export default function LatestUpdates() {
 
   useEffect(() => {
     fetchLatestUpdates();
-    
-    // Refresh data when the page becomes visible again (e.g., after reading a chapter)
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        fetchLatestUpdates();
-      }
-    };
-    
-    // Refresh data when the window gains focus
-    const handleFocus = () => {
-      fetchLatestUpdates();
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
   }, []);
 
   const fetchLatestUpdates = async () => {
@@ -56,17 +36,7 @@ export default function LatestUpdates() {
       const data = await response.json();
       
       if (data.mangas) {
-        console.log('LatestUpdates Debug - Received data:', 
-          data.mangas.slice(0, 2).map(m => ({
-            title: m.title,
-            latestChapterUpdate: m.latestChapterUpdate,
-            latestChapter: m.latestChapter ? {
-              title: m.latestChapter.title,
-              createdAt: m.latestChapter.createdAt,
-              updatedAt: m.latestChapter.updatedAt
-            } : null
-          }))
-        );
+
         setLatestUpdates(data.mangas);
       }
     } catch (error) {

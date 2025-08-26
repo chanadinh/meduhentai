@@ -74,6 +74,21 @@ const ChapterSchema = new mongoose.Schema<IChapter>({
   timestamps: true
 });
 
+// Pre-save middleware to only update updatedAt for actual content changes
+ChapterSchema.pre('save', function(next) {
+  // Only update updatedAt if it's a new document or if content fields have changed
+  if (this.isNew || 
+      this.isModified('title') || 
+      this.isModified('chapterNumber') || 
+      this.isModified('volume') || 
+      this.isModified('pages') || 
+      this.isModified('isDeleted') || 
+      this.isModified('userId')) {
+    this.updatedAt = new Date();
+  }
+  next();
+});
+
 // Create indexes for better query performance
 ChapterSchema.index({ manga: 1, chapterNumber: 1 });
 ChapterSchema.index({ manga: 1, createdAt: -1 });
