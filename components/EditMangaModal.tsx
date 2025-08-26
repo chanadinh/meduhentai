@@ -26,22 +26,22 @@ interface EditMangaModalProps {
 
 
 const GENRES = [
-  'Action', 'Adventure', 'Anal', 'Ahegao', 'BDSM', 'Beach', 'Big Dick', 'Bikini', 
+  'Action', 'Adventure', 'Anal', 'Ahegao', 'BDSM', 'Beach', 'Big Breasts', 'Big Dick', 'Bikini', 
   'Blindfold', 'Blonde', 'Bondage', 'Bukkake', 'Bunny Costume', 'Cheating', 
-  'Chikan', 'Chubby', 'Comedy', 'Cosplay', 'Costume', 'Deepthroat', 'Demon', 
-  'Dildo', 'Drama', 'Ecchi', 'Ebony', 'Elbow Gloves', 'Electrocution', 'Elf', 
+  'Chikan', 'Chubby', 'Closed Eyes', 'Clit Stimulation', 'Comedy', 'Cosplay', 'Costume', 'Defloration', 
+  'Deepthroat', 'Demon', 'Dildo', 'Drama', 'Drugs', 'Ecchi', 'Ebony', 'Elbow Gloves', 'Electrocution', 'Elf', 
   'Enema', 'Exhibitionist', 'Fantasy', 'Fat', 'Femdom', 'Fisting', 'Flatchest', 
-  'Footjob', 'Futa', 'Futanari', 'Gangbang', 'Gape', 'Glasses', 'Glory Hole', 
+  'Footjob', 'Futa', 'Futanari', 'Gangbang', 'Gape', 'Glasses', 'Glory Hole', 'High Heels',
   'Gyaru', 'Handjob', 'Harem', 'Huge Ass', 'Huge Breast', 'Huge Dick', 'Horror', 
   'Incest', 'Lady Suit', 'Latex', 'Legwear', 'Lesbian', 'Maid', 'Masturbation', 
-  'MILF', 'Mind Break', 'Mind Control', 'Mother', 'Mother and Daughter', 'Nerd', 
-  'NTR', 'Oral', 'Orc', 'Orgy', 'Pantyhose', 'Petplay', 'Piercing', 'Piss', 
+  'MILF', 'Mind Break', 'Mind Control', 'Monster', 'Mother', 'Mother and Daughter', 'Multiple Orgasms', 'Nakadashi', 'Nerd', 
+  'Nipple Stimulation', 'NTR', 'Nun', 'Oral', 'Orc', 'Orgy', 'Pantyhose', 'Petplay', 'Piercing', 'Piss', 
   'Pregnant', 'Princess', 'Prolapse', 'Prostitution', 'Public', 'Public Toilet', 
-  'Public Vibrator', 'Romance', 'School Life', 'Sci-Fi', 'Sex Toys', 'Short Hair', 
-  'Sister', 'Slave', 'Slice of Life', 'Slut', 'Slut Dress', 'Sports', 'Squirt', 
+  'Public Vibrator', 'Rape', 'Romance', 'School Life', 'Sci-Fi', 'Sex Toys', 'Short Hair', 
+  'Sister', 'Slave', 'Slice of Life', 'Slut', 'Slut Dress', 'Sole Female', 'Sports', 'Squirt', 
   'Stomach Bulge', 'Supernatural', 'Swimsuit', 'Tail', 'Tan', 'Tan Lines', 
   'Tattoo', 'Teacher', 'Tentacles', 'Thriller', 'Tomboy', 'Train', 'Trap', 
-  'Uncensored', 'Vanilla', 'Vibrator', 'Warrior', 'Wife', 'Yaoi', 'Yuri'
+  'Uncensored', 'Vanilla', 'Vibrator', 'Warrior', 'Wife', 'X-ray', 'Yaoi', 'Yuri'
 ];
 
 const MANGA_TYPES = ['manga', 'manhwa', 'manhua', 'doujinshi'];
