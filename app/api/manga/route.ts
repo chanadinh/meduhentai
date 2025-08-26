@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
         ];
         break;
       case 'latestChapter':
-        // Use aggregation pipeline to sort by latest chapter update time
+        // Use aggregation pipeline to sort by latest chapter creation time
         pipeline = [
           { $match: { isDeleted: { $ne: true } } },
           {
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
               as: 'chapters',
               pipeline: [
                 { $match: { isDeleted: { $ne: true } } },
-                { $sort: { updatedAt: -1 } },
+                { $sort: { createdAt: -1 } }, // Use createdAt (chapter creation time) instead of updatedAt
                 { $limit: 1 }
               ]
             }
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
             $addFields: {
               latestChapterUpdate: {
                 $ifNull: [
-                  { $arrayElemAt: ['$chapters.updatedAt', 0] },
+                  { $arrayElemAt: ['$chapters.createdAt', 0] }, // Use createdAt for chapter creation time
                   new Date(0) // Default to epoch if no chapters
                 ]
               }
@@ -108,22 +108,22 @@ export async function GET(request: NextRequest) {
           { $sort: { latestChapterUpdate: sortOrder === 'desc' ? -1 : 1 } },
           { $skip: skip },
           { $limit: limit },
-                      {
-              $project: {
-                title: 1,
-                coverImage: 1,
-                views: 1,
-                chaptersCount: 1,
-                createdAt: 1,
-                updatedAt: 1,
-                genres: 1,
-                description: 1,
-                author: 1,
-                likes: 1,
-                latestChapterUpdate: 1, // Include the latest chapter update time
-                latestChapter: { $arrayElemAt: ['$chapters', 0] }
-              }
+          {
+            $project: {
+              title: 1,
+              coverImage: 1,
+              views: 1,
+              chaptersCount: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              genres: 1,
+              description: 1,
+              author: 1,
+              likes: 1,
+              latestChapterUpdate: 1, // Include the latest chapter update time
+              latestChapter: { $arrayElemAt: ['$chapters', 0] }
             }
+          }
         ];
         break;
       case 'createdAt':
