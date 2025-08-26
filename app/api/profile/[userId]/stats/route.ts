@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import Manga from '@/models/Manga';
 import Chapter from '@/models/Chapter';
 import Comment from '@/models/Comment';
+import { getUserStats } from '@/lib/user-stats';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -24,29 +25,8 @@ export async function GET(
 
     await connectToDatabase();
 
-    // Calculate total views from all manga uploaded by this user
-    const totalViews = await Manga.aggregate([
-      { $match: { userId: userId, isDeleted: { $ne: true } } },
-      { $group: { _id: null, total: { $sum: '$views' } } }
-    ]);
-
-    // Calculate total likes from all manga uploaded by this user
-    const totalLikes = await Manga.aggregate([
-      { $match: { userId: userId, isDeleted: { $ne: true } } },
-      { $group: { _id: null, total: { $sum: '$likes' } } }
-    ]);
-
-    // Calculate total comments on manga uploaded by this user
-    const totalComments = await Comment.aggregate([
-      { $match: { manga: { $in: await Manga.find({ userId: userId, isDeleted: { $ne: true } }).distinct('_id') } } },
-      { $group: { _id: null, total: { $sum: 1 } } }
-    ]);
-
-    const stats = {
-      totalViews: totalViews[0]?.total || 0,
-      totalLikes: totalLikes[0]?.total || 0,
-      totalComments: totalComments[0]?.total || 0
-    };
+    // Use the utility function to get user stats (with caching)
+    const stats = await getUserStats(userId, false);
 
     return NextResponse.json({ stats });
 

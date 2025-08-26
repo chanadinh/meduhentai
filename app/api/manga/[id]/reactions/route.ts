@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import MangaReaction from '@/models/MangaReaction';
 import Manga from '@/models/Manga';
 import { connectToDatabase } from '@/lib/mongodb';
+import { updateUserStats } from '@/lib/user-stats';
 
 export async function POST(
   request: NextRequest,
@@ -37,6 +38,12 @@ export async function POST(
           $inc: { [reaction + 's']: -1 }
         });
 
+        // Update user stats after manga stats change
+        const manga = await Manga.findById(mangaId);
+        if (manga?.userId) {
+          await updateUserStats(manga.userId.toString());
+        }
+
         return NextResponse.json({ 
           message: 'Reaction removed',
           action: 'removed',
@@ -56,6 +63,12 @@ export async function POST(
           }
         });
 
+        // Update user stats after manga stats change
+        const manga = await Manga.findById(mangaId);
+        if (manga?.userId) {
+          await updateUserStats(manga.userId.toString());
+        }
+
         return NextResponse.json({ 
           message: 'Reaction updated',
           action: 'updated',
@@ -70,6 +83,12 @@ export async function POST(
       await Manga.findByIdAndUpdate(mangaId, {
         $inc: { [reaction + 's']: 1 }
       });
+
+      // Update user stats after manga stats change
+      const manga = await Manga.findById(mangaId);
+      if (manga?.userId) {
+        await updateUserStats(manga.userId.toString());
+      }
 
       return NextResponse.json({ 
         message: 'Reaction added',

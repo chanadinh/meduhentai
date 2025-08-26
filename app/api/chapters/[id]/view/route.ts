@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import Chapter from '@/models/Chapter';
+import { updateUserStats } from '@/lib/user-stats';
 
 // POST - Increment chapter view count
 export async function POST(
@@ -34,6 +35,11 @@ export async function POST(
 
     // Get the updated chapter to return the new view count
     const chapter = await Chapter.findById(chapterId);
+
+    // Update user stats after chapter view count change
+    if (chapter?.userId) {
+      await updateUserStats(chapter.userId.toString());
+    }
 
     return NextResponse.json({ 
       message: 'View count updated',

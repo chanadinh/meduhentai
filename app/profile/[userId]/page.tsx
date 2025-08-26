@@ -10,7 +10,8 @@ import {
   Camera, 
   Trash2,
   Save,
-  Edit3
+  Edit3,
+  RefreshCw
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import EditMangaModal from '@/components/EditMangaModal';
@@ -64,6 +65,31 @@ export default function ProfilePage() {
     fetchProfile();
   }, [session, status, router, userId]);
 
+  // Auto-refresh stats when page becomes visible (for real-time updates)
+  useEffect(() => {
+    if (!isOwnProfile) return;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Refresh stats when page becomes visible
+        refreshStats();
+      }
+    };
+
+    const handleFocus = () => {
+      // Refresh stats when window gains focus
+      refreshStats();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [isOwnProfile]);
+
   const fetchProfile = async () => {
     try {
       setLoading(true);
@@ -99,6 +125,27 @@ export default function ProfilePage() {
       toast.error('Không thể tải thông tin hồ sơ');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshStats = async () => {
+    try {
+      // Fetch fresh stats data
+      const statsResponse = await fetch(`/api/profile/${userId}/stats?refresh=true`);
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        
+        // Update profile with fresh stats
+        setProfile(prev => prev ? {
+          ...prev,
+          stats: statsData.stats
+        } : null);
+        
+        toast.success('Thống kê đã được cập nhật!');
+      }
+    } catch (error) {
+      console.error('Error refreshing stats:', error);
+      toast.error('Không thể cập nhật thống kê');
     }
   };
 
@@ -443,7 +490,18 @@ export default function ProfilePage() {
 
           {/* Statistics */}
           <div className="bg-white rounded-xl p-6 border border-dark-200">
-            <h2 className="text-xl font-semibold text-dark-900 mb-4">Thống kê</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-dark-900">Thống kê</h2>
+              {isOwnProfile && (
+                <button
+                  onClick={refreshStats}
+                  className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-all duration-200"
+                  title="Làm mới thống kê"
+                >
+                  <RefreshCw className="h-5 w-5" />
+                </button>
+              )}
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
