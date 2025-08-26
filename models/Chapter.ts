@@ -96,6 +96,37 @@ ChapterSchema.pre('save', function(next) {
   next();
 });
 
+// Pre-update middleware to prevent timestamp updates for view count changes
+ChapterSchema.pre('updateOne', function(next) {
+  // If this is just a view count update, don't update the updatedAt timestamp
+  const update = this.getUpdate();
+  
+  // Check if this is only updating views field
+  if (update && typeof update === 'object' && '$inc' in update && 
+      update.$inc && typeof update.$inc === 'object' && 'views' in update.$inc && 
+      Object.keys(update).length === 1) {
+    // This is just a view count update, don't update timestamps
+    this.setOptions({ timestamps: false });
+  }
+  
+  next();
+});
+
+ChapterSchema.pre('findOneAndUpdate', function(next) {
+  // If this is just a view count update, don't update the updatedAt timestamp
+  const update = this.getUpdate();
+  
+  // Check if this is only updating views field
+  if (update && typeof update === 'object' && '$inc' in update && 
+      update.$inc && typeof update.$inc === 'object' && 'views' in update.$inc && 
+      Object.keys(update).length === 1) {
+    // This is just a view count update, don't update timestamps
+    this.setOptions({ timestamps: false });
+  }
+  
+  next();
+});
+
 // Create indexes for better query performance
 ChapterSchema.index({ manga: 1, chapterNumber: 1 });
 ChapterSchema.index({ manga: 1, createdAt: -1 });
