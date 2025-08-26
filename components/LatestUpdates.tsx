@@ -27,6 +27,26 @@ export default function LatestUpdates() {
 
   useEffect(() => {
     fetchLatestUpdates();
+    
+    // Refresh data when the page becomes visible again (e.g., after reading a chapter)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchLatestUpdates();
+      }
+    };
+    
+    // Refresh data when the window gains focus
+    const handleFocus = () => {
+      fetchLatestUpdates();
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const fetchLatestUpdates = async () => {
