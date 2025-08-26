@@ -112,6 +112,7 @@ function BrowsePageContent() {
                   className="px-3 py-2 border border-dark-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="createdAt">Ngày tạo</option>
+                  <option value="lastUpdated">Chương mới nhất</option>
                   <option value="updatedAt">Ngày cập nhật</option>
           
                   <option value="views">Lượt xem</option>

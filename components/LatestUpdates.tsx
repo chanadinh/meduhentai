@@ -13,7 +13,7 @@ interface LatestUpdate {
   views: number;
   totalChapters: number;
   status: string;
-  lastUpdated: string;
+  latestChapterUpdate: string; // This now represents the latest chapter creation time
   latestChapter?: {
     title: string;
     chapterNumber: number;
@@ -124,7 +124,7 @@ export default function LatestUpdates() {
             <div className="flex items-center justify-between text-xs text-dark-500">
               <span className="flex items-center">
                 <Clock className="h-3 w-3 mr-1" />
-                {formatDate(manga.lastUpdated)}
+                {formatDate(manga.latestChapterUpdate)}
               </span>
               <div className="flex items-center">
                 <Eye className="h-3 w-3 mr-1" />

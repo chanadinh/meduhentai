@@ -31,7 +31,52 @@ export async function GET(request: NextRequest) {
         sortObject = { likes: sortOrder === 'desc' ? -1 : 1, views: sortOrder === 'desc' ? -1 : 1 };
         break;
       case 'lastUpdated':
-        sortObject = { updatedAt: sortOrder === 'desc' ? -1 : 1 };
+        // Use aggregation pipeline to sort by latest chapter creation time
+        pipeline = [
+          { $match: { isDeleted: { $ne: true } } },
+          {
+            $lookup: {
+              from: 'chapters',
+              localField: '_id',
+              foreignField: 'manga',
+              as: 'chapters',
+              pipeline: [
+                { $match: { isDeleted: { $ne: true } } },
+                { $sort: { createdAt: -1 } }, // Use createdAt (chapter creation time) instead of updatedAt
+                { $limit: 1 }
+              ]
+            }
+          },
+          {
+            $addFields: {
+              latestChapterUpdate: {
+                $ifNull: [
+                  { $arrayElemAt: ['$chapters.createdAt', 0] }, // Use createdAt for chapter creation time
+                  new Date(0) // Default to epoch if no chapters
+                ]
+              }
+            }
+          },
+          { $sort: { latestChapterUpdate: sortOrder === 'desc' ? -1 : 1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $project: {
+              title: 1,
+              coverImage: 1,
+              views: 1,
+              chaptersCount: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              genres: 1,
+              description: 1,
+              author: 1,
+              likes: 1,
+              latestChapterUpdate: 1, // Include the latest chapter update time
+              latestChapter: { $arrayElemAt: ['$chapters', 0] }
+            }
+          }
+        ];
         break;
       case 'latestChapter':
         // Use aggregation pipeline to sort by latest chapter update time
@@ -63,21 +108,22 @@ export async function GET(request: NextRequest) {
           { $sort: { latestChapterUpdate: sortOrder === 'desc' ? -1 : 1 } },
           { $skip: skip },
           { $limit: limit },
-          {
-            $project: {
-              title: 1,
-              coverImage: 1,
-              views: 1,
-              chaptersCount: 1,
-              createdAt: 1,
-              updatedAt: 1,
-              genres: 1,
-              description: 1,
-              author: 1,
-              likes: 1,
-              latestChapter: { $arrayElemAt: ['$chapters', 0] }
+                      {
+              $project: {
+                title: 1,
+                coverImage: 1,
+                views: 1,
+                chaptersCount: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                genres: 1,
+                description: 1,
+                author: 1,
+                likes: 1,
+                latestChapterUpdate: 1, // Include the latest chapter update time
+                latestChapter: { $arrayElemAt: ['$chapters', 0] }
+              }
             }
-          }
         ];
         break;
       case 'createdAt':
@@ -89,8 +135,8 @@ export async function GET(request: NextRequest) {
     let mangas: any[] = [];
     let total: number = 0;
 
-    if (sortBy === 'latestChapter') {
-      // Use aggregation pipeline for latest chapter sorting
+    if (sortBy === 'latestChapter' || sortBy === 'lastUpdated') {
+      // Use aggregation pipeline for latest chapter sorting (both cases now use the same logic)
       const [mangaResults, totalResult] = await Promise.all([
         Manga.aggregate(pipeline),
         Manga.countDocuments({ isDeleted: { $ne: true } })
