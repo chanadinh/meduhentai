@@ -124,7 +124,7 @@ export default function LatestUpdates() {
             <div className="flex items-center justify-between text-xs text-dark-500">
               <span className="flex items-center">
                 <Clock className="h-3 w-3 mr-1" />
-                {formatDate(manga.latestChapterUpdate)}
+                <span title="Thời gian chương mới nhất được tạo">Cập nhật: {formatDate(manga.latestChapterUpdate)}</span>
               </span>
               <div className="flex items-center">
                 <Eye className="h-3 w-3 mr-1" />
