@@ -16,11 +16,11 @@ const reactions: ChapterReaction[] = [];
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
-    const chapterId = params.id;
+    const { id: chapterId } = await context.params;
 
     await connectToDatabase();
 
@@ -54,7 +54,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -67,7 +67,7 @@ export async function POST(
     }
 
     const { reaction } = await request.json();
-    const chapterId = params.id;
+    const { id: chapterId } = await context.params;
     const userId = session.user.id;
 
     if (!['like', 'dislike'].includes(reaction)) {
