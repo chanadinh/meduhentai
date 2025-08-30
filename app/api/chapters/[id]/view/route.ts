@@ -6,10 +6,10 @@ import Manga from '@/models/Manga';
 // POST - Increment chapter view count
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const chapterId = params.id;
+    const { id: chapterId } = await params;
 
     if (!chapterId) {
       return NextResponse.json(

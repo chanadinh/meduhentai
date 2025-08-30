@@ -7,10 +7,10 @@ export const dynamic = 'force-dynamic';
 // GET - Fetch user statistics by userId
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const userId = params.userId;
+    const userId = (await params).userId;
 
     if (!userId) {
       return NextResponse.json(

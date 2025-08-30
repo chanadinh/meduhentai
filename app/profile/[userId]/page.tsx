@@ -4,19 +4,30 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  User, 
-  Calendar, 
-  Camera, 
+import {
+  User,
+  Calendar,
+  Camera,
   Trash2,
   Save,
   Edit3,
-  RefreshCw
+  RefreshCw,
+  Upload,
+  Heart,
+  MessageSquare
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import EditMangaModal from '@/components/EditMangaModal';
 import toast from 'react-hot-toast';
 import { fixR2ImageUrl } from '@/lib/utils';
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  Button,
+  Input,
+  Skeleton
+} from '@heroui/react';
 
 interface UserProfile {
   username: string;
@@ -239,12 +250,14 @@ export default function ProfilePage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-dark-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
         <Navigation />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="mt-4 text-dark-600">Đang tải...</p>
+            <Skeleton className="w-32 h-32 rounded-full mx-auto mb-4" />
+            <Skeleton className="h-8 w-64 mx-auto mb-2" />
+            <Skeleton className="h-6 w-48 mx-auto mb-8" />
+            <Skeleton className="h-12 w-40 mx-auto" />
           </div>
         </div>
       </div>
@@ -257,11 +270,11 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-dark-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
         <Navigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-dark-900">Không thể tải hồ sơ</h1>
+            <h1 className="text-2xl font-bold text-white">Không thể tải hồ sơ</h1>
           </div>
         </div>
       </div>
@@ -269,27 +282,30 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
       <Navigation />
       
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Profile Header */}
-        <div className="profile-header">
-          <div className="text-center">
-            <div className="relative inline-block">
-              <div className="profile-avatar">
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Profile Header - MIMI Style */}
+        <div className="relative rounded-3xl overflow-hidden mb-8">
+          {/* Pink/Purple Header Section */}
+          <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 p-8">
+            <div className="flex items-center gap-6">
+              {/* Large Avatar */}
+              <div className="relative">
                 <img
-                  src={profile?.avatar || '/medusa.ico'}
+                  src={fixR2ImageUrl(profile?.avatar || '/medusa.ico')}
                   alt={profile?.username || 'User'}
-                  className="w-32 h-32 rounded-full border-4 border-white shadow-strong"
+                  className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-2xl"
                 />
                 {isOwnProfile && (
                   <>
                     <button
                       onClick={() => document.getElementById('avatar-input')?.click()}
-                      className="absolute bottom-0 right-0 p-3 bg-primary-600 text-white rounded-full shadow-medium hover:bg-primary-700 transition-colors duration-200"
+                      className="absolute -bottom-2 -right-2 bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-lg transition-all duration-200 border-3 border-white"
+                      aria-label="Thay đổi avatar"
                     >
-                      <Camera className="h-5 w-5" />
+                      <Camera className="h-4 w-4" />
                     </button>
                     <input
                       id="avatar-input"
@@ -301,239 +317,119 @@ export default function ProfilePage() {
                   </>
                 )}
               </div>
-            </div>
-            
-            <h1 className="text-3xl font-bold text-white mt-4 mb-2">
-              {profile?.username || 'User'}
-            </h1>
-            <p className="text-white/90 text-lg">
-              {profile?.role === 'admin' ? 'Quản trị viên' : 
-               profile?.role === 'uploader' ? 'Người tải lên' : 'Thành viên'}
-            </p>
-            <div className="flex items-center justify-center space-x-2 mt-1">
-              <p className="text-white/70 text-sm font-mono">
-                ID: {userId || 'N/A'}
-              </p>
-              {isOwnProfile && (
-                <button
-                  onClick={() => {
-                    if (userId) {
-                      navigator.clipboard.writeText(userId);
-                      toast.success('User ID đã được sao chép!');
-                    }
-                  }}
-                  className="text-white/60 hover:text-white/80 transition-colors"
-                  title="Sao chép User ID"
-                >
-                  📋
-                </button>
-              )}
-            </div>
-            
-            {isOwnProfile && avatarFile && (
-              <div className="mt-4 space-x-2 relative z-20">
-                <button
-                  onClick={() => {
-                    console.log('Save Avatar button clicked'); // Debug log
-                    handleAvatarUpload();
-                  }}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 text-sm cursor-pointer relative z-20"
-                  style={{ pointerEvents: 'auto' }}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Lưu Avatar
-                </button>
-                <button
-                  onClick={() => {
-                    setAvatarFile(null);
-                    setAvatarPreview('');
-                  }}
-                  className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200 text-sm cursor-pointer relative z-20"
-                  style={{ pointerEvents: 'auto' }}
-                >
-                  Hủy
-                </button>
+
+              {/* User Info */}
+              <div className="flex-1 text-left">
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-4xl font-bold text-white">
+                    {profile?.username || 'User'}
+                  </h1>
+                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                    profile?.role === 'admin' ? 'bg-yellow-500 text-black' :
+                    profile?.role === 'uploader' ? 'bg-green-500 text-white' : 
+                    'bg-gray-500 text-white'
+                  }`}>
+                    {profile?.role === 'admin' ? '👑 Chủ thốt' :
+                     profile?.role === 'uploader' ? '📚 Chủ thớt' : '👤 Thành viên'}
+                  </span>
+                </div>
+                
+                <div className="text-white/80 text-lg mb-3">
+                  {(profile.stats?.totalViews || 0).toLocaleString()} truyện
+                </div>
+                
+                <div className="text-white/60 font-mono text-sm">
+                  @{userId?.slice(-5) || 'N/A'}
+                </div>
               </div>
-            )}
-            
-            {isOwnProfile && (
+            </div>
+          </div>
+
+          {/* Action Buttons Row */}
+          {isOwnProfile && (
+            <div className="bg-gray-800 px-8 py-4 flex gap-3">
+              {avatarFile && (
+                <>
+                  <button
+                    onClick={handleAvatarUpload}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200"
+                  >
+                    <Save className="h-4 w-4" />
+                    Lưu
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAvatarFile(null);
+                      setAvatarPreview('');
+                    }}
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200"
+                  >
+                    Hủy
+                  </button>
+                </>
+              )}
               <button
-                onClick={() => {
-                  console.log('Remove Avatar button clicked'); // Debug log
-                  handleAvatarRemove();
-                }}
-                className="mt-2 text-white/80 hover:text-white text-sm underline cursor-pointer relative z-20"
-                style={{ pointerEvents: 'auto' }}
+                onClick={handleAvatarRemove}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200 text-sm"
               >
                 Xóa avatar
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* Profile Content */}
-        <div className="mt-8 space-y-6">
-          {/* Basic Info */}
-          <div className="bg-white rounded-xl p-6 border border-dark-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-dark-900">Thông tin cơ bản</h2>
-              {isOwnProfile && (
-                <button
-                  onClick={() => setEditing(!editing)}
-                  className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200 text-sm"
-                >
-                  {editing ? (
-                    <>
-                      <Edit3 className="h-4 w-4 mr-2" />
-                      Chỉnh sửa
-                    </>
-                  ) : (
-                    <>
-                      <Edit3 className="h-4 w-4 mr-2" />
-                      Chỉnh sửa
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <User className="h-5 w-5 text-primary-600" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-dark-700 mb-1">
-                    Tên người dùng
-                  </label>
-                  {editing ? (
-                    <input
-                      type="text"
-                      value={formData.username}
-                      onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                      className="w-full px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    />
-                  ) : (
-                    <p className="text-dark-900">{profile?.username || 'N/A'}</p>
-                  )}
-                </div>
-              </div>
-              
-
-              
-              <div className="flex items-center space-x-3">
-                <User className="h-5 w-5 text-primary-600" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-dark-700 mb-1">
-                    User ID
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-dark-900 font-mono text-sm">
-                      {userId || 'N/A'}
-                    </p>
-                    {isOwnProfile && (
-                      <button
-                        onClick={() => {
-                          if (userId) {
-                            navigator.clipboard.writeText(userId);
-                            toast.success('User ID đã được sao chép!');
-                          }
-                        }}
-                        className="text-dark-500 hover:text-primary-600 transition-colors"
-                        title="Sao chép User ID"
-                      >
-                        📋
-                      </button>
-                    )}
+        {/* Content Grid - MIMI Style */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Sidebar - Stats */}
+          <div className="lg:col-span-1">
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <h3 className="text-lg font-bold text-white">Thông tin</h3>
+              </CardHeader>
+              <CardBody className="space-y-4">
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <Upload className="h-4 w-4 text-blue-400" />
+                      <span>Đã đăng:</span>
+                    </div>
+                    <span className="text-white font-bold">{(profile.stats?.totalViews || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <Heart className="h-4 w-4 text-red-400" />
+                      <span>Thích:</span>
+                    </div>
+                    <span className="text-white font-bold">{(profile.stats?.totalLikes || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <MessageSquare className="h-4 w-4 text-green-400" />
+                      <span>Bình luận:</span>
+                    </div>
+                    <span className="text-white font-bold">{(profile.stats?.totalComments || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="pt-2 border-t border-gray-700">
+                    <div className="text-gray-400 text-xs">Mô tả:</div>
+                    <div className="text-gray-300 mt-1">Thành viên tích cực của cộng đồng</div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-5 w-5 text-primary-600" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-dark-700 mb-1">
-                    Ngày tham gia
-                  </label>
-                  <p className="text-dark-900">
-                    {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            {editing && (
-              <div className="mt-6 flex space-x-3">
-                <button
-                  onClick={handleSaveProfile}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Lưu thay đổi
-                </button>
-                <button
-                  onClick={() => {
-                    setEditing(false);
-                    setFormData({
-                      username: profile?.username || ''
-                    });
-                  }}
-                  className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200"
-                >
-                  Hủy
-                </button>
-              </div>
-            )}
+              </CardBody>
+            </Card>
           </div>
 
-
-
-          {/* Statistics */}
-          <div className="bg-white rounded-xl p-6 border border-dark-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-dark-900">Thống kê</h2>
-              {isOwnProfile && (
-                <button
-                  onClick={refreshStats}
-                  className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-all duration-200"
-                  title="Làm mới thống kê"
-                >
-                  <RefreshCw className="h-5 w-5" />
-                </button>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-primary-600 mb-2">
-                  {(profile.stats?.totalViews || 0).toLocaleString()}
-                </div>
-                <div className="text-dark-600">Lượt xem</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="text-3xl font-bold text-accent-600 mb-2">
-                  {(profile.stats?.totalLikes || 0).toLocaleString()}
-                </div>
-                <div className="text-dark-600">Lượt thích</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-2">
-                  {(profile.stats?.totalComments || 0).toLocaleString()}
-                </div>
-                <div className="text-dark-600">Bình luận</div>
-              </div>
-            </div>
-          </div>
-
-          {/* User's Uploaded Manga */}
-          <div className="bg-white rounded-xl p-6 border border-dark-200">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold text-dark-900">
-                {isOwnProfile ? 'Manga đã tải lên' : `Manga của ${profile?.username}`}
-              </h2>
-            </div>
-            
-            <MyMangaList userId={userId} isOwnProfile={isOwnProfile} />
+          {/* Right Content - Manga Grid */}
+          <div className="lg:col-span-3">
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <h3 className="text-lg font-bold text-white">
+                  {isOwnProfile ? 'Truyện đã đăng' : `Truyện của ${profile?.username}`}
+                </h3>
+              </CardHeader>
+              <CardBody>
+                <MyMangaList userId={userId} isOwnProfile={isOwnProfile} />
+              </CardBody>
+            </Card>
           </div>
         </div>
       </main>
@@ -600,8 +496,8 @@ function MyMangaList({ userId, isOwnProfile }: { userId: string; isOwnProfile: b
   if (loading && page === 1) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-        <p className="mt-2 text-dark-600">Đang tải...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto"></div>
+        <p className="mt-2 text-gray-300">Đang tải...</p>
       </div>
     );
   }
@@ -609,55 +505,78 @@ function MyMangaList({ userId, isOwnProfile }: { userId: string; isOwnProfile: b
   if (mangas.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-dark-600 mb-4">Bạn chưa tải lên manga nào</p>
+        <p className="text-gray-300 mb-4">Chưa có manga nào được tải lên</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {mangas.map((manga) => (
-          <div key={manga._id} className="bg-dark-50 rounded-lg p-4 border border-dark-200">
-            <div className="flex items-center space-x-3">
-              <img
-                src={fixR2ImageUrl(manga.coverImage)}
-                alt={manga.title}
-                className="w-16 h-20 object-cover rounded-lg"
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-dark-900 truncate">{manga.title}</h3>
-                <p className="text-sm text-dark-600">Chương: {manga.chaptersCount}</p>
-                <p className="text-sm text-dark-600">Lượt xem: {manga.views}</p>
+    <div className="space-y-6">
+      {mangas.length > 0 && (
+        <div className="grid grid-cols-1 gap-4">
+          {mangas.map((manga) => (
+            <div key={manga._id} className="bg-gray-700 rounded-xl p-4 hover:bg-gray-600 transition-colors duration-200 border border-gray-600">
+              <div className="flex items-center gap-4">
+                {/* Manga Cover */}
+                <img
+                  src={fixR2ImageUrl(manga.coverImage)}
+                  alt={manga.title}
+                  className="w-20 h-28 object-cover rounded-lg shadow-lg"
+                />
+                
+                {/* Manga Info */}
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-white mb-2">{manga.title}</h3>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {manga.genres?.slice(0, 8).map((genre: string, index: number) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-gray-600 text-gray-200 text-xs rounded-md"
+                      >
+                        {genre}
+                      </span>
+                    ))}
+                    {manga.genres?.length > 8 && (
+                      <span className="px-2 py-1 bg-gray-600 text-gray-200 text-xs rounded-md">
+                        +{manga.genres.length - 8}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-gray-400 text-sm">
+                    Update: {manga.updatedAt ? new Date(manga.updatedAt).toLocaleDateString('vi-VN') : 'N/A'}
+                  </div>
+                </div>
 
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2">
+                  <Link
+                    href={`/manga/${manga._id}`}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors duration-200 text-sm text-center"
+                  >
+                    Xem
+                  </Link>
+                  {isOwnProfile && (
+                    <button
+                      onClick={() => handleEditManga(manga._id)}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200 text-sm"
+                      aria-label={`Chỉnh sửa ${manga.title}`}
+                    >
+                      Sửa
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="mt-3 flex space-x-2">
-              <Link
-                href={`/manga/${manga._id}`}
-                className="px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200 text-sm flex-1 text-center"
-              >
-                Xem
-              </Link>
-              {isOwnProfile && (
-                <button
-                  onClick={() => handleEditManga(manga._id)}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 text-sm flex-1 text-center"
-                >
-                  Chỉnh sửa
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
       
       {hasMore && (
         <div className="text-center">
           <button
             onClick={loadMore}
             disabled={loading}
-            className="px-6 py-3 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white rounded-xl font-medium transition-all duration-200"
+            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors duration-200"
           >
             {loading ? 'Đang tải...' : 'Tải thêm'}
           </button>

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Chapter from '@/models/Chapter';
 import Manga from '@/models/Manga';
@@ -72,7 +71,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('Chapter creation request received');
     
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     
     if (!session?.user?.id) {
       console.log('No session or user ID');

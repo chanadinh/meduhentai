@@ -51,6 +51,7 @@ export default function Navigation() {
                 className="search-input w-full"
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                aria-label="Tìm kiếm manga, tác giả, thể loại"
               />
               <Search className="search-icon h-4 w-4" />
             </div>
@@ -189,6 +190,7 @@ export default function Navigation() {
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-white/20 transition-colors duration-200"
+              aria-label={isMenuOpen ? "Đóng menu" : "Mở menu"}
             >
               {isMenuOpen ? (
                                         <X className="h-4 w-4 text-black" />
@@ -212,6 +214,7 @@ export default function Navigation() {
                   className="search-input w-full"
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  aria-label="Tìm kiếm manga, tác giả, thể loại"
                 />
                 <Search className="search-icon h-4 w-4" />
               </div>

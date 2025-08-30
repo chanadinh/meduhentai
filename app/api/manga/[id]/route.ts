@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Manga from '@/models/Manga';
 import Chapter from '@/models/Chapter';
@@ -10,10 +9,10 @@ import User from '@/models/User';
 // GET - Fetch a specific manga by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const mangaId = params.id;
+    const mangaId = (await params).id;
 
     if (!mangaId) {
       return NextResponse.json(
@@ -86,10 +85,10 @@ export async function GET(
 // PUT - Update a specific manga by ID
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const mangaId = params.id;
+    const mangaId = (await params).id;
 
     if (!mangaId) {
       return NextResponse.json(
@@ -99,7 +98,7 @@ export async function PUT(
     }
 
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -204,10 +203,10 @@ export async function PUT(
 // DELETE - Delete a specific manga by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const mangaId = params.id;
+    const mangaId = (await params).id;
 
     if (!mangaId) {
       return NextResponse.json(
@@ -217,7 +216,7 @@ export async function DELETE(
     }
 
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },

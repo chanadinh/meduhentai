@@ -121,7 +121,7 @@ export default function MangaGrid({ endpoint, showPagination = true, limit = 20 
         {mangas.map((manga) => (
           <div key={manga._id} className="manga-card manga-card-hover group">
             <Link href={`/manga/${manga._id}`} className="block">
-                          <div className="manga-cover h-48 w-full">
+                          <div className="manga-cover h-64 sm:h-72 lg:h-80 w-full">
               <img
                 src={fixR2ImageUrl(manga.coverImage)}
                 alt={manga.title}
@@ -149,14 +149,15 @@ export default function MangaGrid({ endpoint, showPagination = true, limit = 20 
                     e.preventDefault();
                     handleFavorite(manga._id);
                   }}
-                  className="absolute bottom-3 right-3 bg-white/90 hover:bg-white text-dark-700 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-soft hover:shadow-medium"
+                  className="absolute bottom-3 right-3 bg-white/90 hover:bg-white text-gray-700 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  aria-label="Thêm vào yêu thích"
                 >
                   <Heart className="h-4 w-4" />
                 </button>
               </div>
             </Link>
 
-            <div className="p-3 space-y-2">
+            <div className="p-4 space-y-3">
               <Link href={`/manga/${manga._id}`}>
                 <h3 className="manga-title text-sm">
                   {manga.title}

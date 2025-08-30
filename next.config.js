@@ -1,13 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost', 'your-r2-domain.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pub-82d1a72b4d7f43a5b4a34f4664d53892.r2.dev',
+      },
+    ],
     unoptimized: true,
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@aws-sdk/client-s3'],
-  },
-
+  serverExternalPackages: ['@aws-sdk/client-s3'],
   env: {
     MONGODB_URI: process.env.MONGODB_URI,
     CLOUDFLARE_R2_ACCOUNT_ID: process.env.CLOUDFLARE_R2_ACCOUNT_ID,

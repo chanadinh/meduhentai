@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import Manga from '@/models/Manga';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import { uploadImage } from '@/lib/r2';
 
 // Force dynamic rendering for this route
@@ -192,7 +191,7 @@ export async function GET(request: NextRequest) {
 // POST - Create a new manga
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     
     if (!session?.user?.id) {
       return NextResponse.json(

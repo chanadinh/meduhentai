@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Manga from '@/models/Manga';
 import Comment from '@/models/Comment';
@@ -11,7 +10,7 @@ export const dynamic = 'force-dynamic';
 // GET - Fetch user statistics
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     
     if (!session?.user?.id) {
       return NextResponse.json(

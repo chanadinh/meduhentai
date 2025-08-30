@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Comment from '@/models/Comment';
 import Notification from '@/models/Notification';
@@ -11,10 +10,10 @@ export const dynamic = 'force-dynamic';
 // PUT - Update a comment
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -24,7 +23,7 @@ export async function PUT(
     }
 
     const { content } = await request.json();
-    const commentId = params.id;
+    const commentId = (await params).id;
 
     if (!content || !content.trim()) {
       return NextResponse.json(
@@ -74,10 +73,10 @@ export async function PUT(
 // DELETE - Delete a comment (soft delete)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -86,7 +85,7 @@ export async function DELETE(
       );
     }
 
-    const commentId = params.id;
+    const commentId = (await params).id;
 
     await connectToDatabase();
 

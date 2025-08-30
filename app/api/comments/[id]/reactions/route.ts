@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Comment from '@/models/Comment';
 import mongoose from 'mongoose';
@@ -13,10 +12,10 @@ export const dynamic = 'force-dynamic';
 // POST - Add/remove like or dislike
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -26,7 +25,7 @@ export async function POST(
     }
 
     const { reactionType } = await request.json();
-    const commentId = params.id;
+    const commentId = (await params).id;
 
     if (!reactionType || !['like', 'dislike'].includes(reactionType)) {
       return NextResponse.json(

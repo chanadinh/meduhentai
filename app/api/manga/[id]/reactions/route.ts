@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import MangaReaction from '@/models/MangaReaction';
 import Manga from '@/models/Manga';
 import { connectToDatabase } from '@/lib/mongodb';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await connectToDatabase();
     const { reaction } = await request.json();
-    const mangaId = params.id;
+    const mangaId = (await params).id;
     const userId = session.user.id;
 
     if (!['like', 'dislike'].includes(reaction)) {
@@ -91,16 +90,16 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await connectToDatabase();
-    const mangaId = params.id;
+    const mangaId = (await params).id;
     const userId = session.user.id;
 
     // Get user's reaction for this manga

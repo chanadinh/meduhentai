@@ -5,6 +5,7 @@ import { Heart, Eye, Star, BookOpen } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { fixR2ImageUrl } from '@/lib/utils';
+import { Card, CardBody, Button, Badge, Chip } from '@heroui/react';
 
 interface MangaCardProps {
   manga: {
@@ -57,63 +58,73 @@ export default function MangaCard({ manga, showStats = true, size = 'medium' }: 
   };
 
   return (
-    <div className="group manga-card">
-      <Link href={`/manga/${manga._id}`} className="block">
-        <div className={`relative overflow-hidden rounded-lg bg-dark-200 mb-3 ${sizeClasses[size]}`}>
+    <Card as={Link} href={`/manga/${manga._id}`} className="group cursor-pointer hover:scale-105 transition-transform duration-200">
+      <CardBody className="p-0">
+        <div className="relative">
           <img
             src={fixR2ImageUrl(manga.coverImage)}
             alt={manga.title}
-            className={`w-full ${sizeClasses[size]} object-cover group-hover:scale-105 transition-transform duration-300`}
+            className={`w-full ${sizeClasses[size]} object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300`}
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
+
+          {/* Overlay on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-xl" />
+
           {/* Status Badge */}
           <div className="absolute top-2 left-2">
-            <span className={`status-badge ${
-              manga.status === 'completed' ? 'status-completed' : 'status-ongoing'
-            }`}>
-              {manga.status}
-            </span>
+            <Badge
+              color={manga.status === 'completed' ? 'success' : 'warning'}
+              variant="flat"
+              className="text-xs"
+            >
+              {manga.status === 'completed' ? 'Hoàn thành' : 'Đang tiến hành'}
+            </Badge>
           </div>
 
-
-
           {/* Favorite Button */}
-          <button
+          <Button
+            isIconOnly
+            size="sm"
+            variant="solid"
+            className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             onClick={(e) => {
               e.preventDefault();
               handleFavorite(manga._id);
             }}
-            className="absolute bottom-2 right-2 bg-white/90 hover:bg-white text-secondary-700 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            aria-label="Thêm vào yêu thích"
           >
             <Heart className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
-      </Link>
 
-      <div className="space-y-1">
-        <Link href={`/manga/${manga._id}`}>
-          <h3 className="font-medium text-secondary-900 group-hover:text-primary-600 transition-colors line-clamp-2">
+        <div className="p-4 space-y-2">
+          <h3 className="font-medium text-gray-900 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
             {manga.title}
           </h3>
-        </Link>
-        
-        <p className="text-sm text-secondary-600">{manga.author}</p>
-        
-        {showStats && (
-          <div className="flex items-center justify-between text-xs text-secondary-500">
-            <span className="flex items-center">
-              <BookOpen className="h-3 w-3 mr-1" />
-              {manga.totalChapters} chapters
-            </span>
-            <div className="flex items-center">
-              <Eye className="h-3 w-3 mr-1" />
-              {manga.views.toLocaleString()}
+
+          <p className="text-sm text-gray-600">{manga.author || 'Chưa có tác giả'}</p>
+
+          {showStats && (
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <Chip
+                size="sm"
+                variant="flat"
+                startContent={<BookOpen className="h-3 w-3" />}
+              >
+                {manga.totalChapters} chương
+              </Chip>
+              <Chip
+                size="sm"
+                variant="flat"
+                startContent={<Eye className="h-3 w-3" />}
+              >
+                {manga.views.toLocaleString()}
+              </Chip>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+        </div>
+      </CardBody>
+    </Card>
   );
 }

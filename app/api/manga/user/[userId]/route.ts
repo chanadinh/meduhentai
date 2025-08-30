@@ -4,7 +4,7 @@ import Manga from '@/models/Manga';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     await connectToDatabase();
@@ -17,7 +17,7 @@ export async function GET(
     // Get manga uploaded by the specific user
     const [mangas, total] = await Promise.all([
       Manga.find({ 
-        userId: params.userId,
+        userId: (await params).userId,
         isDeleted: { $ne: true } 
       })
         .sort({ createdAt: -1 })
@@ -26,7 +26,7 @@ export async function GET(
         .select('title coverImage views chaptersCount createdAt updatedAt')
         .lean(),
       Manga.countDocuments({ 
-        userId: params.userId,
+        userId: (await params).userId,
         isDeleted: { $ne: true } 
       })
     ]);

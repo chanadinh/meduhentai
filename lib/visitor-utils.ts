@@ -42,22 +42,23 @@ export function getClientIP(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const realIP = request.headers.get('x-real-ip');
   const cfConnectingIP = request.headers.get('cf-connecting-ip');
-  
+
   if (forwarded) {
     // x-forwarded-for can contain multiple IPs, take the first one
     return forwarded.split(',')[0].trim();
   }
-  
+
   if (realIP) {
     return realIP;
   }
-  
+
   if (cfConnectingIP) {
     return cfConnectingIP;
   }
-  
-  // Fallback to connection remote address
-  return request.ip || 'unknown';
+
+  // In Next.js 15, request.ip is no longer available
+  // Use a fallback method or return 'unknown'
+  return 'unknown';
 }
 
 export function isBot(userAgent: string): boolean {

@@ -1,11 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+// Force dynamic rendering to avoid SSR issues with HeroUI
+export const dynamic = 'force-dynamic';
 import { useSession } from 'next-auth/react';
 import Navigation from '@/components/Navigation';
-import { ChevronLeft, ChevronRight, MessageCircle, User, Search, Clock, Eye, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessageCircle, User, Search, Clock, Eye, Star, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { fixR2ImageUrl } from '@/lib/utils';
+import { Card, CardBody, CardHeader, Button, Skeleton, Divider } from '@heroui/react';
 
 interface Manga {
   _id: string;
@@ -33,7 +37,10 @@ export default function HomePage() {
   const { data: session } = useSession();
   const [popularManga, setPopularManga] = useState<Manga[]>([]);
   const [latestManga, setLatestManga] = useState<Manga[]>([]);
-  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPopularIndex, setCurrentPopularIndex] = useState(0);
+
   // Fallback sample data in case API fails
   const sampleManga: Manga = {
     _id: 'sample-1',
@@ -55,160 +62,170 @@ export default function HomePage() {
       updatedAt: new Date().toISOString()
     }
   };
-  const [loading, setLoading] = useState(true);
-  const [currentPopularIndex, setCurrentPopularIndex] = useState(0);
 
-  useEffect(() => {
-    fetchHomeData();
-  }, []);
-
-  // Auto-advance timer for popular manga
-  useEffect(() => {
-    if (popularManga && popularManga.length > 1) {
-      const timer = setInterval(() => {
-        setCurrentPopularIndex((prevIndex) => 
-          prevIndex === popularManga.length - 1 ? 0 : prevIndex + 1
-        );
-      }, 8000); // 8 seconds
-      
-      return () => clearInterval(timer);
-    }
-  }, [popularManga]);
-
-  // Ensure currentPopularIndex doesn't exceed the top 10 limit
-  useEffect(() => {
-    if (popularManga && popularManga.length > 0 && currentPopularIndex >= Math.min(popularManga.length, 10)) {
-      setCurrentPopularIndex(0);
-    }
-  }, [popularManga, currentPopularIndex]);
-
-  const fetchHomeData = async () => {
+  // Fetch home data with error handling
+  const fetchHomeData = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // Fetch popular manga
-      const popularResponse = await fetch('/api/manga?sort=popular&limit=10');
-      if (popularResponse.ok) {
-        const popularData = await popularResponse.json();
-        console.log('Popular manga data:', popularData);
-        setPopularManga(popularData.mangas || popularData.manga || []);
+      setError(null);
+
+      // Fetch both popular and latest manga in parallel
+      const [popularResponse, latestResponse] = await Promise.allSettled([
+        fetch('/api/manga?sort=popular&limit=10'),
+        fetch('/api/manga?sortBy=latestChapter&sortOrder=desc&limit=18')
+      ]);
+
+      // Handle popular manga response
+      if (popularResponse.status === 'fulfilled' && popularResponse.value.ok) {
+        const popularData = await popularResponse.value.json();
+        const popularList = popularData.mangas || popularData.manga || [];
+        setPopularManga(popularList);
+        console.log('Popular manga loaded:', popularList.length);
       } else {
-        console.error('Failed to fetch popular manga:', popularResponse.status);
+        console.warn('Failed to fetch popular manga');
+        setPopularManga([]); // Set empty array instead of leaving undefined
       }
-      
-      // Fetch latest manga
-      const latestResponse = await fetch('/api/manga?sortBy=latestChapter&sortOrder=desc&limit=15');
-      if (latestResponse.ok) {
-        const latestData = await latestResponse.json();
-        console.log('Latest manga data:', latestData);
-        setLatestManga(latestData.mangas || latestData.manga || []);
+
+      // Handle latest manga response
+      if (latestResponse.status === 'fulfilled' && latestResponse.value.ok) {
+        const latestData = await latestResponse.value.json();
+        const latestList = latestData.mangas || latestData.manga || [];
+        setLatestManga(latestList);
+        console.log('Latest manga loaded:', latestList.length);
       } else {
-        console.error('Failed to fetch latest manga:', latestResponse.status);
+        console.warn('Failed to fetch latest manga');
+        setLatestManga([]); // Set empty array instead of leaving undefined
       }
+
     } catch (error) {
       console.error('Error fetching home data:', error);
+      setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
+      // Set empty arrays to prevent undefined errors
+      setPopularManga([]);
+      setLatestManga([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const nextPopular = () => {
-    if (sortedPopularManga && sortedPopularManga.length > 0) {
-      setCurrentPopularIndex((prev) => 
-        prev === sortedPopularManga.length - 1 ? 0 : prev + 1
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchHomeData();
+  }, [fetchHomeData]);
+
+  // Auto-advance timer for popular manga carousel
+  useEffect(() => {
+    if (popularManga.length > 1) {
+      const timer = setInterval(() => {
+        setCurrentPopularIndex((prev) =>
+          prev >= popularManga.length - 1 ? 0 : prev + 1
+        );
+      }, 8000); // 8 seconds
+
+      return () => clearInterval(timer);
+    }
+  }, [popularManga.length]);
+
+  // Simplified carousel navigation
+  const nextPopular = useCallback(() => {
+    if (popularManga.length > 0) {
+      setCurrentPopularIndex((prev) =>
+        prev >= popularManga.length - 1 ? 0 : prev + 1
       );
     }
-  };
+  }, [popularManga.length]);
 
-  const prevPopular = () => {
-    if (sortedPopularManga && sortedPopularManga.length > 0) {
-      setCurrentPopularIndex((prev) => 
-        prev === 0 ? sortedPopularManga.length - 1 : prev - 1
+  const prevPopular = useCallback(() => {
+    if (popularManga.length > 0) {
+      setCurrentPopularIndex((prev) =>
+        prev === 0 ? popularManga.length - 1 : prev - 1
       );
     }
-  };
+  }, [popularManga.length]);
 
-  // Sort manga by ranking (likes first, then views) and limit to top 10
-  const sortedPopularManga = popularManga && popularManga.length > 0 
-    ? [...popularManga].sort((a, b) => {
-        // First sort by likes (descending)
-        if (a.likes !== b.likes) {
-          return (b.likes || 0) - (a.likes || 0);
-        }
-        // If likes are equal, sort by views (descending)
-        return (b.views || 0) - (a.views || 0);
-      }).slice(0, 10) // Only show top 10
-    : [];
+  // Get current popular manga (simplified)
+  const currentPopularManga = popularManga.length > 0 ? popularManga[currentPopularIndex] : sampleManga;
 
-  const currentPopularManga = sortedPopularManga.length > 0 ? sortedPopularManga[currentPopularIndex] : sampleManga;
-
-  // Calculate the actual ranking position based on likes and views
-  const getRankingPosition = (manga: any) => {
-    if (!sortedPopularManga || sortedPopularManga.length === 0) return 1;
-    
-    // Find the position of the current manga in the sorted array
-    const position = sortedPopularManga.findIndex(m => m._id === manga._id);
-    return position + 1; // Add 1 because index is 0-based
-  };
+  // Get ranking position (simplified)
+  const getRankingPosition = useCallback((manga: Manga) => {
+    if (popularManga.length === 0) return 1;
+    const position = popularManga.findIndex(m => m._id === manga._id);
+    return position !== -1 ? position + 1 : 1;
+  }, [popularManga]);
 
   // Format time to show exact timestamp
-  const formatExactTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffMinutes = Math.floor(diffTime / (1000 * 60));
-    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffMinutes < 1) return 'Vừa cập nhật';
-    if (diffMinutes < 60) return `${diffMinutes} phút trước`;
-    if (diffHours < 24) return `${diffHours} giờ trước`;
-    if (diffDays < 7) return `${diffDays} ngày trước`;
-    
-    // For older dates, show exact date and time
-    return date.toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const formatExactTime = useCallback((dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - date.getTime());
+      const diffMinutes = Math.floor(diffTime / (1000 * 60));
+      const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffMinutes < 1) return 'Vừa cập nhật';
+      if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+      if (diffHours < 24) return `${diffHours} giờ trước`;
+      if (diffDays < 7) return `${diffDays} ngày trước`;
+
+      // For older dates, show exact date and time
+      return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.warn('Error formatting date:', dateString);
+      return 'Không xác định';
+    }
+  }, []);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
         <Navigation />
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-12">
+          <div className="space-y-12">
             {/* Popular Section Skeleton */}
             <div className="space-y-6">
-              <div className="h-8 bg-gray-200 rounded-lg w-48"></div>
+              <Skeleton className="h-8 w-48 rounded-lg" />
               <div className="flex gap-8">
-                <div className="w-96 h-96 bg-gray-200 rounded-lg"></div>
+                <Skeleton className="w-96 h-96 rounded-lg" />
                 <div className="flex-1 space-y-4">
-                  <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+                  <Skeleton className="h-8 w-3/4 rounded" />
                   <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
-                    <div className="h-4 bg-gray-200 rounded w-24"></div>
-                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    <Skeleton className="h-4 w-20 rounded" />
+                    <Skeleton className="h-4 w-24 rounded" />
+                    <Skeleton className="h-4 w-16 rounded" />
                   </div>
-                  <div className="h-20 bg-gray-200 rounded w-full"></div>
-                  <div className="h-4 bg-gray-200 rounded w-32"></div>
+                  <Skeleton className="h-20 w-full rounded" />
+                  <Skeleton className="h-4 w-32 rounded" />
                 </div>
               </div>
             </div>
-            
+
             {/* Latest Section Skeleton */}
             <div className="space-y-6">
-              <div className="h-8 bg-gray-200 rounded-lg w-48"></div>
-              <div className="grid grid-cols-3 gap-4">
-                {[...Array(9)].map((_, i) => (
-                  <div key={i} className="space-y-2">
-                    <div className="h-32 bg-gray-200 rounded-lg"></div>
-                    <div className="h-3 bg-gray-200 rounded w-full"></div>
-                    <div className="h-2 bg-gray-200 rounded w-2/3"></div>
-                  </div>
+              <Skeleton className="h-8 w-48 rounded-lg" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                {[...Array(15)].map((_, i) => (
+                  <Card key={i}>
+                    <CardBody className="p-0">
+                      <div className="relative">
+                        <Skeleton className="w-full h-48 rounded-t-xl" />
+                      </div>
+                      <div className="p-4 space-y-3">
+                        <Skeleton className="h-6 w-full rounded" />
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-4 w-4 rounded" />
+                          <Skeleton className="h-4 w-3/4 rounded" />
+                        </div>
+                        <Skeleton className="h-4 w-1/2 rounded" />
+                      </div>
+                    </CardBody>
+                  </Card>
                 ))}
               </div>
             </div>
@@ -218,180 +235,276 @@ export default function HomePage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <div className="text-red-500 mb-4">
+              <MessageCircle className="h-12 w-12 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold">Đã xảy ra lỗi</h2>
+            </div>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <Button onClick={fetchHomeData} color="primary">
+              Thử lại
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
-      
+
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Popular New Titles Section */}
-        <section className="mb-8 relative overflow-hidden rounded-2xl">
-          {/* Background Image - Covers entire section */}
-          {currentPopularManga && (
-            <div 
-              key={currentPopularManga._id || currentPopularIndex}
-              className="absolute inset-0 rounded-2xl overflow-hidden animate-slide-bg-left"
-              style={{
-                backgroundImage: `url(${fixR2ImageUrl(currentPopularManga.coverImage)})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                filter: 'brightness(0.3)',
-              }}
-            />
-          )}
-          
-          {/* Content */}
-          <div className="relative z-10 p-3 sm:p-5 lg:p-6">
-            {currentPopularManga ? (
-              <div className="flex flex-col lg:flex-row gap-3 lg:gap-6">
-                {/* Left Side - Cover Image */}
-                <div className="w-full lg:w-64 flex-shrink-0 flex justify-center lg:justify-start lg:absolute lg:bottom-0">
-                  {/* Tiêu điểm Label and Bar */}
-                  <div className="absolute -top-10 -left-36 right-0 z-20 text-center">
-                    <h2 className="text-white text-2xl font-bold mb-1 drop-shadow-lg">TIÊU ĐIỂM:</h2>
-                    <div className="w-24 h-1.5 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full"></div>
-                  </div>
-                  
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-200 w-48 lg:w-64">
-                    <img 
+        {popularManga.length > 0 ? (
+          <div className="mb-8">
+            {/* TIÊU ĐIỂM Header - Fixed position above the card */}
+            <div className="mb-4">
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">TIÊU ĐIỂM</h2>
+                <div className="flex-1 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
+                <div className="text-gray-600 font-medium">
+                  TOP {getRankingPosition(currentPopularManga)}
+                </div>
+              </div>
+            </div>
+
+            <Card className="relative overflow-hidden">
+              {/* Background Image - Covers entire section */}
+              <div
+                key={currentPopularManga._id || currentPopularIndex}
+                className="absolute inset-0 overflow-hidden"
+                style={{
+                  backgroundImage: `url(${fixR2ImageUrl(currentPopularManga.coverImage)})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  filter: 'brightness(0.2) blur(1px)',
+                }}
+              />
+              
+              {/* Dark overlay for better contrast */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/70" />
+
+              {/* Content */}
+              <CardBody className="relative z-10 p-4 sm:p-6 lg:p-8">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 lg:gap-8">
+                  {/* Left Side - Cover Image */}
+                  <div className="flex-shrink-0 flex justify-center sm:justify-start">
+                    <img
                       key={currentPopularManga._id || currentPopularIndex}
-                      src={fixR2ImageUrl(currentPopularManga.coverImage)} 
+                      src={fixR2ImageUrl(currentPopularManga.coverImage)}
                       alt={currentPopularManga.title}
-                      className="w-full h-64 lg:h-80 object-cover transition-all duration-700 ease-in-out transform hover:scale-105 animate-slide-in-left"
+                      className="w-40 sm:w-48 md:w-56 lg:w-64 xl:w-72 h-56 sm:h-64 md:h-72 lg:h-80 xl:h-96 object-cover rounded-2xl shadow-2xl"
                     />
                   </div>
-                </div>
 
-                {/* Right Side - Manga Details (Text Only) */}
-                <div className="flex-1 p-3 lg:p-6 flex flex-col lg:ml-64 lg:pt-12">
-                  <h1 
-                    key={`title-${currentPopularManga._id || currentPopularIndex}`}
-                    className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight drop-shadow-lg transition-all duration-500 ease-in-out animate-slide-in-right text-center lg:text-left"
-                  >
-                    {currentPopularManga.title}
-                  </h1>
-                  
-                  {/* Manga Description */}
-                  <div 
-                    key={`desc-${currentPopularManga._id || currentPopularIndex}`}
-                    className="mb-3 transition-all duration-500 ease-in-out animate-slide-in-left"
-                  >
-                    <p className="text-white/90 leading-relaxed text-sm sm:text-base text-center lg:text-left drop-shadow-md line-clamp-3">
+                  {/* Right Side - Manga Details */}
+                  <div className="flex-1 space-y-3 sm:space-y-4 lg:space-y-6">
+                    {/* Title */}
+                    <h1
+                      key={`title-${currentPopularManga._id || currentPopularIndex}`}
+                      className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white leading-tight drop-shadow-lg text-center sm:text-left line-clamp-2"
+                    >
+                      {currentPopularManga.title}
+                    </h1>
+
+                    {/* Description */}
+                    <p className="text-white/90 leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg text-center sm:text-left drop-shadow-md line-clamp-2">
                       {currentPopularManga.description || 'Không có mô tả cho manga này.'}
                     </p>
-                  </div>
-                  
-                  {/* Genres */}
-                  <div 
-                    key={`genres-${currentPopularManga._id || currentPopularIndex}`}
-                    className="mb-4 transition-all duration-500 ease-in-out animate-slide-in-up"
-                  >
-                    <div className="flex flex-wrap gap-2.5 justify-center lg:justify-start">
-                      {currentPopularManga.genres && currentPopularManga.genres.slice(0, 8).map((genre, index) => (
-                        <span 
-                          key={index} 
-                          className="px-3 py-1.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs font-semibold rounded-lg shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg animate-bounce-in border border-orange-400" 
-                          style={{animationDelay: `${index * 0.08}s`}}
+
+                    {/* Genres */}
+                    <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                      {currentPopularManga.genres && currentPopularManga.genres.slice(0, 6).map((genre, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap bg-yellow-500 text-black shadow-lg"
                         >
                           {genre.toUpperCase()}
                         </span>
                       ))}
-                    </div>
-                  </div>
-                  
-                  {/* Manga Description and Read Button */}
-                  <div className="mb-4">
-                    <Link 
-                      href={`/manga/${currentPopularManga._id}`}
-                      className="inline-flex items-center px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg border border-purple-500 backdrop-blur-sm transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
-                    >
-                      Đọc ngay
-                    </Link>
-                  </div>
-                  
-                  {/* Navigation */}
-                  <div className="flex items-center justify-between mt-auto pt-3 lg:pt-6">
-                    <div className="text-xs sm:text-sm text-white/80 font-medium drop-shadow-md">
-                      NO. {getRankingPosition(currentPopularManga)}
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-4">
-                      <button
-                        onClick={prevPopular}
-                        className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-xl border border-white/30 backdrop-blur-sm transition-all duration-200 hover:scale-110 shadow-sm hover:shadow-md"
-                      >
-                        <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-                      </button>
-                      <button
-                        onClick={nextPopular}
-                        className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-xl border border-white/30 backdrop-blur-sm transition-all duration-200 hover:scale-110 shadow-sm hover:shadow-md"
-                      >
-                        <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                <div className="h-64 lg:h-96 bg-gray-100 rounded-2xl flex items-center justify-center">
-                  <p>Chưa có manga nào</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Latest Updates Section */}
-        <section>
-          <div className="flex items-center justify-between mb-6 sm:mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Cập Nhật Mới Nhất</h2>
-            <a href="/browse" className="text-gray-600 hover:text-gray-800 transition-colors duration-200">
-              <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
-            </a>
-          </div>
-          
-          <div className="manga-grid">
-            {(latestManga && latestManga.length > 0 ? latestManga.slice(0, 15) : Array(15).fill(sampleManga)).map((manga) => (
-              <Link key={manga._id} href={`/manga/${manga._id}`} className="group block">
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1 cursor-pointer">
-                  <div className="relative">
-                    <img 
-                      src={fixR2ImageUrl(manga.coverImage)} 
-                      alt={manga.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
-                    />
-                  </div>
-                  
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg text-gray-900 mb-3 line-clamp-2 leading-tight group-hover:text-purple-600 transition-colors duration-200">
-                      {manga.title}
-                    </h3>
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <User className="h-4 w-4" />
-                        <span className="font-medium">{manga.author || 'Chưa có tác giả'}</span>
-                        <span>•</span>
-                        <span className="text-purple-600 font-medium">
-                          {manga.latestChapterUpdate ? formatExactTime(manga.latestChapterUpdate) : 'Không có chương'}
+                      {currentPopularManga.genres && currentPopularManga.genres.length > 6 && (
+                        <span
+                          className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-bold bg-gray-700 text-white shadow-lg"
+                        >
+                          +{currentPopularManga.genres.length - 6}
                         </span>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-row gap-3 justify-center sm:justify-start">
+                      <Button
+                        as={Link}
+                        href={`/manga/${currentPopularManga._id}`}
+                        color="primary"
+                        size="lg"
+                        className="font-bold shadow-xl bg-blue-600 hover:bg-blue-700 text-white border-0 flex-1 sm:flex-none"
+                        startContent={<BookOpen className="h-5 w-5" />}
+                      >
+                        Đọc ngay
+                      </Button>
+                      
+                      <Button
+                        color="secondary"
+                        variant="solid"
+                        size="lg"
+                        className="font-bold shadow-xl bg-gray-700/90 hover:bg-gray-600 text-white border-0 flex-1 sm:flex-none"
+                        startContent={<Eye className="h-5 w-5" />}
+                      >
+                        <span className="hidden sm:inline">{currentPopularManga.views?.toLocaleString() || 0} lượt xem</span>
+                        <span className="sm:hidden">{currentPopularManga.views?.toLocaleString() || 0}</span>
+                      </Button>
+                    </div>
+
+                    {/* Stats and Navigation */}
+                    <div className="flex flex-row items-center justify-between gap-2 sm:gap-4">
+                      <div className="flex items-center gap-2 text-white bg-black/40 px-2 sm:px-3 py-2 rounded-full backdrop-blur-sm">
+                        <Star className="h-4 w-4 fill-current text-yellow-400" />
+                        <span className="text-xs sm:text-sm font-bold">
+                          {currentPopularManga.likes || 0}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 sm:gap-3 bg-black/40 px-3 sm:px-4 py-2 rounded-full backdrop-blur-sm">
+                        <Button
+                          isIconOnly
+                          variant="solid"
+                          onClick={prevPopular}
+                          className="text-white bg-gray-600/80 hover:bg-gray-500 border-0 shadow-lg"
+                          size="sm"
+                          aria-label="Manga trước đó"
+                        >
+                          <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
+                        
+                        <div className="flex gap-1">
+                          {popularManga.slice(0, 5).map((_, index) => (
+                            <div
+                              key={index}
+                              className={`h-2 rounded-full transition-all ${
+                                index === currentPopularIndex
+                                  ? 'bg-white w-4 sm:w-6 shadow-lg'
+                                  : 'bg-white/60 w-2'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        
+                        <Button
+                          isIconOnly
+                          variant="solid"
+                          onClick={nextPopular}
+                          className="text-white bg-gray-600/80 hover:bg-gray-500 border-0 shadow-lg"
+                          size="sm"
+                          aria-label="Manga tiếp theo"
+                        >
+                          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
                       </div>
                     </div>
                   </div>
                 </div>
-              </Link>
-            ))}
+              </CardBody>
+            </Card>
           </div>
-          
-          {/* See More Button */}
-          <div className="text-center mt-8">
-            <Link 
-              href="/browse" 
-              className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl border border-purple-500"
+        ) : (
+          <Card className="mb-8">
+            <CardBody className="text-center py-12">
+              <p className="text-gray-500">Chưa có manga nổi bật nào</p>
+              <Button
+                as={Link}
+                href="/browse"
+                color="primary"
+                className="mt-4"
+              >
+                Duyệt manga
+              </Button>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Latest Updates Section */}
+        <section>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Cập Nhật Mới Nhất</h2>
+            <Button
+              as={Link}
+              href="/browse"
+              variant="light"
+              isIconOnly
+              aria-label="Xem tất cả manga mới nhất"
             >
-              <span>Xem thêm</span>
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Link>
+              <ChevronRight className="h-5 w-5" />
+            </Button>
           </div>
+
+          {latestManga.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+              {latestManga.slice(0, 18).map((manga) => (
+                <Card key={manga._id} as={Link} href={`/manga/${manga._id}`} className="group cursor-pointer hover:scale-105 transition-transform duration-200">
+                <CardBody className="p-0">
+                  <div className="relative">
+                    <img
+                      src={fixR2ImageUrl(manga.coverImage)}
+                      alt={manga.title}
+                      className="w-full h-64 sm:h-72 lg:h-80 object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-200"
+                    />
+                  </div>
+
+                  <div className="p-3 sm:p-4 lg:p-5">
+                    <h3 className="font-bold text-sm sm:text-base lg:text-lg text-gray-900 mb-2 sm:mb-3 lg:mb-4 line-clamp-2 leading-tight group-hover:text-primary transition-colors duration-200">
+                      {manga.title}
+                    </h3>
+
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600">
+                        <User className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="font-medium truncate">{manga.author || 'Chưa có tác giả'}</span>
+                      </div>
+                      <div className="text-xs sm:text-sm text-primary font-medium">
+                        {manga.latestChapterUpdate ? formatExactTime(manga.latestChapterUpdate) : 'Không có chương'}
+                      </div>
+                    </div>
+                  </div>
+                </CardBody>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500">Chưa có manga nào được cập nhật</p>
+              <Button
+                as={Link}
+                href="/browse"
+                color="primary"
+                className="mt-4"
+              >
+                Duyệt manga
+              </Button>
+            </div>
+          )}
+
+          {/* See More Button */}
+          {latestManga.length > 0 && (
+            <div className="text-center mt-8">
+              <Button
+                as={Link}
+                href="/browse"
+                color="primary"
+                size="lg"
+                className="px-8"
+              >
+                <span>Xem thêm</span>
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+          )}
         </section>
       </main>
     </div>

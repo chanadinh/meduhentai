@@ -1,12 +1,12 @@
-import { NextAuthOptions } from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
+import NextAuth from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
 import { connectToDatabase } from './mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 
-export const authOptions: NextAuthOptions = {
+export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
-    CredentialsProvider({
+    Credentials({
       name: 'credentials',
       credentials: {
         username: { label: 'Username', type: 'text' },
@@ -19,15 +19,15 @@ export const authOptions: NextAuthOptions = {
 
         try {
           await connectToDatabase();
-          
+
           const user = await User.findOne({ username: credentials.username });
-          
+
           if (!user) {
             return null;
           }
 
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-          
+
           if (!isPasswordValid) {
             return null;
           }
@@ -74,4 +74,9 @@ export const authOptions: NextAuthOptions = {
     signIn: '/auth/signin',
   },
   secret: process.env.NEXTAUTH_SECRET,
-};
+});
+
+// Helper function to get server session (Auth.js v5 equivalent of getServerSession)
+export async function getServerSession() {
+  return await auth();
+}
