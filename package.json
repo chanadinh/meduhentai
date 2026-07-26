@@ -2,7 +2,6 @@
   "name": "meduhentai-web",
   "version": "0.1.0",
   "private": true,
-
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -21,7 +20,7 @@
     "dotenv": "^17.2.1",
     "lucide-react": "^0.542.0",
     "mongoose": "^8.0.3",
-    "next": "^15.5.2",
+    "next": "15.5.9",
     "next-auth": "^5.0.0-beta.29",
     "nodemailer": "^6.10.1",
     "react": "^19.1.1",
